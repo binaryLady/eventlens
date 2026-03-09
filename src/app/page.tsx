@@ -9,12 +9,13 @@ import {
   Suspense,
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { PhotoRecord, PhotosResponse } from "@/lib/types";
+import { PhotoRecord, PhotosResponse, MatchResult } from "@/lib/types";
 import { searchPhotos, getFolders } from "@/lib/photos";
 import { config } from "@/lib/config";
 import Lightbox from "@/components/Lightbox";
 import Toast from "@/components/Toast";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import PhotoUpload from "@/components/PhotoUpload";
 
 function timeAgo(dateStr: string): string {
   if (!dateStr) return "";
@@ -56,6 +57,8 @@ function PhotoGrid() {
   const [toast, setToast] = useState<{ message: string; count: number } | null>(
     null,
   );
+  const [matchResults, setMatchResults] = useState<MatchResult[] | null>(null);
+  const [matchDescription, setMatchDescription] = useState("");
   const pendingPhotosRef = useRef<PhotoRecord[] | null>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
 
@@ -125,7 +128,28 @@ function PhotoGrid() {
 
   const folders = useMemo(() => getFolders(allPhotos), [allPhotos]);
 
+  const handleMatchResults = useCallback(
+    (data: { matches: MatchResult[]; description: string }) => {
+      setMatchResults(data.matches);
+      setMatchDescription(data.description);
+      // Clear text search when using face match
+      setSearchInput("");
+      setDebouncedQuery("");
+      setActiveFolder("");
+    },
+    [],
+  );
+
+  const handleClearMatch = useCallback(() => {
+    setMatchResults(null);
+    setMatchDescription("");
+  }, []);
+
   const filteredPhotos = useMemo(() => {
+    // If face match is active, show match results
+    if (matchResults !== null) {
+      return matchResults.map((m) => m.photo);
+    }
     let result = allPhotos;
     if (activeFolder) {
       result = result.filter((p) => p.folder === activeFolder);
@@ -134,7 +158,17 @@ function PhotoGrid() {
       result = searchPhotos(debouncedQuery, result);
     }
     return result;
-  }, [allPhotos, activeFolder, debouncedQuery]);
+  }, [allPhotos, activeFolder, debouncedQuery, matchResults]);
+
+  // Map of photo id -> match confidence for badge display
+  const matchConfidenceMap = useMemo(() => {
+    if (!matchResults) return null;
+    const map = new Map<string, number>();
+    for (const m of matchResults) {
+      map.set(m.photo.id, m.confidence);
+    }
+    return map;
+  }, [matchResults]);
 
   const folderCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -218,6 +252,13 @@ function PhotoGrid() {
               </button>
             )}
           </div>
+
+          {/* Photo upload for face matching */}
+          <PhotoUpload
+            onMatchResults={handleMatchResults}
+            onClear={handleClearMatch}
+            isActive={matchResults !== null}
+          />
         </div>
       </header>
 
@@ -258,7 +299,18 @@ function PhotoGrid() {
       <div className="mx-auto max-w-6xl px-4 pb-4">
         {!loading && !error && (
           <p className="text-sm text-zinc-500">
-            {debouncedQuery ? (
+            {matchResults !== null ? (
+              <>
+                {matchResults.length} face match
+                {matchResults.length !== 1 ? "es" : ""} found
+                {matchDescription && (
+                  <span className="text-zinc-600">
+                    {" "}
+                    &mdash; {matchDescription}
+                  </span>
+                )}
+              </>
+            ) : debouncedQuery ? (
               <>
                 {filteredPhotos.length} result
                 {filteredPhotos.length !== 1 ? "s" : ""} for &ldquo;
@@ -354,6 +406,33 @@ function PhotoGrid() {
             </div>
           )}
 
+        {/* Empty: no face match results */}
+        {!loading &&
+          !error &&
+          matchResults !== null &&
+          matchResults.length === 0 && (
+            <div className="flex flex-col items-center py-20 text-center">
+              <svg
+                className="mb-4 text-zinc-700"
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <p className="text-zinc-400">
+                No matching faces found. Try uploading a clearer photo with good
+                lighting.
+              </p>
+            </div>
+          )}
+
         {/* Photo grid */}
         {!loading && !error && filteredPhotos.length > 0 && (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
@@ -362,6 +441,7 @@ function PhotoGrid() {
                 key={photo.id}
                 photo={photo}
                 onClick={() => setSelectedPhoto(photo)}
+                matchConfidence={matchConfidenceMap?.get(photo.id)}
               />
             ))}
           </div>
@@ -407,16 +487,22 @@ function PhotoGrid() {
 function PhotoCard({
   photo,
   onClick,
+  matchConfidence,
 }: {
   photo: PhotoRecord;
   onClick: () => void;
+  matchConfidence?: number;
 }) {
   const [imgError, setImgError] = useState(false);
 
   return (
     <button
       onClick={onClick}
-      className="group relative aspect-[4/3] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900 cursor-pointer transition-all duration-200 motion-safe:hover:scale-[1.02] hover:ring-2 hover:ring-[var(--color-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
+      className={`group relative aspect-[4/3] overflow-hidden rounded-xl border bg-zinc-900 cursor-pointer transition-all duration-200 motion-safe:hover:scale-[1.02] hover:ring-2 hover:ring-[var(--color-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] ${
+        matchConfidence !== undefined && matchConfidence >= 70
+          ? "border-emerald-500/50 ring-1 ring-emerald-500/20"
+          : "border-zinc-800"
+      }`}
     >
       {imgError || !photo.thumbnailUrl ? (
         <div className="flex h-full w-full items-center justify-center bg-zinc-800">
@@ -453,11 +539,26 @@ function PhotoCard({
         </span>
       </div>
 
-      {/* Face count badge */}
-      {photo.faceCount > 0 && (
-        <div className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-accent)] text-[10px] font-bold text-zinc-900">
-          {photo.faceCount}
+      {/* Match confidence badge (when face matching is active) */}
+      {matchConfidence !== undefined ? (
+        <div
+          className={`absolute right-2 top-2 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+            matchConfidence >= 70
+              ? "bg-emerald-500 text-white"
+              : matchConfidence >= 50
+                ? "bg-amber-500 text-zinc-900"
+                : "bg-zinc-600 text-zinc-200"
+          }`}
+        >
+          {matchConfidence}%
         </div>
+      ) : (
+        /* Face count badge (normal mode) */
+        photo.faceCount > 0 && (
+          <div className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-accent)] text-[10px] font-bold text-zinc-900">
+            {photo.faceCount}
+          </div>
+        )
       )}
     </button>
   );

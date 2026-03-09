@@ -18,3 +18,14 @@ export interface PhotosResponse {
   folders: string[];
   lastUpdated: string;
 }
+
+export interface MatchResult {
+  photo: PhotoRecord;
+  confidence: number; // 0-100
+  reason: string;
+}
+
+export interface MatchResponse {
+  matches: MatchResult[];
+  description: string; // AI-generated description of the uploaded person
+}
