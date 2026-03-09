@@ -30,6 +30,7 @@ const config: Config = {
         flicker: "flicker 4s ease-in-out infinite",
         "pulse-green": "pulse-green 2s ease-in-out infinite",
         "grid-reveal": "grid-reveal 0.6s ease-out forwards",
+        "slide-up": "slide-up 0.3s ease-out forwards",
       },
     },
   },

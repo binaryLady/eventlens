@@ -16,6 +16,7 @@ import Lightbox from "@/components/Lightbox";
 import Toast from "@/components/Toast";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import PhotoUpload from "@/components/PhotoUpload";
+import FloatingActionBar from "@/components/FloatingActionBar";
 
 function timeAgo(dateStr: string): string {
   if (!dateStr) return "";
@@ -177,6 +178,9 @@ function PhotoGrid() {
   const [matchResults, setMatchResults] = useState<MatchResult[] | null>(null);
   const [matchDescription, setMatchDescription] = useState("");
   const [shuffledPhotos, setShuffledPhotos] = useState<PhotoRecord[]>([]);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [downloading, setDownloading] = useState(false);
   const pendingPhotosRef = useRef<PhotoRecord[] | null>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
 
@@ -268,6 +272,28 @@ function PhotoGrid() {
     setMatchDescription("");
   }, []);
 
+  // ─── Multi-select handlers (no filteredPhotos dependency) ───
+  const toggleSelectMode = useCallback(() => {
+    setSelectMode((prev) => {
+      if (prev) setSelectedIds(new Set());
+      return !prev;
+    });
+  }, []);
+
+  const togglePhotoSelection = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+    setSelectMode(false);
+  }, []);
+
   const filteredPhotos = useMemo(() => {
     if (matchResults !== null) {
       return matchResults.map((m) => m.photo);
@@ -300,6 +326,58 @@ function PhotoGrid() {
     }
     return counts;
   }, [allPhotos]);
+
+  // ─── Multi-select handlers (depend on filteredPhotos) ───
+  const selectAll = useCallback(() => {
+    setSelectedIds(new Set(filteredPhotos.map((p) => p.id)));
+  }, [filteredPhotos]);
+
+  const handleDownloadZip = useCallback(async () => {
+    if (selectedIds.size === 0) return;
+    setDownloading(true);
+    try {
+      const files = filteredPhotos
+        .filter((p) => selectedIds.has(p.id))
+        .map((p) => ({ fileId: p.driveFileId, filename: p.filename }));
+
+      const res = await fetch("/api/download-zip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ files }),
+      });
+
+      if (!res.ok) throw new Error("Download failed");
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "eventlens_photos.zip";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      // Exit select mode after successful download
+      clearSelection();
+    } catch (err) {
+      console.error("ZIP download error:", err);
+      setToast({ message: "ZIP DOWNLOAD FAILED — RETRY", count: 0 });
+    } finally {
+      setDownloading(false);
+    }
+  }, [selectedIds, filteredPhotos, clearSelection]);
+
+  // Escape key exits select mode
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && selectMode) {
+        clearSelection();
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [selectMode, clearSelection]);
 
   const handleRefresh = () => {
     if (pendingPhotosRef.current) {
@@ -394,34 +472,50 @@ function PhotoGrid() {
       </header>
 
       {/* Filter bar */}
-      {folders.length > 0 && (
+      {!loading && !error && allPhotos.length > 0 && (
         <div className="scrollbar-hide mx-auto max-w-5xl overflow-x-auto px-4 pb-4">
-          <div className="flex gap-1.5">
+          <div className="flex items-center gap-1.5">
+            {folders.length > 0 && (
+              <>
+                <button
+                  onClick={() => setActiveFolder("")}
+                  className={`shrink-0 px-3 py-1 text-xs font-mono uppercase tracking-wider transition-all ${
+                    activeFolder === ""
+                      ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
+                      : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
+                  }`}
+                >
+                  ALL [{allPhotos.length}]
+                </button>
+                {folders.map((folder) => (
+                  <button
+                    key={folder}
+                    onClick={() =>
+                      setActiveFolder(activeFolder === folder ? "" : folder)
+                    }
+                    className={`shrink-0 px-3 py-1 text-xs font-mono uppercase tracking-wider transition-all ${
+                      activeFolder === folder
+                        ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
+                        : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
+                    }`}
+                  >
+                    {folder} [{folderCounts[folder] || 0}]
+                  </button>
+                ))}
+              </>
+            )}
+
+            {/* Select mode toggle */}
             <button
-              onClick={() => setActiveFolder("")}
-              className={`shrink-0 px-3 py-1 text-xs font-mono uppercase tracking-wider transition-all ${
-                activeFolder === ""
+              onClick={toggleSelectMode}
+              className={`shrink-0 ml-auto px-3 py-1 text-xs font-mono uppercase tracking-wider transition-all ${
+                selectMode
                   ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
                   : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
               }`}
             >
-              ALL [{allPhotos.length}]
+              {selectMode ? "EXIT SELECT" : "SELECT"}
             </button>
-            {folders.map((folder) => (
-              <button
-                key={folder}
-                onClick={() =>
-                  setActiveFolder(activeFolder === folder ? "" : folder)
-                }
-                className={`shrink-0 px-3 py-1 text-xs font-mono uppercase tracking-wider transition-all ${
-                  activeFolder === folder
-                    ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
-                    : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
-                }`}
-              >
-                {folder} [{folderCounts[folder] || 0}]
-              </button>
-            ))}
           </div>
         </div>
       )}
@@ -529,9 +623,17 @@ function PhotoGrid() {
               <PhotoCard
                 key={photo.id}
                 photo={photo}
-                onClick={() => setSelectedPhoto(photo)}
+                onClick={() => {
+                  if (selectMode) {
+                    togglePhotoSelection(photo.id);
+                  } else {
+                    setSelectedPhoto(photo);
+                  }
+                }}
                 matchConfidence={matchConfidenceMap?.get(photo.id)}
                 index={index}
+                selectMode={selectMode}
+                selected={selectedIds.has(photo.id)}
               />
             ))}
           </div>
@@ -571,6 +673,16 @@ function PhotoGrid() {
           onDismiss={() => setToast(null)}
         />
       )}
+
+      {/* Floating action bar for multi-select */}
+      <FloatingActionBar
+        selectedCount={selectedIds.size}
+        totalCount={filteredPhotos.length}
+        onSelectAll={selectAll}
+        onClearSelection={clearSelection}
+        onDownloadZip={handleDownloadZip}
+        downloading={downloading}
+      />
     </div>
   );
 }
@@ -580,11 +692,15 @@ function PhotoCard({
   onClick,
   matchConfidence,
   index,
+  selectMode,
+  selected,
 }: {
   photo: PhotoRecord;
   onClick: () => void;
   matchConfidence?: number;
   index: number;
+  selectMode: boolean;
+  selected: boolean;
 }) {
   const [imgError, setImgError] = useState(false);
 
@@ -592,9 +708,11 @@ function PhotoCard({
     <button
       onClick={onClick}
       className={`group relative aspect-[4/3] overflow-hidden border bg-black cursor-pointer transition-all duration-200 motion-safe:hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(0,255,65,0.15)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] animate-grid-reveal ${
-        matchConfidence !== undefined && matchConfidence >= 70
-          ? "border-[#00ff41] shadow-[0_0_12px_rgba(0,255,65,0.2)]"
-          : "border-[#00ff4122] hover:border-[#00ff4166]"
+        selected
+          ? "border-[#00ff41] shadow-[0_0_15px_rgba(0,255,65,0.25)] ring-1 ring-[#00ff41]"
+          : matchConfidence !== undefined && matchConfidence >= 70
+            ? "border-[#00ff41] shadow-[0_0_12px_rgba(0,255,65,0.2)]"
+            : "border-[#00ff4122] hover:border-[#00ff4166]"
       }`}
       style={{ animationDelay: `${index * 0.03}s` }}
     >
@@ -607,9 +725,39 @@ function PhotoCard({
           src={photo.thumbnailUrl}
           alt={photo.filename}
           loading="lazy"
-          className="h-full w-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+          className={`h-full w-full object-cover transition-opacity ${
+            selected ? "opacity-70" : "opacity-90 group-hover:opacity-100"
+          }`}
           onError={() => setImgError(true)}
         />
+      )}
+
+      {/* Select mode checkbox overlay */}
+      {selectMode && (
+        <div className="absolute top-1.5 left-1.5 z-10">
+          <div
+            className={`flex h-5 w-5 items-center justify-center border transition-all ${
+              selected
+                ? "border-[#00ff41] bg-[#00ff41]"
+                : "border-[#00ff4166] bg-black/60"
+            }`}
+          >
+            {selected && (
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="black"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Bottom overlay */}
@@ -624,7 +772,7 @@ function PhotoCard({
       <div className="absolute bottom-1 right-1 w-2.5 h-2.5 border-b border-r border-[#00ff4144] opacity-0 group-hover:opacity-100 transition-opacity" />
 
       {/* Match confidence badge */}
-      {matchConfidence !== undefined ? (
+      {!selectMode && matchConfidence !== undefined ? (
         <div
           className={`absolute right-1.5 top-1.5 px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider ${
             matchConfidence >= 70
@@ -637,6 +785,7 @@ function PhotoCard({
           {matchConfidence}%
         </div>
       ) : (
+        !selectMode &&
         photo.faceCount > 0 && (
           <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center bg-[#00ff41] text-[9px] font-mono font-bold text-black">
             {photo.faceCount}

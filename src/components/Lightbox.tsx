@@ -271,30 +271,8 @@ export default function Lightbox({
           {/* Actions */}
           <div className="flex gap-2 pt-4 mt-4 border-t border-[#00ff4115]">
             <a
-              href={photo.driveUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 border border-[#00ff41] bg-[#00ff4111] px-4 py-2 text-xs font-mono uppercase tracking-wider text-[#00ff41] hover:bg-[#00ff4122] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] transition-all"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
-              OPEN IN DRIVE
-            </a>
-            <a
               href={photo.downloadUrl}
-              className="inline-flex items-center gap-2 border border-[#00ff4133] px-4 py-2 text-xs font-mono uppercase tracking-wider text-[#00ff4199] hover:border-[#00ff41] hover:text-[#00ff41] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] transition-all"
+              className="inline-flex items-center gap-2 border border-[#00ff41] bg-[#00ff4111] px-4 py-2 text-xs font-mono uppercase tracking-wider text-[#00ff41] hover:bg-[#00ff4122] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] transition-all"
             >
               <svg
                 width="14"
