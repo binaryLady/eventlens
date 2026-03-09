@@ -23,22 +23,22 @@ export default class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4">
-          <div className="text-center">
-            <h2 className="font-heading text-2xl font-bold text-zinc-100">
-              Something went wrong
+        <div className="flex min-h-screen items-center justify-center bg-black px-4 grid-bg">
+          <div className="text-center border border-[#ff000033] bg-black p-8">
+            <h2 className="font-mono text-sm font-bold uppercase tracking-wider text-red-500">
+              &#9888; SYSTEM ERROR
             </h2>
-            <p className="mt-2 text-zinc-400">
-              There was an error loading the photos. Please try again.
+            <p className="mt-2 text-xs font-mono uppercase tracking-wider text-[#00ff4155]">
+              FAILED TO LOAD PHOTO INTERFACE — RETRY RECOMMENDED
             </p>
             <button
               onClick={() => {
                 this.setState({ hasError: false });
                 window.location.reload();
               }}
-              className="mt-4 rounded-lg bg-[var(--color-primary)] px-6 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+              className="mt-4 border border-[#00ff41] px-6 py-2 text-xs font-mono uppercase tracking-wider text-[#00ff41] hover:bg-[#00ff4111] transition-all"
             >
-              Retry
+              [REBOOT]
             </button>
           </div>
         </div>

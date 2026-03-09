@@ -63,7 +63,6 @@ export default function Lightbox({
     };
   }, [photo, onClose, goPrev, goNext]);
 
-  // Focus trap
   useEffect(() => {
     if (photo && closeRef.current) {
       closeRef.current.focus();
@@ -92,7 +91,7 @@ export default function Lightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -101,16 +100,23 @@ export default function Lightbox({
       aria-label="Photo viewer"
       ref={dialogRef}
     >
+      {/* Scan line overlay on lightbox */}
+      <div className="absolute inset-0 pointer-events-none z-[51] opacity-30">
+        <div className="w-full h-full" style={{
+          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,65,0.02) 2px, rgba(0,255,65,0.02) 4px)',
+        }} />
+      </div>
+
       {/* Close button */}
       <button
         ref={closeRef}
         onClick={onClose}
-        className="absolute top-4 right-4 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] transition-colors"
+        className="absolute top-4 right-4 z-[52] flex h-8 w-8 items-center justify-center border border-[#00ff4133] bg-black text-[#00ff4199] hover:border-[#00ff41] hover:text-[#00ff41] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] transition-all"
         aria-label="Close lightbox"
       >
         <svg
-          width="20"
-          height="20"
+          width="16"
+          height="16"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -127,12 +133,12 @@ export default function Lightbox({
       {photos.length > 1 && (
         <button
           onClick={goPrev}
-          className="absolute left-2 top-1/2 z-50 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] transition-colors md:left-4"
+          className="absolute left-2 top-1/2 z-[52] -translate-y-1/2 flex h-10 w-10 items-center justify-center border border-[#00ff4133] bg-black text-[#00ff4199] hover:border-[#00ff41] hover:text-[#00ff41] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] transition-all md:left-4"
           aria-label="Previous photo"
         >
           <svg
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -149,12 +155,12 @@ export default function Lightbox({
       {photos.length > 1 && (
         <button
           onClick={goNext}
-          className="absolute right-2 top-1/2 z-50 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] transition-colors md:right-4"
+          className="absolute right-2 top-1/2 z-[52] -translate-y-1/2 flex h-10 w-10 items-center justify-center border border-[#00ff4133] bg-black text-[#00ff4199] hover:border-[#00ff41] hover:text-[#00ff41] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] transition-all md:right-4"
           aria-label="Next photo"
         >
           <svg
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -167,6 +173,13 @@ export default function Lightbox({
         </button>
       )}
 
+      {/* Counter */}
+      {photos.length > 1 && (
+        <div className="absolute top-4 left-4 z-[52] text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
+          {currentIndex + 1} / {photos.length}
+        </div>
+      )}
+
       {/* Content */}
       <div
         className="flex max-h-full w-full max-w-5xl flex-col overflow-y-auto px-4 py-16 md:px-8"
@@ -177,14 +190,25 @@ export default function Lightbox({
         <div className="relative flex items-center justify-center">
           {!imageLoaded && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="h-10 w-10 animate-spin rounded-full border-4 border-zinc-600 border-t-[var(--color-primary)]" />
+              <div className="flex flex-col items-center gap-2">
+                <div className="relative w-8 h-8">
+                  <div className="absolute inset-0 border border-[#00ff41] animate-crosshair-spin" />
+                  <div className="absolute inset-2 bg-[#00ff41] animate-pulse" />
+                </div>
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
+                  LOADING
+                </span>
+              </div>
             </div>
           )}
           {fullImageUrl && (
             <img
               src={fullImageUrl}
               alt={photo.filename}
-              className="max-h-[70vh] w-auto max-w-full rounded-lg object-contain"
+              className="max-h-[70vh] w-auto max-w-full object-contain"
+              style={{
+                boxShadow: imageLoaded ? '0 0 30px rgba(0,255,65,0.1)' : 'none',
+              }}
               onLoad={() => setImageLoaded(true)}
               onError={() => setImageLoaded(true)}
             />
@@ -192,65 +216,69 @@ export default function Lightbox({
         </div>
 
         {/* Metadata panel */}
-        <div className="mt-4 space-y-3 rounded-xl bg-zinc-900 p-4 md:p-6">
+        <div className="mt-4 border border-[#00ff4122] bg-black p-4 md:p-6 relative">
+          {/* Corner brackets */}
+          <div className="absolute top-0 left-0 w-3 h-3 border-t border-l border-[#00ff4144] -translate-x-px -translate-y-px" />
+          <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-[#00ff4144] translate-x-px translate-y-px" />
+
           <div className="flex flex-wrap items-center gap-3">
-            <h3 className="font-heading text-lg font-bold text-zinc-100">
+            <h3 className="font-mono text-sm font-bold text-[#00ff41] uppercase tracking-wider">
               {photo.filename}
             </h3>
-            <span className="rounded-full bg-[var(--color-primary)]/20 px-3 py-0.5 text-xs font-medium text-[var(--color-primary)]">
+            <span className="border border-[#00ff4133] px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider text-[#00ff4199]">
               {photo.folder}
             </span>
             {photo.faceCount > 0 && (
-              <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-400">
-                {photo.faceCount} {photo.faceCount === 1 ? "face" : "faces"}
+              <span className="border border-[#00ff4122] px-2 py-0.5 text-[10px] font-mono text-[#00ff4166]">
+                {photo.faceCount} {photo.faceCount === 1 ? "FACE" : "FACES"}
               </span>
             )}
           </div>
 
           {photo.visibleText && (
-            <div>
-              <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-                Text found
+            <div className="mt-3">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4144]">
+                {"// TEXT DETECTED"}
               </span>
-              <p className="mt-1 rounded bg-zinc-800 px-3 py-2 font-mono text-sm text-zinc-300">
+              <p className="mt-1 border-l-2 border-[#00ff4133] pl-3 font-mono text-xs text-[#00ff4199]">
                 {photo.visibleText}
               </p>
             </div>
           )}
 
           {photo.peopleDescriptions && (
-            <div>
-              <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-                People
+            <div className="mt-3">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4144]">
+                {"// SUBJECTS"}
               </span>
-              <p className="mt-1 text-sm text-zinc-300">
+              <p className="mt-1 text-xs font-mono text-[#00ff4199]">
                 {photo.peopleDescriptions}
               </p>
             </div>
           )}
 
           {photo.sceneDescription && (
-            <div>
-              <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-                Scene
+            <div className="mt-3">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4144]">
+                {"// SCENE"}
               </span>
-              <p className="mt-1 text-sm text-zinc-300">
+              <p className="mt-1 text-xs font-mono text-[#00ff4199]">
                 {photo.sceneDescription}
               </p>
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-2 pt-4 mt-4 border-t border-[#00ff4115]">
             <a
               href={photo.driveUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 transition-opacity"
+              className="inline-flex items-center gap-2 border border-[#00ff41] bg-[#00ff4111] px-4 py-2 text-xs font-mono uppercase tracking-wider text-[#00ff41] hover:bg-[#00ff4122] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] transition-all"
             >
               <svg
-                width="16"
-                height="16"
+                width="14"
+                height="14"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -262,15 +290,15 @@ export default function Lightbox({
                 <polyline points="15 3 21 3 21 9" />
                 <line x1="10" y1="14" x2="21" y2="3" />
               </svg>
-              Open in Drive
+              OPEN IN DRIVE
             </a>
             <a
               href={photo.downloadUrl}
-              className="inline-flex items-center gap-2 rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 transition-colors"
+              className="inline-flex items-center gap-2 border border-[#00ff4133] px-4 py-2 text-xs font-mono uppercase tracking-wider text-[#00ff4199] hover:border-[#00ff41] hover:text-[#00ff41] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] transition-all"
             >
               <svg
-                width="16"
-                height="16"
+                width="14"
+                height="14"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -282,7 +310,7 @@ export default function Lightbox({
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-              Download
+              DOWNLOAD
             </a>
           </div>
         </div>

@@ -24,11 +24,11 @@ function timeAgo(dateStr: string): string {
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
   if (seconds < 60) return "just now";
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
-  return `${days} day${days === 1 ? "" : "s"} ago`;
+  return `${days}d ago`;
 }
 
 function isRecentlyUpdated(dateStr: string): boolean {
@@ -36,6 +36,123 @@ function isRecentlyUpdated(dateStr: string): boolean {
   const date = new Date(dateStr);
   const now = new Date();
   return now.getTime() - date.getTime() < 5 * 60 * 1000;
+}
+
+/* ═══════════════════════════════════════════
+   TERMINAL BOOT LOADING ANIMATION
+   ═══════════════════════════════════════════ */
+function TerminalLoader() {
+  const [lines, setLines] = useState<string[]>([]);
+  const [showCursor, setShowCursor] = useState(true);
+
+  const bootSequence = useMemo(
+    () => [
+      "> INITIALIZING EVENTLENS v2.0 ...",
+      "> CONNECTING TO PHOTO DATABASE ...",
+      "> LOADING DRIVE ASSETS ...",
+      "> INDEXING VISUAL DATA ...",
+      "> ACTIVATING FACE RECOGNITION MODULE ...",
+      "> RENDERING GRID INTERFACE ...",
+    ],
+    [],
+  );
+
+  useEffect(() => {
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i < bootSequence.length) {
+        setLines((prev) => [...prev, bootSequence[i]]);
+        i++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 350);
+    return () => clearInterval(interval);
+  }, [bootSequence]);
+
+  useEffect(() => {
+    const blink = setInterval(() => setShowCursor((c) => !c), 530);
+    return () => clearInterval(blink);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-black grid-bg flex items-center justify-center p-4">
+      <div className="w-full max-w-lg">
+        {/* Terminal window */}
+        <div className="border border-[#00ff4133] bg-black/80 p-6">
+          {/* Terminal header bar */}
+          <div className="flex items-center gap-2 border-b border-[#00ff4122] pb-3 mb-4">
+            <div className="h-2 w-2 rounded-full bg-[#00ff41]" />
+            <div className="h-2 w-2 rounded-full bg-[#00ff4166]" />
+            <div className="h-2 w-2 rounded-full bg-[#00ff4133]" />
+            <span className="ml-2 text-[10px] uppercase tracking-widest text-[#00ff4166]">
+              eventlens://boot
+            </span>
+          </div>
+
+          {/* Boot text */}
+          <div className="font-mono text-sm space-y-1">
+            {lines.map((line, i) => (
+              <div
+                key={i}
+                className="animate-boot-line text-[#00ff41] opacity-0"
+                style={{ animationDelay: `${i * 0.1}s` }}
+              >
+                {line}
+                {i < 2 && (
+                  <span className="ml-2 text-[#00ff4166]">[OK]</span>
+                )}
+              </div>
+            ))}
+            {showCursor && (
+              <span className="inline-block w-2 h-4 bg-[#00ff41] ml-1" />
+            )}
+          </div>
+
+          {/* Scan line effect */}
+          <div className="mt-6 h-1 w-full overflow-hidden bg-[#00ff4111]">
+            <div className="h-full w-1/3 bg-gradient-to-r from-transparent via-[#00ff41] to-transparent animate-[skeleton-scan_1.5s_linear_infinite]" />
+          </div>
+        </div>
+
+        {/* Crosshair decoration */}
+        <div className="mt-4 flex items-center justify-center gap-2 text-[10px] text-[#00ff4144] uppercase tracking-widest">
+          <span>&#x2500;&#x2500;&#x253c;&#x2500;&#x2500;</span>
+          <span>LOADING</span>
+          <span>&#x2500;&#x2500;&#x253c;&#x2500;&#x2500;</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   GRID SKELETON LOADER (terminal-styled)
+   ═══════════════════════════════════════════ */
+function GridSkeleton() {
+  return (
+    <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+      {Array.from({ length: 12 }).map((_, i) => (
+        <div
+          key={i}
+          className="aspect-[4/3] border border-[#00ff4115] skeleton-terminal"
+          style={{ animationDelay: `${i * 0.15}s` }}
+        >
+          {/* Corner brackets */}
+          <div className="relative h-full w-full p-2">
+            <div className="absolute top-1 left-1 w-3 h-3 border-t border-l border-[#00ff4133]" />
+            <div className="absolute top-1 right-1 w-3 h-3 border-t border-r border-[#00ff4133]" />
+            <div className="absolute bottom-1 left-1 w-3 h-3 border-b border-l border-[#00ff4133]" />
+            <div className="absolute bottom-1 right-1 w-3 h-3 border-b border-r border-[#00ff4133]" />
+            {/* Center crosshair */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-[#00ff4122] text-lg">+</span>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function PhotoGrid() {
@@ -79,7 +196,6 @@ function PhotoGrid() {
     fetchData().then((data) => {
       if (data) {
         setAllPhotos(data.photos);
-        // Shuffle for random grid on each page load
         const shuffled = [...data.photos];
         for (let i = shuffled.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -103,7 +219,7 @@ function PhotoGrid() {
         const diff = data.photos.length - allPhotos.length;
         pendingPhotosRef.current = data.photos;
         setToast({
-          message: `${diff} new photo${diff === 1 ? "" : "s"} found`,
+          message: `${diff} new photo${diff === 1 ? "" : "s"} detected`,
           count: diff,
         });
         setLastUpdated(data.lastUpdated);
@@ -140,7 +256,6 @@ function PhotoGrid() {
     (data: { matches: MatchResult[]; description: string }) => {
       setMatchResults(data.matches);
       setMatchDescription(data.description);
-      // Clear text search when using face match
       setSearchInput("");
       setDebouncedQuery("");
       setActiveFolder("");
@@ -154,26 +269,21 @@ function PhotoGrid() {
   }, []);
 
   const filteredPhotos = useMemo(() => {
-    // Face match results — ranked by confidence
     if (matchResults !== null) {
       return matchResults.map((m) => m.photo);
     }
-    // Text search — ranked by relevance
     if (debouncedQuery) {
       const base = activeFolder
         ? allPhotos.filter((p) => p.folder === activeFolder)
         : allPhotos;
       return searchPhotos(debouncedQuery, base);
     }
-    // Folder filter on shuffled grid
     if (activeFolder) {
       return shuffledPhotos.filter((p) => p.folder === activeFolder);
     }
-    // Default: random shuffled grid
     return shuffledPhotos;
   }, [allPhotos, shuffledPhotos, activeFolder, debouncedQuery, matchResults]);
 
-  // Map of photo id -> match confidence for badge display
   const matchConfidenceMap = useMemo(() => {
     if (!matchResults) return null;
     const map = new Map<string, number>();
@@ -201,93 +311,101 @@ function PhotoGrid() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-black grid-bg">
       {/* Header */}
-      <header className="px-4 pt-10 pb-6 text-center md:pt-16 md:pb-8">
-        <div className="mx-auto max-w-2xl">
-          <div className="flex items-center justify-center gap-3">
-            <h1 className="font-heading text-4xl font-bold tracking-tight text-zinc-100 md:text-5xl lg:text-6xl">
-              {config.eventName}
-            </h1>
-            {isRecentlyUpdated(lastUpdated) && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                Photos updating live
+      <header className="px-4 pt-8 pb-6 md:pt-12 md:pb-8">
+        <div className="mx-auto max-w-5xl">
+          {/* Top bar with coordinates */}
+          <div className="flex items-center justify-between mb-4 text-[10px] text-[#00ff4144] uppercase tracking-widest font-mono">
+            <span>SYS://PHOTO_RECON</span>
+            <span>{allPhotos.length > 0 ? `${allPhotos.length} ASSETS INDEXED` : "STANDBY"}</span>
+          </div>
+
+          {/* Title block */}
+          <div className="border border-[#00ff4122] p-6 md:p-8 relative">
+            {/* Corner brackets */}
+            <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#00ff41] -translate-x-px -translate-y-px" />
+            <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#00ff41] translate-x-px -translate-y-px" />
+            <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#00ff41] -translate-x-px translate-y-px" />
+            <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#00ff41] translate-x-px translate-y-px" />
+
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-3">
+                <h1 className="font-heading text-4xl font-bold tracking-wider text-[#00ff41] uppercase glow-text md:text-5xl lg:text-6xl animate-flicker">
+                  {config.eventName}
+                </h1>
+                {isRecentlyUpdated(lastUpdated) && (
+                  <span className="inline-flex items-center gap-1.5 border border-[#00ff4144] px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider text-[#00ff41]">
+                    <span className="h-1.5 w-1.5 bg-[#00ff41] animate-pulse" />
+                    LIVE
+                  </span>
+                )}
+              </div>
+              <p className="mt-2 text-xs uppercase tracking-[0.3em] text-[#00ff4166] font-mono">
+                {config.eventTagline}
+              </p>
+            </div>
+
+            {/* Search */}
+            <div className="relative mt-6 max-w-xl mx-auto">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#00ff4166] text-sm font-mono">
+                {">_"}
               </span>
-            )}
-          </div>
-          <p className="mt-2 text-lg text-zinc-400">{config.eventTagline}</p>
-
-          {/* Search */}
-          <div className="relative mt-6">
-            <svg
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search by text on banners, clothing, or describe a scene..."
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-900 py-3.5 pl-12 pr-10 text-zinc-100 placeholder-zinc-500 outline-none transition-colors focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20"
-              aria-label="Search photos"
-              autoFocus
-            />
-            {searchInput && (
-              <button
-                onClick={() => setSearchInput("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-zinc-500 hover:text-zinc-300 transition-colors"
-                aria-label="Clear search"
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="SEARCH VISUAL DATA..."
+                className="w-full border border-[#00ff4133] bg-black/60 py-3 pl-10 pr-10 text-sm text-[#00ff41] font-mono placeholder-[#00ff4133] outline-none transition-all focus:border-[#00ff41] focus:shadow-[0_0_15px_rgba(0,255,65,0.15)]"
+                aria-label="Search photos"
+                autoFocus
+              />
+              {searchInput && (
+                <button
+                  onClick={() => setSearchInput("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#00ff4166] hover:text-[#00ff41] transition-colors"
+                  aria-label="Clear search"
                 >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            )}
-          </div>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              )}
+            </div>
 
-          {/* Photo upload for face matching */}
-          <PhotoUpload
-            onMatchResults={handleMatchResults}
-            onClear={handleClearMatch}
-            isActive={matchResults !== null}
-          />
+            {/* Photo upload for face matching */}
+            <PhotoUpload
+              onMatchResults={handleMatchResults}
+              onClear={handleClearMatch}
+              isActive={matchResults !== null}
+            />
+          </div>
         </div>
       </header>
 
       {/* Filter bar */}
       {folders.length > 0 && (
-        <div className="scrollbar-hide mx-auto max-w-6xl overflow-x-auto px-4 pb-4">
-          <div className="flex gap-2">
+        <div className="scrollbar-hide mx-auto max-w-5xl overflow-x-auto px-4 pb-4">
+          <div className="flex gap-1.5">
             <button
               onClick={() => setActiveFolder("")}
-              className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              className={`shrink-0 px-3 py-1 text-xs font-mono uppercase tracking-wider transition-all ${
                 activeFolder === ""
-                  ? "bg-[var(--color-primary)] text-white"
-                  : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200"
+                  ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
+                  : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
               }`}
             >
-              All Photos ({allPhotos.length})
+              ALL [{allPhotos.length}]
             </button>
             {folders.map((folder) => (
               <button
@@ -295,13 +413,13 @@ function PhotoGrid() {
                 onClick={() =>
                   setActiveFolder(activeFolder === folder ? "" : folder)
                 }
-                className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                className={`shrink-0 px-3 py-1 text-xs font-mono uppercase tracking-wider transition-all ${
                   activeFolder === folder
-                    ? "bg-[var(--color-primary)] text-white"
-                    : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200"
+                    ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
+                    : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
                 }`}
               >
-                {folder} ({folderCounts[folder] || 0})
+                {folder} [{folderCounts[folder] || 0}]
               </button>
             ))}
           </div>
@@ -309,29 +427,26 @@ function PhotoGrid() {
       )}
 
       {/* Results info */}
-      <div className="mx-auto max-w-6xl px-4 pb-4">
+      <div className="mx-auto max-w-5xl px-4 pb-3">
         {!loading && !error && (
-          <p className="text-sm text-zinc-500">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
             {matchResults !== null ? (
               <>
-                {matchResults.length} face match
-                {matchResults.length !== 1 ? "es" : ""} found
+                {matchResults.length} MATCH{matchResults.length !== 1 ? "ES" : ""} FOUND
                 {matchDescription && (
-                  <span className="text-zinc-600">
-                    {" "}
-                    &mdash; {matchDescription}
+                  <span className="text-[#00ff4133]">
+                    {" // "}
+                    {matchDescription}
                   </span>
                 )}
               </>
             ) : debouncedQuery ? (
               <>
-                {filteredPhotos.length} result
-                {filteredPhotos.length !== 1 ? "s" : ""} for &ldquo;
-                {debouncedQuery}&rdquo;
+                {filteredPhotos.length} RESULT{filteredPhotos.length !== 1 ? "S" : ""} FOR &quot;{debouncedQuery.toUpperCase()}&quot;
               </>
             ) : (
               <>
-                Showing {filteredPhotos.length} of {allPhotos.length} photos
+                {filteredPhotos.length} / {allPhotos.length} ASSETS
               </>
             )}
           </p>
@@ -339,25 +454,15 @@ function PhotoGrid() {
       </div>
 
       {/* Main content */}
-      <main className="mx-auto max-w-6xl px-4 pb-12">
-        {/* Loading state */}
-        {loading && (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div
-                key={i}
-                className="aspect-[4/3] animate-pulse rounded-xl bg-zinc-800"
-              />
-            ))}
-          </div>
-        )}
+      <main className="mx-auto max-w-5xl px-4 pb-12">
+        {/* Loading state — terminal boot animation for grid */}
+        {loading && <GridSkeleton />}
 
         {/* Error state */}
         {error && (
-          <div className="flex flex-col items-center py-20 text-center">
-            <p className="text-zinc-400">
-              Couldn&apos;t load photos. Check that the Google Sheet is shared
-              publicly.
+          <div className="flex flex-col items-center py-20 text-center border border-[#ff000033] bg-[#ff000008] p-8">
+            <p className="text-xs font-mono uppercase tracking-wider text-red-500">
+              &#9888; CONNECTION ERROR — VERIFY GOOGLE SHEET ACCESS
             </p>
             <button
               onClick={() => {
@@ -374,33 +479,19 @@ function PhotoGrid() {
                   }
                 });
               }}
-              className="mt-4 rounded-lg bg-[var(--color-primary)] px-6 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+              className="mt-4 border border-[#00ff41] px-6 py-2 text-xs font-mono uppercase tracking-wider text-[#00ff41] hover:bg-[#00ff4111] transition-all"
             >
-              Retry
+              [RETRY CONNECTION]
             </button>
           </div>
         )}
 
         {/* Empty: no photos yet */}
         {!loading && !error && allPhotos.length === 0 && (
-          <div className="flex flex-col items-center py-20 text-center">
-            <svg
-              className="mb-4 text-zinc-700"
-              width="48"
-              height="48"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-              <circle cx="8.5" cy="8.5" r="1.5" />
-              <polyline points="21 15 16 10 5 21" />
-            </svg>
-            <p className="text-zinc-400">
-              No photos found. Upload a photo above to find your matches.
+          <div className="flex flex-col items-center py-20 text-center border border-[#00ff4122] p-8">
+            <div className="text-4xl text-[#00ff4133] mb-4">+</div>
+            <p className="text-xs font-mono uppercase tracking-wider text-[#00ff4155]">
+              {"NO ASSETS DETECTED // UPLOAD PHOTO TO BEGIN FACIAL SCAN"}
             </p>
           </div>
         )}
@@ -409,11 +500,11 @@ function PhotoGrid() {
         {!loading &&
           !error &&
           allPhotos.length > 0 &&
-          filteredPhotos.length === 0 && (
-            <div className="flex flex-col items-center py-20 text-center">
-              <p className="text-zinc-400">
-                No photos match &ldquo;{debouncedQuery}&rdquo;. Try searching
-                for text you saw on signs or banners.
+          filteredPhotos.length === 0 &&
+          matchResults === null && (
+            <div className="flex flex-col items-center py-20 text-center border border-[#00ff4122] p-8">
+              <p className="text-xs font-mono uppercase tracking-wider text-[#00ff4155]">
+                NO MATCHES FOR &quot;{debouncedQuery.toUpperCase()}&quot; {"//"} TRY ALTERNATE QUERY
               </p>
             </div>
           )}
@@ -423,37 +514,24 @@ function PhotoGrid() {
           !error &&
           matchResults !== null &&
           matchResults.length === 0 && (
-            <div className="flex flex-col items-center py-20 text-center">
-              <svg
-                className="mb-4 text-zinc-700"
-                width="48"
-                height="48"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-              <p className="text-zinc-400">
-                No matching faces found. Try uploading a clearer photo with good
-                lighting.
+            <div className="flex flex-col items-center py-20 text-center border border-[#00ff4122] p-8">
+              <div className="text-4xl text-[#00ff4133] mb-4 animate-crosshair-spin">&#x2295;</div>
+              <p className="text-xs font-mono uppercase tracking-wider text-[#00ff4155]">
+                {"NO FACIAL MATCH DETECTED // TRY HIGHER RESOLUTION INPUT"}
               </p>
             </div>
           )}
 
         {/* Photo grid */}
         {!loading && !error && filteredPhotos.length > 0 && (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-            {filteredPhotos.map((photo) => (
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+            {filteredPhotos.map((photo, index) => (
               <PhotoCard
                 key={photo.id}
                 photo={photo}
                 onClick={() => setSelectedPhoto(photo)}
                 matchConfidence={matchConfidenceMap?.get(photo.id)}
+                index={index}
               />
             ))}
           </div>
@@ -462,17 +540,18 @@ function PhotoGrid() {
 
       {/* Footer */}
       {!loading && !error && allPhotos.length > 0 && (
-        <footer className="border-t border-zinc-800/50 px-4 py-8 text-center">
-          <p className="text-sm text-zinc-500">
-            Showing {allPhotos.length} photos from {folders.length} folder
-            {folders.length !== 1 ? "s" : ""}
+        <footer className="border-t border-[#00ff4115] px-4 py-6 text-center">
+          <div className="flex items-center justify-center gap-4 text-[10px] font-mono uppercase tracking-widest text-[#00ff4133]">
+            <span>&#x2500;&#x2500;&#x253c;&#x2500;&#x2500;</span>
+            <span>
+              {allPhotos.length} PHOTOS {"//"} {folders.length} FOLDER{folders.length !== 1 ? "S" : ""}
+              {lastUpdated && <> {"//"} UPDATED {timeAgo(lastUpdated).toUpperCase()}</>}
+            </span>
+            <span>&#x2500;&#x2500;&#x253c;&#x2500;&#x2500;</span>
+          </div>
+          <p className="mt-2 text-[10px] font-mono tracking-wider text-[#00ff4122]">
+            POWERED BY EVENTLENS
           </p>
-          {lastUpdated && (
-            <p className="mt-1 text-xs text-zinc-600">
-              Last updated: {timeAgo(lastUpdated)}
-            </p>
-          )}
-          <p className="mt-3 text-xs text-zinc-700">Powered by EventLens</p>
         </footer>
       )}
 
@@ -488,7 +567,7 @@ function PhotoGrid() {
       {toast && (
         <Toast
           message={toast.message}
-          action={{ label: "Refresh", onClick: handleRefresh }}
+          action={{ label: "SYNC", onClick: handleRefresh }}
           onDismiss={() => setToast(null)}
         />
       )}
@@ -500,74 +579,66 @@ function PhotoCard({
   photo,
   onClick,
   matchConfidence,
+  index,
 }: {
   photo: PhotoRecord;
   onClick: () => void;
   matchConfidence?: number;
+  index: number;
 }) {
   const [imgError, setImgError] = useState(false);
 
   return (
     <button
       onClick={onClick}
-      className={`group relative aspect-[4/3] overflow-hidden rounded-xl border bg-zinc-900 cursor-pointer transition-all duration-200 motion-safe:hover:scale-[1.02] hover:ring-2 hover:ring-[var(--color-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] ${
+      className={`group relative aspect-[4/3] overflow-hidden border bg-black cursor-pointer transition-all duration-200 motion-safe:hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(0,255,65,0.15)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] animate-grid-reveal ${
         matchConfidence !== undefined && matchConfidence >= 70
-          ? "border-emerald-500/50 ring-1 ring-emerald-500/20"
-          : "border-zinc-800"
+          ? "border-[#00ff41] shadow-[0_0_12px_rgba(0,255,65,0.2)]"
+          : "border-[#00ff4122] hover:border-[#00ff4166]"
       }`}
+      style={{ animationDelay: `${index * 0.03}s` }}
     >
       {imgError || !photo.thumbnailUrl ? (
-        <div className="flex h-full w-full items-center justify-center bg-zinc-800">
-          <svg
-            className="text-zinc-600"
-            width="32"
-            height="32"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-            <circle cx="8.5" cy="8.5" r="1.5" />
-            <polyline points="21 15 16 10 5 21" />
-          </svg>
+        <div className="flex h-full w-full items-center justify-center bg-[#0a0a0a]">
+          <span className="text-[#00ff4122] text-2xl">+</span>
         </div>
       ) : (
         <img
           src={photo.thumbnailUrl}
           alt={photo.filename}
           loading="lazy"
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
           onError={() => setImgError(true)}
         />
       )}
 
       {/* Bottom overlay */}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-2.5 pb-2.5 pt-8">
-        <span className="inline-block rounded-full bg-zinc-800/80 px-2 py-0.5 text-[10px] font-medium text-zinc-300">
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent px-2 pb-2 pt-6">
+        <span className="inline-block border border-[#00ff4133] bg-black/80 px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-[#00ff4199]">
           {photo.folder}
         </span>
       </div>
 
-      {/* Match confidence badge (when face matching is active) */}
+      {/* Top-left corner bracket */}
+      <div className="absolute top-1 left-1 w-2.5 h-2.5 border-t border-l border-[#00ff4144] opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute bottom-1 right-1 w-2.5 h-2.5 border-b border-r border-[#00ff4144] opacity-0 group-hover:opacity-100 transition-opacity" />
+
+      {/* Match confidence badge */}
       {matchConfidence !== undefined ? (
         <div
-          className={`absolute right-2 top-2 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+          className={`absolute right-1.5 top-1.5 px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider ${
             matchConfidence >= 70
-              ? "bg-emerald-500 text-white"
+              ? "bg-[#00ff41] text-black"
               : matchConfidence >= 50
-                ? "bg-amber-500 text-zinc-900"
-                : "bg-zinc-600 text-zinc-200"
+                ? "bg-[#00ff4188] text-black"
+                : "border border-[#00ff4144] bg-black/80 text-[#00ff4166]"
           }`}
         >
           {matchConfidence}%
         </div>
       ) : (
-        /* Face count badge (normal mode) */
         photo.faceCount > 0 && (
-          <div className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-accent)] text-[10px] font-bold text-zinc-900">
+          <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center bg-[#00ff41] text-[9px] font-mono font-bold text-black">
             {photo.faceCount}
           </div>
         )
@@ -579,13 +650,7 @@ function PhotoCard({
 export default function Home() {
   return (
     <ErrorBoundary>
-      <Suspense
-        fallback={
-          <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-zinc-600 border-t-[var(--color-primary)]" />
-          </div>
-        }
-      >
+      <Suspense fallback={<TerminalLoader />}>
         <PhotoGrid />
       </Suspense>
     </ErrorBoundary>

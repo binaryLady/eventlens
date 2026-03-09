@@ -8,10 +8,11 @@ export interface EventLensConfig {
 }
 
 export const config: EventLensConfig = {
-  eventName: process.env.NEXT_PUBLIC_EVENT_NAME || "Event Photos",
-  eventTagline: process.env.NEXT_PUBLIC_EVENT_TAGLINE || "Find your photos",
-  primaryColor: process.env.NEXT_PUBLIC_PRIMARY_COLOR || "#3b82f6",
-  accentColor: process.env.NEXT_PUBLIC_ACCENT_COLOR || "#f59e0b",
+  eventName: process.env.NEXT_PUBLIC_EVENT_NAME || "HARD MODE",
+  eventTagline:
+    process.env.NEXT_PUBLIC_EVENT_TAGLINE || "PHOTO RECONNAISSANCE SYSTEM",
+  primaryColor: process.env.NEXT_PUBLIC_PRIMARY_COLOR || "#00ff41",
+  accentColor: process.env.NEXT_PUBLIC_ACCENT_COLOR || "#00ff41",
   sheetId: process.env.GOOGLE_SHEET_ID || "",
   geminiApiKey: process.env.GEMINI_API_KEY || "",
 };
