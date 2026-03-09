@@ -28,4 +28,5 @@ export interface MatchResult {
 export interface MatchResponse {
   matches: MatchResult[];
   description: string; // AI-generated description of the uploaded person
+  tier: "text" | "visual" | "both";
 }

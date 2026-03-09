@@ -8,11 +8,11 @@ export const maxDuration = 60; // Allow up to 60s for face matching
 
 /**
  * POST /api/match
- * Accepts an uploaded photo and finds matching people across all event photos
- * in Google Drive by visual face comparison via Gemini.
+ * Accepts an uploaded photo and finds matching people across all event photos.
+ * Uses a two-tier strategy: fast text match first, expensive visual AI fallback only if needed.
  *
  * Body: { image: string (base64), mimeType: string }
- * Returns: { matches: MatchResult[], description: string }
+ * Returns: { matches: MatchResult[], description: string, tier: "text" | "visual" | "both" }
  */
 export async function POST(request: NextRequest) {
   try {
@@ -26,69 +26,72 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Phase 1: Describe the person in the uploaded photo
+    // Describe the person in the uploaded selfie (one Gemini call — shared by both tiers)
     const description = await describePersonForMatching(image, mimeType);
 
     if (description.includes("NO_PERSON_DETECTED")) {
       return NextResponse.json({
         matches: [],
         description: "",
+        tier: "text",
         error:
           "No person detected in the uploaded photo. Please upload a clear photo of a person.",
       });
     }
 
-    // Fetch all event photos from the Sheet
     const allPhotos = await fetchPhotos();
 
     if (allPhotos.length === 0) {
       return NextResponse.json({
         matches: [],
         description,
+        tier: "text",
         error: "No event photos available yet.",
       });
     }
 
-    // Phase 2: Text pre-filter to rank candidates (cheap, instant)
-    const descTerms = description
-      .toLowerCase()
-      .split(/[,\s]+/)
-      .filter((t) => t.length > 2);
+    // ── TIER 1: Text match (instant, free) ──────────────────────────────
+    const attributeTerms = parseAttributeTerms(description);
+    const textMatches = scoreByText(allPhotos, attributeTerms);
 
-    const textScored = scoreByDescription(allPhotos, descTerms);
-
-    // Build candidate list: text-matched first, then remaining photos with images
-    const candidateIds = new Set<string>();
-    const candidates: PhotoRecord[] = [];
-
-    // Add text-matched photos first (best candidates)
-    for (const item of textScored) {
-      if (item.photo.driveFileId) {
-        candidateIds.add(item.photo.id);
-        candidates.push(item.photo);
-      }
+    if (textMatches.length >= 3) {
+      // Tier 1 produced enough results — return immediately
+      return NextResponse.json({
+        matches: textMatches,
+        description,
+        tier: "text",
+      });
     }
 
-    // Then add remaining photos that have Drive file IDs
-    for (const photo of allPhotos) {
-      if (!candidateIds.has(photo.id) && photo.driveFileId) {
-        candidates.push(photo);
-      }
-    }
-
-    // Cap at 50 to keep Gemini costs and latency reasonable
-    const capped = candidates.slice(0, 50);
-
-    // Phase 3: Visual face matching — fetch images via Drive API, send to Gemini
+    // ── TIER 2: Visual AI match (expensive fallback) ────────────────────
     if (!config.googleApiKey) {
-      return NextResponse.json(
-        { error: "Missing GOOGLE_API_KEY — required for face matching" },
-        { status: 500 },
-      );
+      // Can't run Tier 2 without API key — return whatever Tier 1 found
+      return NextResponse.json({
+        matches: textMatches,
+        description,
+        tier: "text",
+        error: textMatches.length === 0
+          ? "Missing GOOGLE_API_KEY — required for visual face matching"
+          : undefined,
+      });
     }
-    const matches = await visuallyVerifyCandidates(image, mimeType, capped, config.googleApiKey);
 
-    return NextResponse.json({ matches, description });
+    const visualMatches = await runVisualMatching(
+      image,
+      mimeType,
+      allPhotos,
+      config.googleApiKey,
+    );
+
+    // Merge Tier 1 + Tier 2, deduplicate by photo id
+    const merged = mergeResults(textMatches, visualMatches);
+    const tier = textMatches.length > 0 && visualMatches.length > 0
+      ? "both"
+      : visualMatches.length > 0
+        ? "visual"
+        : "text";
+
+    return NextResponse.json({ matches: merged, description, tier });
   } catch (error) {
     console.error("Match error:", error);
     return NextResponse.json(
@@ -103,71 +106,98 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function scoreByDescription(
+// ── Tier 1 helpers ────────────────────────────────────────────────────────
+
+/**
+ * Parse a comma-separated description into cleaned attribute terms.
+ * "short brown hair, glasses, blue polo shirt" → ["short brown hair", "glasses", "blue polo shirt"]
+ */
+function parseAttributeTerms(description: string): string[] {
+  return description
+    .split(/[,;\n]+/)
+    .map((t) => t.trim().toLowerCase())
+    .filter((t) => t.length > 1);
+}
+
+/**
+ * Score every photo against the attribute terms from the selfie description.
+ * Score = matching terms / total terms * 100, with a 1.2x bonus for photos with faces.
+ * Returns photos with score >= 30, sorted by confidence descending.
+ */
+function scoreByText(
   photos: PhotoRecord[],
-  descTerms: string[],
-): Array<{ photo: PhotoRecord; score: number }> {
-  const scored = photos
-    .map((photo) => {
-      const text = [
-        photo.peopleDescriptions,
-        photo.sceneDescription,
-        photo.visibleText,
-      ]
-        .join(" ")
-        .toLowerCase();
+  terms: string[],
+): MatchResult[] {
+  if (terms.length === 0) return [];
 
-      let score = 0;
-      for (const term of descTerms) {
-        if (text.includes(term)) score += 1;
+  const results: MatchResult[] = [];
+
+  for (const photo of photos) {
+    const haystack = (photo.peopleDescriptions || "").toLowerCase();
+    if (!haystack) continue;
+
+    let matchCount = 0;
+    const matched: string[] = [];
+    for (const term of terms) {
+      if (haystack.includes(term)) {
+        matchCount++;
+        matched.push(term);
       }
-      if (photo.faceCount > 0) score += 1;
+    }
 
-      return { photo, score };
-    })
-    .filter((item) => item.score > 0);
+    if (matchCount === 0) continue;
 
-  scored.sort((a, b) => b.score - a.score);
-  return scored;
-}
+    let score = (matchCount / terms.length) * 100;
+    if (photo.faceCount > 0) {
+      score *= 1.2;
+    }
+    score = Math.min(score, 100);
 
-async function fetchDriveImage(
-  fileId: string,
-  apiKey: string,
-): Promise<{ base64: string; mimeType: string } | null> {
-  try {
-    // Use Google Drive API v3 — works server-side for public files with API key
-    const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-
-    const contentType = res.headers.get("content-type") || "";
-    if (!contentType.startsWith("image/")) return null;
-
-    const buffer = await res.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString("base64");
-    return { base64, mimeType: contentType };
-  } catch {
-    return null;
+    if (score >= 30) {
+      results.push({
+        photo,
+        confidence: Math.round(score),
+        reason: `Text match: ${matched.join(", ")}`,
+      });
+    }
   }
+
+  results.sort((a, b) => b.confidence - a.confidence);
+  return results;
 }
 
-async function visuallyVerifyCandidates(
+// ── Tier 2 helpers ────────────────────────────────────────────────────────
+
+const VISUAL_BATCH_SIZE = 5;
+const MAX_VISUAL_CANDIDATES = 30; // 6 batches max
+
+/**
+ * Run visual face matching against photos with detected faces.
+ * Processes in batches of 5, exits early if 3+ high-confidence matches found.
+ */
+async function runVisualMatching(
   uploadedImageBase64: string,
   uploadedMimeType: string,
-  candidates: PhotoRecord[],
+  allPhotos: PhotoRecord[],
   apiKey: string,
 ): Promise<MatchResult[]> {
-  const BATCH_SIZE = 10;
+  // Build candidate set: only photos with faces, sorted by faceCount descending
+  const candidates = allPhotos
+    .filter((p) => p.faceCount > 0 && p.driveFileId)
+    .sort((a, b) => b.faceCount - a.faceCount)
+    .slice(0, MAX_VISUAL_CANDIDATES);
+
+  if (candidates.length === 0) return [];
+
   const allMatches: MatchResult[] = [];
 
-  for (let i = 0; i < candidates.length; i += BATCH_SIZE) {
-    const batch = candidates.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < candidates.length; i += VISUAL_BATCH_SIZE) {
+    const batch = candidates.slice(i, i + VISUAL_BATCH_SIZE);
 
-    // Fetch images from Google Drive API in parallel
+    // Fetch thumbnails at w300 (small — sufficient for face matching)
     const images = await Promise.all(
       batch.map(async (photo) => {
-        const result = await fetchDriveImage(photo.driveFileId, apiKey);
+        const result = await fetchDriveThumbnail(photo.driveFileId, apiKey);
         if (!result) return null;
         return { id: photo.id, imageBase64: result.base64, mimeType: result.mimeType };
       }),
@@ -196,8 +226,92 @@ async function visuallyVerifyCandidates(
         });
       }
     }
+
+    // Early exit: if we have 3+ matches with confidence >= 50, stop processing
+    const highConfidence = allMatches.filter((m) => m.confidence >= 50);
+    if (highConfidence.length >= 3) break;
   }
 
   allMatches.sort((a, b) => b.confidence - a.confidence);
   return allMatches;
+}
+
+/**
+ * Fetch a Drive image at reduced size (w300) for face matching.
+ */
+async function fetchDriveThumbnail(
+  fileId: string,
+  apiKey: string,
+): Promise<{ base64: string; mimeType: string } | null> {
+  try {
+    // Use thumbnail link with w300 for smaller downloads
+    const url = `https://lh3.googleusercontent.com/d/${fileId}=w300`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      // Fall back to full Drive API if thumbnail endpoint fails
+      return fetchDriveImageFull(fileId, apiKey);
+    }
+
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.startsWith("image/")) {
+      return fetchDriveImageFull(fileId, apiKey);
+    }
+
+    const buffer = await res.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString("base64");
+    return { base64, mimeType: contentType };
+  } catch {
+    return fetchDriveImageFull(fileId, apiKey);
+  }
+}
+
+/**
+ * Full-size Drive API fallback for when thumbnail endpoint is unavailable.
+ */
+async function fetchDriveImageFull(
+  fileId: string,
+  apiKey: string,
+): Promise<{ base64: string; mimeType: string } | null> {
+  try {
+    const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.startsWith("image/")) return null;
+
+    const buffer = await res.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString("base64");
+    return { base64, mimeType: contentType };
+  } catch {
+    return null;
+  }
+}
+
+// ── Merge / dedup ─────────────────────────────────────────────────────────
+
+/**
+ * Merge Tier 1 and Tier 2 results, deduplicating by photo id.
+ * When both tiers found the same photo, keep the higher confidence.
+ */
+function mergeResults(
+  textMatches: MatchResult[],
+  visualMatches: MatchResult[],
+): MatchResult[] {
+  const byId = new Map<string, MatchResult>();
+
+  for (const m of textMatches) {
+    byId.set(m.photo.id, m);
+  }
+
+  for (const m of visualMatches) {
+    const existing = byId.get(m.photo.id);
+    if (!existing || m.confidence > existing.confidence) {
+      byId.set(m.photo.id, m);
+    }
+  }
+
+  const merged = Array.from(byId.values());
+  merged.sort((a, b) => b.confidence - a.confidence);
+  return merged;
 }
