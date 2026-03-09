@@ -177,6 +177,7 @@ function PhotoGrid() {
   );
   const [matchResults, setMatchResults] = useState<MatchResult[] | null>(null);
   const [matchDescription, setMatchDescription] = useState("");
+  const [matchTier, setMatchTier] = useState<"text" | "visual" | "both">("text");
   const [shuffledPhotos, setShuffledPhotos] = useState<PhotoRecord[]>([]);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -257,9 +258,10 @@ function PhotoGrid() {
   const folders = useMemo(() => getFolders(allPhotos), [allPhotos]);
 
   const handleMatchResults = useCallback(
-    (data: { matches: MatchResult[]; description: string }) => {
+    (data: { matches: MatchResult[]; description: string; tier?: "text" | "visual" | "both" }) => {
       setMatchResults(data.matches);
       setMatchDescription(data.description);
+      setMatchTier(data.tier || "text");
       setSearchInput("");
       setDebouncedQuery("");
       setActiveFolder("");
@@ -526,7 +528,17 @@ function PhotoGrid() {
           <p className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
             {matchResults !== null ? (
               <>
-                {matchResults.length} MATCH{matchResults.length !== 1 ? "ES" : ""} FOUND
+                {matchResults.length} MATCH{matchResults.length !== 1 ? "ES" : ""}
+                {matchTier === "visual" && (
+                  <span className="text-[#00ff41]">
+                    {" // "}DEEP SCAN
+                  </span>
+                )}
+                {matchTier === "both" && (
+                  <span className="text-[#00ff41]">
+                    {" // "}TEXT + VISUAL SCAN
+                  </span>
+                )}
                 {matchDescription && (
                   <span className="text-[#00ff4133]">
                     {" // "}

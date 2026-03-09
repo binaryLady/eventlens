@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 
 interface PhotoUploadProps {
   onMatchResults: (results: {
@@ -34,10 +34,19 @@ export default function PhotoUpload({
   isActive,
 }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false);
+  const [statusText, setStatusText] = useState("SCANNING...");
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const deepScanTimerRef = useRef<NodeJS.Timeout>();
+
+  const clearDeepScanTimer = useCallback(() => {
+    if (deepScanTimerRef.current) {
+      clearTimeout(deepScanTimerRef.current);
+      deepScanTimerRef.current = undefined;
+    }
+  }, []);
 
   const processFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -52,6 +61,13 @@ export default function PhotoUpload({
 
     setError(null);
     setUploading(true);
+    setStatusText("SCANNING...");
+
+    // If response takes > 4s, visual fallback kicked in
+    clearDeepScanTimer();
+    deepScanTimerRef.current = setTimeout(() => {
+      setStatusText("DEEP SCANNING...");
+    }, 4000);
 
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -68,6 +84,7 @@ export default function PhotoUpload({
           body: JSON.stringify({ image: base64, mimeType }),
         });
 
+        clearDeepScanTimer();
         const data = await res.json();
 
         if (!res.ok) {
@@ -84,6 +101,7 @@ export default function PhotoUpload({
 
         onMatchResults(data);
       } catch {
+        clearDeepScanTimer();
         setError("NETWORK ERROR — RETRY");
       }
 
@@ -100,6 +118,7 @@ export default function PhotoUpload({
   };
 
   const handleClear = () => {
+    clearDeepScanTimer();
     setPreview(null);
     setError(null);
     setUploading(false);
@@ -199,7 +218,7 @@ export default function PhotoUpload({
                 <div className="absolute inset-0 border border-[#00ff41] animate-crosshair-spin" />
                 <div className="absolute inset-1 bg-[#00ff41] animate-pulse" />
               </div>
-              SCANNING FACES...
+              {statusText}
             </div>
           ) : (
             <button
