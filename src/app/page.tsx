@@ -387,8 +387,7 @@ function PhotoGrid() {
               <polyline points="21 15 16 10 5 21" />
             </svg>
             <p className="text-zinc-400">
-              Photos are being analyzed. They&apos;ll appear here as processing
-              completes.
+              No photos found. Upload a photo above to find your matches.
             </p>
           </div>
         )}

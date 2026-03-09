@@ -14,29 +14,58 @@ export function extractDriveFileId(driveUrl: string): string {
   return "";
 }
 
+function parseCSVRow(row: string): string[] {
+  const fields: string[] = [];
+  let current = "";
+  let inQuotes = false;
+  for (let i = 0; i < row.length; i++) {
+    const ch = row[i];
+    if (inQuotes) {
+      if (ch === '"' && row[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        current += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ",") {
+        fields.push(current);
+        current = "";
+      } else {
+        current += ch;
+      }
+    }
+  }
+  fields.push(current);
+  return fields;
+}
+
 export async function fetchPhotos(): Promise<PhotoRecord[]> {
-  const { sheetId, apiKey } = config;
+  const { sheetId } = config;
 
   if (!sheetId) {
     console.error("Missing GOOGLE_SHEET_ID");
     return [];
   }
-  if (!apiKey) {
-    console.error("Missing GOOGLE_SHEETS_API_KEY");
-    return [];
-  }
 
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/A2:H?key=${apiKey}`;
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
 
   const res = await fetch(url, { next: { revalidate: 30 } });
 
   if (!res.ok) {
-    console.error(`Sheets API error: ${res.status} ${res.statusText}`);
+    console.error(`Google Sheets export error: ${res.status} ${res.statusText}`);
     return [];
   }
 
-  const data = await res.json();
-  const rows: string[][] = data.values || [];
+  const csvText = await res.text();
+  const lines = csvText.split("\n").filter((line) => line.trim().length > 0);
+
+  // Skip header row
+  const rows: string[][] = lines.slice(1).map(parseCSVRow);
 
   const photos: PhotoRecord[] = rows
     .map((row, index) => {
