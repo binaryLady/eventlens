@@ -5,6 +5,7 @@ export interface EventLensConfig {
   accentColor: string;
   sheetId: string;
   apiKey: string;
+  geminiApiKey: string;
 }
 
 export const config: EventLensConfig = {
@@ -14,4 +15,5 @@ export const config: EventLensConfig = {
   accentColor: process.env.NEXT_PUBLIC_ACCENT_COLOR || "#f59e0b",
   sheetId: process.env.GOOGLE_SHEET_ID || "",
   apiKey: process.env.GOOGLE_SHEETS_API_KEY || "",
+  geminiApiKey: process.env.GEMINI_API_KEY || "",
 };
