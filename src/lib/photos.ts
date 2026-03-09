@@ -47,13 +47,37 @@ export async function fetchPhotos(): Promise<PhotoRecord[]> {
 
   const text = await res.text();
 
-  // Response is JSONP-wrapped: google.visualization.Query.setResponse({...})
-  // Strip the wrapper to get pure JSON
-  const jsonMatch = text.match(
+  // Google returns two possible formats depending on context:
+  // 1. JSONP: google.visualization.Query.setResponse({...})
+  // 2. Anti-XSSI prefix: )]}'  followed by raw JSON on next line
+  let jsonStr: string | null = null;
+
+  // Try JSONP format first
+  const jsonpMatch = text.match(
     /google\.visualization\.Query\.setResponse\(({[\s\S]*})\)/,
   );
-  if (!jsonMatch) {
-    console.error("Could not parse Google Sheets response");
+  if (jsonpMatch) {
+    jsonStr = jsonpMatch[1];
+  }
+
+  // Try anti-XSSI prefix format: )]}'  or )]}' followed by JSON
+  if (!jsonStr) {
+    const xssiMatch = text.match(/^\)\]\}'\s*\n?([\s\S]+)/);
+    if (xssiMatch) {
+      jsonStr = xssiMatch[1].trim();
+    }
+  }
+
+  // Fallback: try to find any JSON object in the response
+  if (!jsonStr) {
+    const braceStart = text.indexOf("{");
+    if (braceStart !== -1) {
+      jsonStr = text.slice(braceStart);
+    }
+  }
+
+  if (!jsonStr) {
+    console.error("Could not parse Google Sheets response. Raw:", text.slice(0, 200));
     return [];
   }
 
@@ -66,7 +90,7 @@ export async function fetchPhotos(): Promise<PhotoRecord[]> {
   };
 
   try {
-    data = JSON.parse(jsonMatch[1]);
+    data = JSON.parse(jsonStr);
   } catch (e) {
     console.error("Failed to parse sheet JSON:", e);
     return [];
