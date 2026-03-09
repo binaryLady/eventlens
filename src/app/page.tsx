@@ -59,6 +59,7 @@ function PhotoGrid() {
   );
   const [matchResults, setMatchResults] = useState<MatchResult[] | null>(null);
   const [matchDescription, setMatchDescription] = useState("");
+  const [shuffledPhotos, setShuffledPhotos] = useState<PhotoRecord[]>([]);
   const pendingPhotosRef = useRef<PhotoRecord[] | null>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
 
@@ -78,6 +79,13 @@ function PhotoGrid() {
     fetchData().then((data) => {
       if (data) {
         setAllPhotos(data.photos);
+        // Shuffle for random grid on each page load
+        const shuffled = [...data.photos];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        setShuffledPhotos(shuffled);
         setLastUpdated(data.lastUpdated);
         setLoading(false);
       } else {
@@ -146,19 +154,24 @@ function PhotoGrid() {
   }, []);
 
   const filteredPhotos = useMemo(() => {
-    // If face match is active, show match results
+    // Face match results — ranked by confidence
     if (matchResults !== null) {
       return matchResults.map((m) => m.photo);
     }
-    let result = allPhotos;
-    if (activeFolder) {
-      result = result.filter((p) => p.folder === activeFolder);
-    }
+    // Text search — ranked by relevance
     if (debouncedQuery) {
-      result = searchPhotos(debouncedQuery, result);
+      const base = activeFolder
+        ? allPhotos.filter((p) => p.folder === activeFolder)
+        : allPhotos;
+      return searchPhotos(debouncedQuery, base);
     }
-    return result;
-  }, [allPhotos, activeFolder, debouncedQuery, matchResults]);
+    // Folder filter on shuffled grid
+    if (activeFolder) {
+      return shuffledPhotos.filter((p) => p.folder === activeFolder);
+    }
+    // Default: random shuffled grid
+    return shuffledPhotos;
+  }, [allPhotos, shuffledPhotos, activeFolder, debouncedQuery, matchResults]);
 
   // Map of photo id -> match confidence for badge display
   const matchConfidenceMap = useMemo(() => {
