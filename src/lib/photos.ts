@@ -17,8 +17,12 @@ export function extractDriveFileId(driveUrl: string): string {
 export async function fetchPhotos(): Promise<PhotoRecord[]> {
   const { sheetId, apiKey } = config;
 
-  if (!sheetId || !apiKey) {
-    console.error("Missing GOOGLE_SHEET_ID or GOOGLE_SHEETS_API_KEY");
+  if (!sheetId) {
+    console.error("Missing GOOGLE_SHEET_ID");
+    return [];
+  }
+  if (!apiKey) {
+    console.error("Missing GOOGLE_SHEETS_API_KEY");
     return [];
   }
 
