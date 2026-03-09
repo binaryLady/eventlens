@@ -7,7 +7,8 @@ export const maxDuration = 60; // Allow up to 60s for face matching
 
 /**
  * POST /api/match
- * Accepts an uploaded photo (base64) and finds matching people in the event photos.
+ * Accepts an uploaded photo and finds matching people across all event photos
+ * in Google Drive by visual face comparison via Gemini.
  *
  * Body: { image: string (base64), mimeType: string }
  * Returns: { matches: MatchResult[], description: string }
@@ -31,11 +32,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         matches: [],
         description: "",
-        error: "No person detected in the uploaded photo. Please upload a clear photo of a person.",
+        error:
+          "No person detected in the uploaded photo. Please upload a clear photo of a person.",
       });
     }
 
-    // Fetch all event photos
+    // Fetch all event photos from the Sheet
     const allPhotos = await fetchPhotos();
 
     if (allPhotos.length === 0) {
@@ -46,79 +48,72 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Phase 2: Text-based pre-filter using the AI description
+    // Phase 2: Text pre-filter to rank candidates (cheap, instant)
     const descTerms = description
       .toLowerCase()
       .split(/[,\s]+/)
       .filter((t) => t.length > 2);
 
-    const candidates = scoreAndRankCandidates(allPhotos, descTerms);
+    const textScored = scoreByDescription(allPhotos, descTerms);
 
-    // Take top candidates for visual verification (limit to manage API costs)
-    const topCandidates = candidates.slice(0, 30);
+    // Build candidate list: text-matched first, then remaining photos with images
+    const candidateIds = new Set<string>();
+    const candidates: PhotoRecord[] = [];
 
-    if (topCandidates.length === 0) {
-      // If text matching found nothing, take photos with faces as candidates
-      const photosWithFaces = allPhotos
-        .filter((p) => p.faceCount > 0)
-        .slice(0, 30);
-
-      if (photosWithFaces.length === 0) {
-        return NextResponse.json({ matches: [], description });
+    // Add text-matched photos first (best candidates)
+    for (const item of textScored) {
+      if (item.photo.driveFileId) {
+        candidateIds.add(item.photo.id);
+        candidates.push(item.photo);
       }
-
-      // Go directly to visual verification
-      const visualMatches = await visuallyVerifyCandidates(
-        image,
-        mimeType,
-        photosWithFaces,
-      );
-
-      return NextResponse.json({
-        matches: visualMatches,
-        description,
-      });
     }
 
-    // Phase 3: Visual face verification with Gemini
-    const visualMatches = await visuallyVerifyCandidates(
-      image,
-      mimeType,
-      topCandidates.map((c) => c.photo),
-    );
+    // Then add remaining photos that have Drive file IDs
+    for (const photo of allPhotos) {
+      if (!candidateIds.has(photo.id) && photo.driveFileId) {
+        candidates.push(photo);
+      }
+    }
 
-    return NextResponse.json({
-      matches: visualMatches,
-      description,
-    });
+    // Cap at 50 to keep Gemini costs and latency reasonable
+    const capped = candidates.slice(0, 50);
+
+    // Phase 3: Visual face matching — fetch Drive thumbnails, send to Gemini
+    const matches = await visuallyVerifyCandidates(image, mimeType, capped);
+
+    return NextResponse.json({ matches, description });
   } catch (error) {
     console.error("Match error:", error);
     return NextResponse.json(
       {
         error:
-          error instanceof Error ? error.message : "Failed to process photo match",
+          error instanceof Error
+            ? error.message
+            : "Failed to process photo match",
       },
       { status: 500 },
     );
   }
 }
 
-function scoreAndRankCandidates(
+function scoreByDescription(
   photos: PhotoRecord[],
   descTerms: string[],
 ): Array<{ photo: PhotoRecord; score: number }> {
   const scored = photos
     .map((photo) => {
-      const peopleDesc = photo.peopleDescriptions.toLowerCase();
-      const sceneDesc = photo.sceneDescription.toLowerCase();
+      const text = [
+        photo.peopleDescriptions,
+        photo.sceneDescription,
+        photo.visibleText,
+      ]
+        .join(" ")
+        .toLowerCase();
+
       let score = 0;
-
       for (const term of descTerms) {
-        if (peopleDesc.includes(term)) score += 3;
-        if (sceneDesc.includes(term)) score += 1;
+        if (text.includes(term)) score += 1;
       }
-
-      // Boost photos that have faces
       if (photo.faceCount > 0) score += 1;
 
       return { photo, score };
@@ -134,24 +129,17 @@ async function visuallyVerifyCandidates(
   uploadedMimeType: string,
   candidates: PhotoRecord[],
 ): Promise<MatchResult[]> {
-  // Fetch thumbnails for candidates and send to Gemini in batches
   const BATCH_SIZE = 10;
   const allMatches: MatchResult[] = [];
 
   for (let i = 0; i < candidates.length; i += BATCH_SIZE) {
     const batch = candidates.slice(i, i + BATCH_SIZE);
 
-    // Fetch thumbnails
+    // Fetch thumbnails from Google Drive in parallel
     const thumbnails = await Promise.all(
       batch.map(async (photo) => {
         try {
-          // Use a smaller thumbnail for faster processing
-          const thumbUrl = photo.driveFileId
-            ? `https://lh3.googleusercontent.com/d/${photo.driveFileId}=w300`
-            : "";
-
-          if (!thumbUrl) return null;
-
+          const thumbUrl = `https://lh3.googleusercontent.com/d/${photo.driveFileId}=w300`;
           const res = await fetch(thumbUrl);
           if (!res.ok) return null;
 
@@ -159,32 +147,26 @@ async function visuallyVerifyCandidates(
           const base64 = Buffer.from(buffer).toString("base64");
           const contentType = res.headers.get("content-type") || "image/jpeg";
 
-          return {
-            id: photo.id,
-            imageBase64: base64,
-            mimeType: contentType,
-          };
+          return { id: photo.id, imageBase64: base64, mimeType: contentType };
         } catch {
           return null;
         }
       }),
     );
 
-    const validThumbnails = thumbnails.filter(
+    const valid = thumbnails.filter(
       (t): t is { id: string; imageBase64: string; mimeType: string } =>
         t !== null,
     );
 
-    if (validThumbnails.length === 0) continue;
+    if (valid.length === 0) continue;
 
-    // Send to Gemini for face comparison
     const matches = await verifyFaceMatches(
       uploadedImageBase64,
       uploadedMimeType,
-      validThumbnails,
+      valid,
     );
 
-    // Map matches back to PhotoRecords
     for (const match of matches) {
       const photo = batch.find((p) => p.id === match.id);
       if (photo) {
@@ -197,7 +179,6 @@ async function visuallyVerifyCandidates(
     }
   }
 
-  // Sort by confidence descending
   allMatches.sort((a, b) => b.confidence - a.confidence);
   return allMatches;
 }

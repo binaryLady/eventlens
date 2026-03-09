@@ -14,36 +14,11 @@ export function extractDriveFileId(driveUrl: string): string {
   return "";
 }
 
-function parseCSVRow(row: string): string[] {
-  const fields: string[] = [];
-  let current = "";
-  let inQuotes = false;
-  for (let i = 0; i < row.length; i++) {
-    const ch = row[i];
-    if (inQuotes) {
-      if (ch === '"' && row[i + 1] === '"') {
-        current += '"';
-        i++;
-      } else if (ch === '"') {
-        inQuotes = false;
-      } else {
-        current += ch;
-      }
-    } else {
-      if (ch === '"') {
-        inQuotes = true;
-      } else if (ch === ",") {
-        fields.push(current);
-        current = "";
-      } else {
-        current += ch;
-      }
-    }
-  }
-  fields.push(current);
-  return fields;
-}
-
+/**
+ * Fetch photo metadata from a public Google Sheet.
+ * Uses the Google Visualization API (gviz/tq) which works when the sheet
+ * is shared as "Anyone with the link" — no API key needed.
+ */
 export async function fetchPhotos(): Promise<PhotoRecord[]> {
   const { sheetId } = config;
 
@@ -52,31 +27,64 @@ export async function fetchPhotos(): Promise<PhotoRecord[]> {
     return [];
   }
 
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+  // Google Visualization API — works with "Anyone with the link" sharing
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
 
-  const res = await fetch(url, { next: { revalidate: 30 } });
+  const res = await fetch(url, {
+    next: { revalidate: 30 },
+    headers: {
+      // Avoid Google returning an HTML sign-in page
+      "X-DataSource-Auth": "true",
+    },
+  });
 
   if (!res.ok) {
-    console.error(`Google Sheets export error: ${res.status} ${res.statusText}`);
+    console.error(
+      `Google Sheets fetch error: ${res.status} ${res.statusText}`,
+    );
     return [];
   }
 
-  const csvText = await res.text();
-  const lines = csvText.split("\n").filter((line) => line.trim().length > 0);
+  const text = await res.text();
 
-  // Skip header row
-  const rows: string[][] = lines.slice(1).map(parseCSVRow);
+  // Response is JSONP-wrapped: google.visualization.Query.setResponse({...})
+  // Strip the wrapper to get pure JSON
+  const jsonMatch = text.match(
+    /google\.visualization\.Query\.setResponse\(({[\s\S]*})\)/,
+  );
+  if (!jsonMatch) {
+    console.error("Could not parse Google Sheets response");
+    return [];
+  }
+
+  let data: {
+    table?: {
+      rows?: Array<{
+        c: Array<{ v?: string | number | null } | null>;
+      }>;
+    };
+  };
+
+  try {
+    data = JSON.parse(jsonMatch[1]);
+  } catch (e) {
+    console.error("Failed to parse sheet JSON:", e);
+    return [];
+  }
+
+  const rows = data.table?.rows || [];
 
   const photos: PhotoRecord[] = rows
     .map((row, index) => {
-      const filename = row[0] || "";
-      const driveUrl = row[1] || "";
-      const folder = row[2] || "";
-      const visibleText = row[3] || "";
-      const peopleDescriptions = row[4] || "";
-      const sceneDescription = row[5] || "";
-      const faceCount = parseInt(row[6] || "0", 10) || 0;
-      const processedAt = row[7] || "";
+      const cells = row.c || [];
+      const filename = String(cells[0]?.v ?? "");
+      const driveUrl = String(cells[1]?.v ?? "");
+      const folder = String(cells[2]?.v ?? "");
+      const visibleText = String(cells[3]?.v ?? "");
+      const peopleDescriptions = String(cells[4]?.v ?? "");
+      const sceneDescription = String(cells[5]?.v ?? "");
+      const faceCount = parseInt(String(cells[6]?.v ?? "0"), 10) || 0;
+      const processedAt = String(cells[7]?.v ?? "");
 
       if (!filename) return null;
 
@@ -105,15 +113,16 @@ export async function fetchPhotos(): Promise<PhotoRecord[]> {
 
   photos.sort(
     (a, b) =>
-      new Date(b.processedAt).getTime() - new Date(a.processedAt).getTime()
+      new Date(b.processedAt).getTime() - new Date(a.processedAt).getTime(),
   );
 
   return photos;
 }
 
+/** Client-side text search — runs in the browser, no server round-trip */
 export function searchPhotos(
   query: string,
-  photos: PhotoRecord[]
+  photos: PhotoRecord[],
 ): PhotoRecord[] {
   const terms = query
     .toLowerCase()
