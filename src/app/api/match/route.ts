@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchPhotos } from "@/lib/photos";
 import { describePersonForMatching, verifyFaceMatches } from "@/lib/gemini";
 import { PhotoRecord, MatchResult } from "@/lib/types";
+import { config } from "@/lib/config";
 
 export const maxDuration = 60; // Allow up to 60s for face matching
 
@@ -78,8 +79,14 @@ export async function POST(request: NextRequest) {
     // Cap at 50 to keep Gemini costs and latency reasonable
     const capped = candidates.slice(0, 50);
 
-    // Phase 3: Visual face matching — fetch Drive thumbnails, send to Gemini
-    const matches = await visuallyVerifyCandidates(image, mimeType, capped);
+    // Phase 3: Visual face matching — fetch images via Drive API, send to Gemini
+    if (!config.googleApiKey) {
+      return NextResponse.json(
+        { error: "Missing GOOGLE_API_KEY — required for face matching" },
+        { status: 500 },
+      );
+    }
+    const matches = await visuallyVerifyCandidates(image, mimeType, capped, config.googleApiKey);
 
     return NextResponse.json({ matches, description });
   } catch (error) {
@@ -124,10 +131,32 @@ function scoreByDescription(
   return scored;
 }
 
+async function fetchDriveImage(
+  fileId: string,
+  apiKey: string,
+): Promise<{ base64: string; mimeType: string } | null> {
+  try {
+    // Use Google Drive API v3 — works server-side for public files with API key
+    const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.startsWith("image/")) return null;
+
+    const buffer = await res.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString("base64");
+    return { base64, mimeType: contentType };
+  } catch {
+    return null;
+  }
+}
+
 async function visuallyVerifyCandidates(
   uploadedImageBase64: string,
   uploadedMimeType: string,
   candidates: PhotoRecord[],
+  apiKey: string,
 ): Promise<MatchResult[]> {
   const BATCH_SIZE = 10;
   const allMatches: MatchResult[] = [];
@@ -135,26 +164,16 @@ async function visuallyVerifyCandidates(
   for (let i = 0; i < candidates.length; i += BATCH_SIZE) {
     const batch = candidates.slice(i, i + BATCH_SIZE);
 
-    // Fetch thumbnails from Google Drive in parallel
-    const thumbnails = await Promise.all(
+    // Fetch images from Google Drive API in parallel
+    const images = await Promise.all(
       batch.map(async (photo) => {
-        try {
-          const thumbUrl = `https://lh3.googleusercontent.com/d/${photo.driveFileId}=w300`;
-          const res = await fetch(thumbUrl);
-          if (!res.ok) return null;
-
-          const buffer = await res.arrayBuffer();
-          const base64 = Buffer.from(buffer).toString("base64");
-          const contentType = res.headers.get("content-type") || "image/jpeg";
-
-          return { id: photo.id, imageBase64: base64, mimeType: contentType };
-        } catch {
-          return null;
-        }
+        const result = await fetchDriveImage(photo.driveFileId, apiKey);
+        if (!result) return null;
+        return { id: photo.id, imageBase64: result.base64, mimeType: result.mimeType };
       }),
     );
 
-    const valid = thumbnails.filter(
+    const valid = images.filter(
       (t): t is { id: string; imageBase64: string; mimeType: string } =>
         t !== null,
     );

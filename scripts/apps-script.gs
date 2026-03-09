@@ -15,8 +15,8 @@
 //   Filename | Drive URL | Folder | Visible Text | People Descriptions | Scene | Face Count | Processed At
 // ============================================
 
-const FOLDER_ID = '1iK2WDmcmSaXEhv9k-PpagcR17LLiAV40';      // From Drive folder URL after /folders/
-const GEMINI_API_KEY = 'AIzaSyCqjWIzPnF5IaV0ZczLnv8uJlSOi97UCX8';    // From aistudio.google.com/apikey
+const FOLDER_ID = '';      // From Drive folder URL after /folders/
+const GEMINI_API_KEY = '';    // From aistudio.google.com/apikey
 const MODEL = 'gemini-2.5-pro';
 const BATCH_SIZE = 100;                        // Process N images per run (avoid timeout)
 const NOTIFY_EVERY = 500;                      // Email you every N images (0 = only on completion)

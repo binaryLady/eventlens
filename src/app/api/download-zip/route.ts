@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import JSZip from "jszip";
+import { config } from "@/lib/config";
 
 export const maxDuration = 60;
 
@@ -45,12 +46,16 @@ export async function POST(request: NextRequest) {
       const results = await Promise.all(
         batch.map(async (entry, batchIndex) => {
           try {
-            const url = `https://lh3.googleusercontent.com/d/${entry.fileId}=w1600`;
+            // Use Drive API for reliable server-side access to public files
+            const url = config.googleApiKey
+              ? `https://www.googleapis.com/drive/v3/files/${entry.fileId}?alt=media&key=${config.googleApiKey}`
+              : `https://lh3.googleusercontent.com/d/${entry.fileId}=w1600`;
             const res = await fetch(url);
             if (!res.ok) return null;
 
             const contentType =
               res.headers.get("content-type") || "image/jpeg";
+            if (!contentType.startsWith("image/")) return null;
             const ext = contentType.includes("png") ? "png" : "jpg";
             const data = await res.arrayBuffer();
 
