@@ -41,7 +41,8 @@
       "Bash(curl -s \"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001?key=$GEMINI_API_KEY\")",
       "Bash(python3 -c \"import json,sys; m=json.load\\(sys.stdin\\); print\\(json.dumps\\(m, indent=2\\)\\)\")",
       "Bash(curl -s \"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=$GEMINI_API_KEY\" -H \"Content-Type: application/json\" -d '{\"\"model\"\":\"\"models/gemini-embedding-001\"\",\"\"content\"\":{\"\"parts\"\":[{\"\"text\"\":\"\"test\"\"}]}}')",
-      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); e=d.get\\(''embedding'',{}\\); print\\(f''Dims: {len\\(e.get\\(\"\"values\"\",[]\\)\\)}''\\)\")"
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); e=d.get\\(''embedding'',{}\\); print\\(f''Dims: {len\\(e.get\\(\"\"values\"\",[]\\)\\)}''\\)\")",
+      "Bash(npx tsc --noEmit --pretty)"
     ]
   }
 }

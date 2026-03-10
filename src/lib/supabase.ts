@@ -87,6 +87,34 @@ export async function enrichPhotoDescriptions(
   }
 }
 
+export interface SemanticMatch {
+  id: string;
+  drive_file_id: string;
+  filename: string;
+  drive_url: string;
+  folder: string;
+  visible_text: string;
+  people_descriptions: string;
+  scene_description: string;
+  face_count: number;
+  similarity: number;
+}
+
+export async function searchPhotosSemantic(
+  queryEmbedding: number[],
+  threshold = 0.35,
+  limit = 30,
+): Promise<SemanticMatch[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase.rpc("search_photos_semantic", {
+    query_embedding: queryEmbedding,
+    match_threshold: threshold,
+    match_count: limit,
+  });
+  if (error) return [];
+  return (data as SemanticMatch[]) || [];
+}
+
 export interface PhotoRow {
   id: string;
   drive_file_id: string;
