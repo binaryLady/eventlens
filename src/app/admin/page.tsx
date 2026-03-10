@@ -47,13 +47,26 @@ export default function AdminPage() {
         }
         throw new Error(`Status fetch failed: ${res.status}`);
       }
-      const data: StatusData = await res.json();
-      setStatus(data);
-      setAuthenticated(true);
+
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const data: StatusData = await res.json();
+        setStatus(data);
+        setAuthenticated(true);
+      } else {
+        // Handle non-JSON response (likely HTML from Vercel protection)
+        const text = await res.text();
+        if (text.includes("Authentication Required") || text.includes("<!doctype")) {
+          throw new Error("Authentication required - please check your admin secret");
+        } else {
+          throw new Error("Unexpected response format");
+        }
+      }
     } catch (error) {
       addLog(
         `Status error: ${error instanceof Error ? error.message : "Unknown"}`,
       );
+      setAuthenticated(false);
     }
   }, [headers, addLog]);
 
@@ -85,7 +98,20 @@ export default function AdminPage() {
         body: body ? JSON.stringify(body) : undefined,
       });
 
-      const data: ActionResult = await res.json();
+      const contentType = res.headers.get("content-type");
+      let data: ActionResult;
+
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        // Handle non-JSON response (likely HTML from Vercel protection)
+        const text = await res.text();
+        if (text.includes("Authentication Required") || text.includes("<!doctype")) {
+          throw new Error("Authentication required - please check your admin secret");
+        } else {
+          throw new Error("Unexpected response format");
+        }
+      }
 
       if (!res.ok) {
         addLog(`ERROR: ${data.error || res.statusText}`);
