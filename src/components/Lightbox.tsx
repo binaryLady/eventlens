@@ -131,8 +131,8 @@ export default function Lightbox({
     ? `https://lh3.googleusercontent.com/d/${photo.driveFileId}=w1600`
     : "";
 
-  const videoEmbedUrl = photo.driveFileId
-    ? `https://drive.google.com/file/d/${photo.driveFileId}/preview`
+  const videoStreamUrl = photo.driveFileId
+    ? `https://drive.google.com/uc?export=download&id=${photo.driveFileId}`
     : "";
 
   const hasMeta = !!(photo.visibleText || photo.peopleDescriptions || photo.sceneDescription || photo.faceCount > 0);
@@ -221,13 +221,13 @@ export default function Lightbox({
             </div>
           )}
           {isVideo ? (
-            <iframe
+            <video
               key={photo.driveFileId}
-              src={videoEmbedUrl}
-              allow="autoplay; encrypted-media"
-              allowFullScreen
-              className={`w-full h-full border-0 lightbox-media ${imageLoaded ? 'loaded' : ''}`}
-              onLoad={() => setImageLoaded(true)}
+              src={videoStreamUrl}
+              controls
+              playsInline
+              className={`max-w-full max-h-full object-contain lightbox-media ${imageLoaded ? 'loaded' : ''}`}
+              onLoadedData={() => setImageLoaded(true)}
             />
           ) : fullImageUrl ? (
             <Image

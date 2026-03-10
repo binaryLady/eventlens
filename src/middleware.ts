@@ -20,10 +20,9 @@ export function middleware(request: NextRequest) {
 
   const response = NextResponse.next();
 
-  // CSP: allow Google Drive iframe embeds for video playback
   response.headers.set(
     "Content-Security-Policy",
-    "frame-src https://drive.google.com https://*.google.com; frame-ancestors 'self'"
+    "frame-ancestors 'self'"
   );
 
   return response;
