@@ -1,5 +1,96 @@
 import { PhotoRecord } from "./types";
 import { config } from "./config";
+import { PhotoRow } from "./supabase";
+
+// @TheTechMargin 2026
+function supabaseAvailable(): boolean {
+  return !!(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
+
+function rowToPhoto(row: PhotoRow): PhotoRecord {
+  return {
+    id: row.id,
+    filename: row.filename,
+    driveUrl: row.drive_url,
+    driveFileId: row.drive_file_id,
+    folder: row.folder || "",
+    visibleText: row.visible_text || "",
+    peopleDescriptions: row.people_descriptions || "",
+    sceneDescription: row.scene_description || "",
+    faceCount: row.face_count || 0,
+    processedAt: row.processed_at || row.created_at || "",
+    thumbnailUrl: row.drive_file_id
+      ? `https://lh3.googleusercontent.com/d/${row.drive_file_id}=w400`
+      : "",
+    downloadUrl: row.drive_file_id
+      ? `https://drive.google.com/uc?export=download&id=${row.drive_file_id}`
+      : "",
+  };
+}
+
+/**
+ * Fetch AI metadata from Supabase, keyed by drive_file_id.
+ * Returns a map for merging onto Drive-sourced photos.
+ */
+async function fetchSupabaseMetadata(): Promise<Map<string, PhotoRow>> {
+  if (!supabaseAvailable()) return new Map();
+
+  try {
+    const { createServerClient } = await import("./supabase");
+    const supabase = createServerClient();
+
+    const { data, error } = await supabase
+      .from("photos")
+      .select("*")
+      .eq("status", "completed");
+
+    if (error) {
+      console.error("Supabase fetch error:", error.message);
+      return new Map();
+    }
+
+    const map = new Map<string, PhotoRow>();
+    for (const row of (data as PhotoRow[])) {
+      map.set(row.drive_file_id, row);
+    }
+    return map;
+  } catch (error) {
+    console.error("Failed to fetch Supabase metadata:", error);
+    return new Map();
+  }
+}
+
+/**
+ * Merge Supabase AI metadata onto Drive-sourced photos.
+ * Drive provides the image list + thumbnails, Supabase provides
+ * visibleText, peopleDescriptions, sceneDescription, faceCount.
+ */
+export async function fetchPhotosWithMetadata(): Promise<PhotoRecord[]> {
+  // Get images from Drive
+  const drivePhotos = config.driveFolderId
+    ? await fetchPhotosFromDriveFolder()
+    : await fetchPhotos();
+
+  // Overlay Supabase metadata if available
+  const metadata = await fetchSupabaseMetadata();
+  if (metadata.size === 0) return drivePhotos;
+
+  for (const photo of drivePhotos) {
+    const row = metadata.get(photo.driveFileId);
+    if (row) {
+      photo.visibleText = row.visible_text || "";
+      photo.peopleDescriptions = row.people_descriptions || "";
+      photo.sceneDescription = row.scene_description || "";
+      photo.faceCount = row.face_count || 0;
+      if (row.processed_at) photo.processedAt = row.processed_at;
+    }
+  }
+
+  return drivePhotos;
+}
 
 export function extractDriveFileId(driveUrl: string): string {
   // https://drive.google.com/file/d/{ID}/view
