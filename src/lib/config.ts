@@ -6,6 +6,7 @@ export interface EventLensConfig {
   sheetId: string;
   geminiApiKey: string;
   googleApiKey: string;
+  driveFolderId: string;
 }
 
 export const config: EventLensConfig = {
@@ -17,4 +18,5 @@ export const config: EventLensConfig = {
   sheetId: process.env.GOOGLE_SHEET_ID || "",
   geminiApiKey: process.env.GEMINI_API_KEY || "",
   googleApiKey: process.env.GOOGLE_API_KEY || "",
+  driveFolderId: process.env.GOOGLE_DRIVE_FOLDER_ID || "",
 };

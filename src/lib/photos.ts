@@ -216,3 +216,35 @@ export function getFolders(photos: PhotoRecord[]): string[] {
   }
   return Array.from(folders).sort();
 }
+
+/**
+ * Fetch all subfolder names from the Google Drive parent folder.
+ * Uses Drive API v3 — requires the folder to be publicly shared and a valid API key.
+ * Falls back to photo-derived folders if the Drive folder ID or API key is missing.
+ */
+export async function fetchDriveFolders(): Promise<string[]> {
+  const { driveFolderId, googleApiKey } = config;
+
+  if (!driveFolderId || !googleApiKey) {
+    return [];
+  }
+
+  try {
+    const query = encodeURIComponent(
+      `'${driveFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+    );
+    const url = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(name)&orderBy=name&pageSize=200&key=${googleApiKey}`;
+
+    const res = await fetch(url, { next: { revalidate: 300 } });
+    if (!res.ok) {
+      console.error(`Drive folders fetch error: ${res.status} ${res.statusText}`);
+      return [];
+    }
+
+    const data: { files?: Array<{ name: string }> } = await res.json();
+    return (data.files || []).map((f) => f.name).sort();
+  } catch (error) {
+    console.error("Failed to fetch Drive folders:", error);
+    return [];
+  }
+}

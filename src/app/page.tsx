@@ -10,7 +10,7 @@ import {
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { PhotoRecord, PhotosResponse, MatchResult } from "@/lib/types";
-import { searchPhotos, getFolders } from "@/lib/photos";
+import { searchPhotos } from "@/lib/photos";
 import { config } from "@/lib/config";
 import Lightbox from "@/components/Lightbox";
 import Toast from "@/components/Toast";
@@ -161,6 +161,7 @@ function PhotoGrid() {
   const router = useRouter();
 
   const [allPhotos, setAllPhotos] = useState<PhotoRecord[]>([]);
+  const [folders, setFolders] = useState<string[]>([]);
   const [lastUpdated, setLastUpdated] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -201,6 +202,7 @@ function PhotoGrid() {
     fetchData().then((data) => {
       if (data) {
         setAllPhotos(data.photos);
+        setFolders(data.folders);
         const shuffled = [...data.photos];
         for (let i = shuffled.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -227,8 +229,10 @@ function PhotoGrid() {
           message: `${diff} new photo${diff === 1 ? "" : "s"} detected`,
           count: diff,
         });
+        setFolders(data.folders);
         setLastUpdated(data.lastUpdated);
       } else if (data) {
+        setFolders(data.folders);
         setLastUpdated(data.lastUpdated);
       }
     }, 30000);
@@ -254,8 +258,6 @@ function PhotoGrid() {
     const str = params.toString();
     router.replace(str ? `?${str}` : "/", { scroll: false });
   }, [debouncedQuery, activeFolder, router]);
-
-  const folders = useMemo(() => getFolders(allPhotos), [allPhotos]);
 
   const handleMatchResults = useCallback(
     (data: { matches: MatchResult[]; description: string; tier?: "text" | "visual" | "both" }) => {
@@ -799,8 +801,8 @@ function PhotoCard({
       ) : (
         !selectMode &&
         photo.faceCount > 0 && (
-          <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center bg-[#00ff41] text-[9px] font-mono font-bold text-black">
-            {photo.faceCount}
+          <div className="absolute right-1.5 top-1.5 flex items-center justify-center bg-[#00ff41] px-1.5 py-0.5 text-[9px] font-mono font-bold text-black">
+            {photo.faceCount} {photo.faceCount === 1 ? "FACE" : "FACES"}
           </div>
         )
       )}
