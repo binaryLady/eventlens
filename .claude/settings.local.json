@@ -23,7 +23,17 @@
       "Bash(curl -s -b \"auth=true\" \"http://localhost:3000/api/photos\")",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); p=[x for x in d[''photos''] if ''SONIA'' in x[''filename'']]; print\\(p[0][''driveFileId'']\\)\")",
       "Bash(npx tsc --noEmit)",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "Bash(python3 -m pip install -r scripts/requirements.txt)",
+      "Bash(python3 -m venv scripts/.venv)",
+      "Bash(scripts/.venv/bin/pip install -r scripts/requirements.txt)",
+      "Bash(scripts/.venv/bin/python scripts/process_photos.py --help)",
+      "Bash(scripts/.venv/bin/python scripts/process_photos.py --only-scan --verbose)",
+      "Bash(scripts/.venv/bin/python scripts/process_photos.py --only-rename --dry-run --folder HARD_MODE_DAY_3 --verbose)",
+      "Bash(scripts/.venv/bin/python scripts/process_photos.py --only-describe --batch-size 3 --folder HARD_MODE_DAY_3 --verbose)",
+      "Bash(scripts/.venv/bin/python -c \":*)",
+      "Bash(scripts/.venv/bin/pip install psycopg2-binary)",
+      "Bash(scripts/.venv/bin/python scripts/process_photos.py --only-describe --batch-size 2 --folder \"Hard_Mode_26_Day_3_\" --verbose)"
     ]
   }
 }
