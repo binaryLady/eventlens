@@ -165,6 +165,8 @@ function PhotoGrid() {
   const [debouncedQuery, setDebouncedQuery] = useState(
     searchParams.get("q") || "",
   );
+  const [serverResults, setServerResults] = useState<PhotoRecord[] | null>(null);
+  const [searchSource, setSearchSource] = useState<"client" | "server">("client");
   const [activeFolder, setActiveFolder] = useState(
     searchParams.get("folder") || "",
   );
@@ -246,6 +248,39 @@ function PhotoGrid() {
     };
   }, [searchInput]);
 
+  // Server-side semantic search (Supabase full-text + trigram)
+  useEffect(() => {
+    if (!debouncedQuery || matchResults !== null) {
+      setServerResults(null);
+      return;
+    }
+
+    let cancelled = false;
+    const params = new URLSearchParams({ q: debouncedQuery });
+    if (activeFolder) params.set("folder", activeFolder);
+
+    fetch(`/api/search?${params}`)
+      .then((res) => res.json())
+      .then((data: { results: PhotoRecord[]; source: string }) => {
+        if (cancelled) return;
+        if (data.source === "supabase" && data.results.length > 0) {
+          setServerResults(data.results);
+          setSearchSource("server");
+        } else {
+          setServerResults(null);
+          setSearchSource("client");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setServerResults(null);
+          setSearchSource("client");
+        }
+      });
+
+    return () => { cancelled = true; };
+  }, [debouncedQuery, activeFolder, matchResults]);
+
   // Sync URL params
   useEffect(() => {
     const params = new URLSearchParams();
@@ -294,7 +329,8 @@ function PhotoGrid() {
     setSelectMode(false);
   }, []);
 
-  const isSearchActive = debouncedQuery !== "" || activeFolder !== "" || matchResults !== null;
+  const [browseAll, setBrowseAll] = useState(false);
+  const isSearchActive = debouncedQuery !== "" || activeFolder !== "" || matchResults !== null || browseAll;
 
   const applySorting = useCallback((photos: PhotoRecord[]): PhotoRecord[] => {
     if (sortOrder === "shuffle") return photos;
@@ -321,6 +357,10 @@ function PhotoGrid() {
       return matchResults.map((m) => m.photo);
     }
     if (debouncedQuery) {
+      // Prefer server-side semantic results if available
+      if (serverResults && serverResults.length > 0) {
+        return serverResults;
+      }
       const base = activeFolder
         ? allPhotos.filter((p) => p.folder === activeFolder)
         : allPhotos;
@@ -331,7 +371,7 @@ function PhotoGrid() {
       return applySorting(base.filter((p) => p.folder === activeFolder));
     }
     return sortOrder === "shuffle" ? shuffledPhotos : applySorting(allPhotos);
-  }, [allPhotos, shuffledPhotos, activeFolder, debouncedQuery, matchResults, applySorting, sortOrder]);
+  }, [allPhotos, shuffledPhotos, activeFolder, debouncedQuery, matchResults, serverResults, applySorting, sortOrder]);
 
   const folderPreviews = useMemo(() => {
     const previews: Record<string, PhotoRecord[]> = {};
@@ -488,7 +528,7 @@ function PhotoGrid() {
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="SEARCH VISUAL DATA..."
+                placeholder="SEARCH PHOTOS, PEOPLE, SCENES..."
                 className="w-full border border-[#00ff4133] bg-black/60 py-3 pl-10 pr-10 text-base md:text-sm text-[#00ff41] font-mono placeholder-[#00ff4133] outline-none transition-all focus:border-[#00ff41] focus:shadow-[0_0_15px_rgba(0,255,65,0.15)]"
                 aria-label="Search photos"
                 enterKeyHint="search"
@@ -526,16 +566,16 @@ function PhotoGrid() {
         </div>
       </header>
 
-      {/* Filter bar */}
-      {!loading && !error && allPhotos.length > 0 && isSearchActive && (
-        <div className="mx-auto max-w-5xl px-4 pb-4 space-y-2">
+      {/* Filter bar — always visible when we have photos */}
+      {!loading && !error && allPhotos.length > 0 && (
+        <div className="mx-auto max-w-5xl px-3 md:px-4 pb-3 md:pb-4 space-y-2">
           {/* Row 1: folder tabs (scrollable) */}
           {folders.length > 0 && (
-            <div className="scrollbar-hide overflow-x-auto -mx-4 px-4">
+            <div className="scrollbar-hide overflow-x-auto -mx-3 px-3 md:-mx-4 md:px-4">
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setActiveFolder("")}
-                  className={`shrink-0 px-3 py-2 md:py-1 text-xs font-mono uppercase tracking-wider transition-all ${
+                  className={`shrink-0 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                     activeFolder === ""
                       ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
                       : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
@@ -549,7 +589,7 @@ function PhotoGrid() {
                     onClick={() =>
                       setActiveFolder(activeFolder === folder ? "" : folder)
                     }
-                    className={`shrink-0 px-3 py-2 md:py-1 text-xs font-mono uppercase tracking-wider transition-all ${
+                    className={`shrink-0 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                       activeFolder === folder
                         ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
                         : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
@@ -562,26 +602,31 @@ function PhotoGrid() {
             </div>
           )}
 
-          {/* Row 2: sort + select (always visible) */}
-          <div className="flex items-center justify-end gap-1.5">
-            <SortDropdown sortOrder={sortOrder} onChange={setSortOrder} />
-            <button
-              onClick={toggleSelectMode}
-              className={`px-3 py-2 md:py-1 text-xs font-mono uppercase tracking-wider transition-all ${
-                selectMode
-                  ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
-                  : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
-              }`}
-            >
-              {selectMode ? "EXIT SELECT" : "SELECT"}
-            </button>
+          {/* Row 2: sort + select */}
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[#00ff4144]">
+              {debouncedQuery && searchSource === "server" ? "SEMANTIC SEARCH" : debouncedQuery ? "TEXT SEARCH" : ""}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <SortDropdown sortOrder={sortOrder} onChange={setSortOrder} />
+              <button
+                onClick={toggleSelectMode}
+                className={`px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
+                  selectMode
+                    ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
+                    : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
+                }`}
+              >
+                {selectMode ? "EXIT" : "SELECT"}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Results info */}
-      {isSearchActive && (
-        <div className="mx-auto max-w-5xl px-4 pb-3">
+      {isSearchActive && (debouncedQuery || matchResults !== null) && (
+        <div className="mx-auto max-w-5xl px-3 md:px-4 pb-2 md:pb-3">
           {!loading && !error && (
             <p className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
               {matchResults !== null ? (
@@ -661,15 +706,15 @@ function PhotoGrid() {
           </div>
         )}
 
-        {/* Browse landing */}
+        {/* Browse landing (no search/filter active) */}
         {!loading && !error && allPhotos.length > 0 && !isSearchActive && (
           <>
-            {/* Folder cards */}
-            {folders.length > 0 && (
-              <section className="mb-8">
-                <div className="flex items-center gap-3 mb-4">
+            {/* Folder cards — visual grid for quick browse */}
+            {folders.length > 1 && (
+              <section className="mb-6 md:mb-8">
+                <div className="flex items-center gap-3 mb-3 md:mb-4">
                   <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
-                    &#x2500;&#x2500; FOLDERS
+                    &#x2500;&#x2500; ALBUMS
                   </span>
                   <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4133]">
                     [{folders.length}]
@@ -693,6 +738,7 @@ function PhotoGrid() {
                                 <img
                                   src={previews[i].thumbnailUrl}
                                   alt=""
+                                  loading="lazy"
                                   className="h-full w-full object-cover opacity-50 group-hover:opacity-70 transition-opacity"
                                 />
                               ) : (
@@ -705,11 +751,11 @@ function PhotoGrid() {
                         </div>
 
                         {/* Dark overlay + folder label */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent flex flex-col items-center justify-end pb-4">
-                          <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#00ff41] group-hover:glow-text transition-all">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent flex flex-col items-center justify-end pb-3 md:pb-4">
+                          <span className="text-[11px] md:text-xs font-mono font-bold uppercase tracking-wider text-[#00ff41] group-hover:glow-text transition-all">
                             {folder}
                           </span>
-                          <span className="mt-1 text-[9px] font-mono uppercase tracking-widest text-[#00ff4155]">
+                          <span className="mt-0.5 md:mt-1 text-[9px] font-mono uppercase tracking-widest text-[#00ff4155]">
                             {count} PHOTO{count !== 1 ? "S" : ""}
                           </span>
                         </div>
@@ -724,34 +770,19 @@ function PhotoGrid() {
               </section>
             )}
 
-            {/* Random photo grid preview */}
+            {/* Photo grid — show hero subset on landing */}
             {heroPhotos.length > 0 && (
               <section>
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
-                      &#x2500;&#x2500; {sortOrder === "shuffle" ? "RANDOM SELECTION" : sortOrder === "newest" ? "NEWEST FIRST" : sortOrder === "oldest" ? "OLDEST FIRST" : sortOrder === "name-asc" ? "NAME A\u2192Z" : "NAME Z\u2192A"}
-                    </span>
-                    <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[#00ff4133]">
-                      [{allPhotos.length} TOTAL]
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <SortDropdown sortOrder={sortOrder} onChange={setSortOrder} />
-                    <button
-                      onClick={toggleSelectMode}
-                      className={`shrink-0 px-3 py-2 md:py-1 text-xs font-mono uppercase tracking-wider transition-all ${
-                        selectMode
-                          ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
-                          : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
-                      }`}
-                    >
-                      {selectMode ? "EXIT SELECT" : "SELECT"}
-                    </button>
-                  </div>
+                <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
+                  <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
+                    &#x2500;&#x2500; {sortOrder === "shuffle" ? "FEATURED" : sortOrder === "newest" ? "NEWEST" : sortOrder === "oldest" ? "OLDEST" : sortOrder === "name-asc" ? "NAME A\u2192Z" : "NAME Z\u2192A"}
+                  </span>
+                  <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[#00ff4133]">
+                    [{allPhotos.length} TOTAL]
+                  </span>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5 md:gap-2 md:grid-cols-3 lg:grid-cols-4">
-                  {filteredPhotos.map((photo, index) => (
+                  {heroPhotos.map((photo, index) => (
                     <PhotoCard
                       key={photo.id}
                       photo={photo}
@@ -767,6 +798,18 @@ function PhotoGrid() {
                       selected={selectedIds.has(photo.id)}
                     />
                   ))}
+                </div>
+                {/* Browse all prompt */}
+                <div className="mt-4 md:mt-6 flex justify-center">
+                  <button
+                    onClick={() => setBrowseAll(true)}
+                    className="inline-flex items-center gap-2 border border-[#00ff4133] bg-black/60 px-5 py-2.5 text-[11px] md:text-xs font-mono uppercase tracking-wider text-[#00ff4199] transition-all hover:border-[#00ff41] hover:text-[#00ff41] hover:shadow-[0_0_10px_rgba(0,255,65,0.15)] active:bg-[#00ff4111]"
+                  >
+                    BROWSE ALL {allPhotos.length} PHOTOS
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
                 </div>
               </section>
             )}
@@ -908,7 +951,7 @@ function SortDropdown({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 px-3 py-1 text-xs font-mono uppercase tracking-wider border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41] transition-all"
+        className="flex items-center gap-1.5 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41] transition-all"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 6h18M6 12h12M9 18h6" />

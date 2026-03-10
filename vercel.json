@@ -15,6 +15,9 @@
     },
     "src/app/api/match/route.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/search/route.ts": {
+      "maxDuration": 15
     }
   }
 }

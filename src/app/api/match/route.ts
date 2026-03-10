@@ -61,7 +61,8 @@ export async function POST(request: NextRequest) {
 
 async function tryVectorMatch(
   imageBase64: string,
-  _mimeType: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  mimeType: string,
 ): Promise<{ matches: MatchResult[]; description: string; tier: string } | null> {
   try {
     // Get face embedding from Python service

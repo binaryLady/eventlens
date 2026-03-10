@@ -10,7 +10,7 @@ function supabaseAvailable(): boolean {
   );
 }
 
-function rowToPhoto(row: PhotoRow): PhotoRecord {
+export function rowToPhoto(row: PhotoRow): PhotoRecord {
   return {
     id: row.id,
     filename: row.filename,
