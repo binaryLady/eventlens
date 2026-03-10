@@ -178,6 +178,7 @@ function PhotoGrid() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [downloading, setDownloading] = useState(false);
+  const [sortOrder, setSortOrder] = useState<"shuffle" | "newest" | "oldest" | "name-asc" | "name-desc">("shuffle");
   const pendingPhotosRef = useRef<PhotoRecord[] | null>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
 
@@ -295,6 +296,26 @@ function PhotoGrid() {
 
   const isSearchActive = debouncedQuery !== "" || activeFolder !== "" || matchResults !== null;
 
+  const applySorting = useCallback((photos: PhotoRecord[]): PhotoRecord[] => {
+    if (sortOrder === "shuffle") return photos;
+    const sorted = [...photos];
+    switch (sortOrder) {
+      case "newest":
+        sorted.sort((a, b) => (b.processedAt || b.filename).localeCompare(a.processedAt || a.filename));
+        break;
+      case "oldest":
+        sorted.sort((a, b) => (a.processedAt || a.filename).localeCompare(b.processedAt || b.filename));
+        break;
+      case "name-asc":
+        sorted.sort((a, b) => a.filename.localeCompare(b.filename));
+        break;
+      case "name-desc":
+        sorted.sort((a, b) => b.filename.localeCompare(a.filename));
+        break;
+    }
+    return sorted;
+  }, [sortOrder]);
+
   const filteredPhotos = useMemo(() => {
     if (matchResults !== null) {
       return matchResults.map((m) => m.photo);
@@ -303,13 +324,14 @@ function PhotoGrid() {
       const base = activeFolder
         ? allPhotos.filter((p) => p.folder === activeFolder)
         : allPhotos;
-      return searchPhotos(debouncedQuery, base);
+      return applySorting(searchPhotos(debouncedQuery, base));
     }
     if (activeFolder) {
-      return shuffledPhotos.filter((p) => p.folder === activeFolder);
+      const base = sortOrder === "shuffle" ? shuffledPhotos : allPhotos;
+      return applySorting(base.filter((p) => p.folder === activeFolder));
     }
-    return shuffledPhotos;
-  }, [allPhotos, shuffledPhotos, activeFolder, debouncedQuery, matchResults]);
+    return sortOrder === "shuffle" ? shuffledPhotos : applySorting(allPhotos);
+  }, [allPhotos, shuffledPhotos, activeFolder, debouncedQuery, matchResults, applySorting, sortOrder]);
 
   const folderPreviews = useMemo(() => {
     const previews: Record<string, PhotoRecord[]> = {};
@@ -536,17 +558,20 @@ function PhotoGrid() {
               </>
             )}
 
-            {/* Select mode toggle */}
-            <button
-              onClick={toggleSelectMode}
-              className={`shrink-0 ml-auto px-3 py-1 text-xs font-mono uppercase tracking-wider transition-all ${
-                selectMode
-                  ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
-                  : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
-              }`}
-            >
-              {selectMode ? "EXIT SELECT" : "SELECT"}
-            </button>
+            {/* Sort + Select controls */}
+            <div className="shrink-0 ml-auto flex items-center gap-1.5">
+              <SortDropdown sortOrder={sortOrder} onChange={setSortOrder} />
+              <button
+                onClick={toggleSelectMode}
+                className={`px-3 py-1 text-xs font-mono uppercase tracking-wider transition-all ${
+                  selectMode
+                    ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
+                    : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
+                }`}
+              >
+                {selectMode ? "EXIT SELECT" : "SELECT"}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -702,22 +727,25 @@ function PhotoGrid() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
-                      &#x2500;&#x2500; RANDOM SELECTION
+                      &#x2500;&#x2500; {sortOrder === "shuffle" ? "RANDOM SELECTION" : sortOrder === "newest" ? "NEWEST FIRST" : sortOrder === "oldest" ? "OLDEST FIRST" : sortOrder === "name-asc" ? "NAME A\u2192Z" : "NAME Z\u2192A"}
                     </span>
                     <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4133]">
                       [{allPhotos.length} TOTAL]
                     </span>
                   </div>
-                  <button
-                    onClick={toggleSelectMode}
-                    className={`shrink-0 px-3 py-1 text-xs font-mono uppercase tracking-wider transition-all ${
-                      selectMode
-                        ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
-                        : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
-                    }`}
-                  >
-                    {selectMode ? "EXIT SELECT" : "SELECT"}
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <SortDropdown sortOrder={sortOrder} onChange={setSortOrder} />
+                    <button
+                      onClick={toggleSelectMode}
+                      className={`shrink-0 px-3 py-1 text-xs font-mono uppercase tracking-wider transition-all ${
+                        selectMode
+                          ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
+                          : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
+                      }`}
+                    >
+                      {selectMode ? "EXIT SELECT" : "SELECT"}
+                    </button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
                   {shuffledPhotos.map((photo, index) => (
@@ -833,6 +861,64 @@ function PhotoGrid() {
         onDownloadZip={handleDownloadZip}
         downloading={downloading}
       />
+    </div>
+  );
+}
+
+function SortDropdown({
+  sortOrder,
+  onChange,
+}: {
+  sortOrder: "shuffle" | "newest" | "oldest" | "name-asc" | "name-desc";
+  onChange: (v: "shuffle" | "newest" | "oldest" | "name-asc" | "name-desc") => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const options: { value: typeof sortOrder; label: string }[] = [
+    { value: "shuffle", label: "SHUFFLE" },
+    { value: "newest", label: "NEWEST" },
+    { value: "oldest", label: "OLDEST" },
+    { value: "name-asc", label: "NAME A\u2192Z" },
+    { value: "name-desc", label: "NAME Z\u2192A" },
+  ];
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 px-3 py-1 text-xs font-mono uppercase tracking-wider border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41] transition-all"
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 6h18M6 12h12M9 18h6" />
+        </svg>
+        {options.find((o) => o.value === sortOrder)?.label}
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-50 border border-[#00ff4133] bg-black min-w-[120px]">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              className={`block w-full text-left px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider transition-all ${
+                sortOrder === opt.value
+                  ? "text-[#00ff41] bg-[#00ff4111]"
+                  : "text-[#00ff4166] hover:text-[#00ff41] hover:bg-[#00ff4108]"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

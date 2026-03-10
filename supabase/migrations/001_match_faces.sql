@@ -2,6 +2,8 @@
 -- Uses cosine distance (<=> operator) on InsightFace 512-dim embeddings
 -- @TheTechMargin 2026
 
+drop function if exists match_faces(vector, double precision, integer);
+
 create or replace function match_faces(
   query_embedding vector(512),
   match_threshold float default 0.6,
