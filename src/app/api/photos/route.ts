@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
-import { config } from "@/lib/config";
-import { fetchPhotosFromDriveFolder, fetchPhotos, getFolders } from "@/lib/photos";
+import { fetchPhotosWithMetadata, getFolders } from "@/lib/photos";
 
 export const revalidate = 30;
 
 // @TheTechMargin 2026
 export async function GET() {
   try {
-    const photos = config.driveFolderId
-      ? await fetchPhotosFromDriveFolder()
-      : await fetchPhotos();
+    const photos = await fetchPhotosWithMetadata();
 
     const folders = getFolders(photos);
 
