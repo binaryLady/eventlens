@@ -196,7 +196,7 @@ function PhotoGrid() {
     return "shuffle";
   });
   const pendingPhotosRef = useRef<PhotoRecord[] | null>(null);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<NodeJS.Timeout>(undefined);
 
   const setActiveFolder = useCallback((folder: string) => {
     setActiveFolderRaw(folder);
