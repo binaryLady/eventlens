@@ -150,13 +150,11 @@ export default function Lightbox({
     >
       {/* Scan line overlay */}
       <div className="absolute inset-0 pointer-events-none z-[51] opacity-30">
-        <div className="w-full h-full" style={{
-          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,65,0.02) 2px, rgba(0,255,65,0.02) 4px)',
-        }} />
+        <div className="w-full h-full scan-line-bg" />
       </div>
 
       {/* Top bar — safe area aware */}
-      <div className="relative z-[52] flex items-center justify-between px-3 pt-safe-top md:px-4" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
+      <div className="relative z-[52] flex items-center justify-between px-3 pt-safe-area-max md:px-4">
         {/* Counter */}
         {photos.length > 1 && (
           <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4177]">
@@ -169,7 +167,7 @@ export default function Lightbox({
         <button
           ref={closeRef}
           onClick={onClose}
-          className="flex h-10 w-10 items-center justify-center border border-[#00ff4133] bg-black text-[#00ff4199] hover:border-[#00ff41] hover:text-[#00ff41] active:bg-[#00ff4111] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] transition-all"
+          className="flex h-10 w-10 items-center justify-center border border-[#ff00ff33] bg-black text-[#ff00ff99] hover:border-[#00ff41] hover:text-[#00ff41] active:bg-[#ff00ff11] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] transition-all"
           aria-label="Close lightbox"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -190,7 +188,7 @@ export default function Lightbox({
         {photos.length > 1 && (
           <button
             onClick={goPrev}
-            className="hidden md:flex absolute left-2 top-1/2 z-[52] -translate-y-1/2 h-12 w-12 items-center justify-center border border-[#00ff4133] bg-black text-[#00ff4199] hover:border-[#00ff41] hover:text-[#00ff41] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] transition-all md:left-4"
+            className="hidden md:flex absolute left-2 top-1/2 z-[52] -translate-y-1/2 h-12 w-12 items-center justify-center border border-[#ff00ff33] bg-black text-[#ff00ff99] hover:border-[#00ff41] hover:text-[#00ff41] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] transition-all md:left-4"
             aria-label="Previous photo"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -203,7 +201,7 @@ export default function Lightbox({
         {photos.length > 1 && (
           <button
             onClick={goNext}
-            className="hidden md:flex absolute right-2 top-1/2 z-[52] -translate-y-1/2 h-12 w-12 items-center justify-center border border-[#00ff4133] bg-black text-[#00ff4199] hover:border-[#00ff41] hover:text-[#00ff41] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] transition-all md:right-4"
+            className="hidden md:flex absolute right-2 top-1/2 z-[52] -translate-y-1/2 h-12 w-12 items-center justify-center border border-[#ff00ff33] bg-black text-[#ff00ff99] hover:border-[#00ff41] hover:text-[#00ff41] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] transition-all md:right-4"
             aria-label="Next photo"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -234,12 +232,7 @@ export default function Lightbox({
               controls
               autoPlay
               playsInline
-              className="max-w-full max-h-full object-contain select-none"
-              style={{
-                opacity: imageLoaded ? 1 : 0,
-                boxShadow: imageLoaded ? '0 0 30px rgba(0,255,65,0.1)' : 'none',
-                transition: 'opacity 0.3s ease-in-out',
-              }}
+              className={`max-w-full max-h-full object-contain select-none lightbox-media ${imageLoaded ? 'loaded' : ''}`}
               onLoadedData={() => setImageLoaded(true)}
               onError={() => setImageLoaded(true)}
             />
@@ -250,15 +243,8 @@ export default function Lightbox({
               alt={photo.filename}
               fill
               unoptimized
-              className="object-contain select-none"
-              style={{
-                opacity: imageLoaded ? 1 : 0,
-                boxShadow: imageLoaded ? '0 0 30px rgba(0,255,65,0.1)' : 'none',
-                transform: swipeOffset ? `translateX(${swipeOffset * 0.3}px)` : undefined,
-                transition: swipeOffset
-                  ? 'opacity 0.3s ease-in-out'
-                  : 'opacity 0.3s ease-in-out, transform 0.2s ease-out',
-              }}
+              className={`object-contain select-none lightbox-media lightbox-image ${imageLoaded ? 'loaded' : ''} ${swipeOffset ? 'swiping' : ''}`}
+              style={swipeOffset ? { '--swipe-x': `${swipeOffset * 0.3}px` } as React.CSSProperties : undefined}
               draggable={false}
               onLoad={() => setImageLoaded(true)}
               onError={() => setImageLoaded(true)}
@@ -268,7 +254,7 @@ export default function Lightbox({
       </div>
 
       {/* Bottom bar — filename + actions, safe area aware */}
-      <div className="relative z-[52] border-t border-[#00ff4122] bg-black" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
+      <div className="relative z-[52] border-t border-[#00ff4122] bg-black pb-safe-area-max">
         {/* Swipe hint on mobile */}
         <div className="flex justify-center pt-1.5 pb-0.5 md:hidden">
           <div className="w-8 h-0.5 rounded-full bg-[#00ff4133]" />
@@ -296,7 +282,7 @@ export default function Lightbox({
               {hasMeta && (
                 <button
                   onClick={() => setShowMeta(!showMeta)}
-                  className="md:hidden flex h-9 w-9 items-center justify-center border border-[#00ff4133] bg-black text-[#00ff4199] active:bg-[#00ff4111] transition-all"
+                  className="md:hidden flex h-9 w-9 items-center justify-center border border-[#ff00ff33] bg-black text-[#ff00ff99] active:bg-[#ff00ff11] transition-all"
                   aria-label="Toggle details"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

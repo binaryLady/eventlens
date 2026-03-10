@@ -96,7 +96,7 @@ function TerminalLoader() {
               <div
                 key={i}
                 className="animate-boot-line text-[#00ff41] opacity-0"
-                style={{ animationDelay: `${i * 0.1}s` }}
+                style={{ '--delay': `${i * 0.1}s` } as React.CSSProperties}
               >
                 {line}
                 {i < 2 && (
@@ -133,7 +133,7 @@ function GridSkeleton() {
         <div
           key={i}
           className="aspect-[4/3] border border-[#00ff4115] skeleton-terminal"
-          style={{ animationDelay: `${i * 0.15}s` }}
+          style={{ '--delay': `${i * 0.15}s` } as React.CSSProperties}
         >
           {/* Corner brackets */}
           <div className="relative h-full w-full p-2">
@@ -1087,7 +1087,7 @@ function PhotoCard({
             ? "border-[#00ff41] shadow-[0_0_12px_rgba(0,255,65,0.2)]"
             : "border-[#00ff4122] hover:border-[#00ff4166]"
       }`}
-      style={{ animationDelay: `${index * 0.03}s` }}
+      style={{ '--delay': `${index * 0.03}s` } as React.CSSProperties}
     >
       {imgError || !photo.thumbnailUrl ? (
         <div className="flex h-full w-full items-center justify-center bg-[#0a0a0a]">

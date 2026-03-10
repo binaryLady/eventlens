@@ -21,12 +21,12 @@ export default function FloatingActionBar({
   if (selectedCount === 0) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#00ff41] bg-black animate-slide-up" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#00ff41] bg-black animate-slide-up safe-bottom">
       <div className="mx-auto max-w-5xl flex items-center justify-between px-3 py-2.5 md:px-4 md:py-3 gap-2 md:gap-3">
         {/* Left: Cancel */}
         <button
           onClick={onClearSelection}
-          className="shrink-0 border border-[#00ff4133] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[#00ff4166] hover:border-[#00ff41] hover:text-[#00ff41] active:bg-[#00ff4111] transition-all"
+          className="shrink-0 border border-[#ff00ff33] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[#ff00ff66] hover:border-[#00ff41] hover:text-[#00ff41] active:bg-[#ff00ff11] transition-all"
         >
           CANCEL
         </button>
@@ -41,7 +41,7 @@ export default function FloatingActionBar({
           {selectedCount < totalCount && (
             <button
               onClick={onSelectAll}
-              className="hidden sm:block shrink-0 border border-[#00ff4133] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[#00ff4166] hover:border-[#00ff41] hover:text-[#00ff41] active:bg-[#00ff4111] transition-all"
+              className="hidden sm:block shrink-0 border border-[#ff00ff33] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[#ff00ff66] hover:border-[#00ff41] hover:text-[#00ff41] active:bg-[#ff00ff11] transition-all"
             >
               SELECT ALL
             </button>

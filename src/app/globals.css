@@ -137,6 +137,7 @@ body {
 
 .animate-boot-line {
   animation: boot-line 0.4s ease-out forwards;
+  animation-delay: var(--delay, 0s);
 }
 
 .animate-cursor-blink {
@@ -153,6 +154,7 @@ body {
 
 .animate-grid-reveal {
   animation: grid-reveal 0.6s ease-out forwards;
+  animation-delay: var(--delay, 0s);
 }
 
 .animate-crosshair-spin {
@@ -171,6 +173,7 @@ body {
   );
   background-size: 200% 100%;
   animation: skeleton-scan 2s linear infinite;
+  animation-delay: var(--delay, 0s);
 }
 
 /* ═══════════════════════════════════════════
@@ -301,4 +304,54 @@ html {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ═══════════════════════════════════════════
+   SCAN LINE BACKGROUND
+   ═══════════════════════════════════════════ */
+.scan-line-bg {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 255, 65, 0.02) 2px,
+    rgba(0, 255, 65, 0.02) 4px
+  );
+}
+
+/* ═══════════════════════════════════════════
+   SAFE AREA UTILITIES (with max fallback)
+   ═══════════════════════════════════════════ */
+.pt-safe-area-max {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+
+.pb-safe-area-max {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+.mb-safe-bottom {
+  margin-bottom: env(safe-area-inset-bottom);
+}
+
+/* ═══════════════════════════════════════════
+   LIGHTBOX MEDIA STATES
+   ═══════════════════════════════════════════ */
+.lightbox-media {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.lightbox-media.loaded {
+  opacity: 1;
+  box-shadow: 0 0 30px rgba(0, 255, 65, 0.1);
+}
+
+.lightbox-image {
+  transition: opacity 0.3s ease-in-out, transform 0.2s ease-out;
+}
+
+.lightbox-image.swiping {
+  transition: opacity 0.3s ease-in-out;
+  transform: translateX(var(--swipe-x, 0px));
 }

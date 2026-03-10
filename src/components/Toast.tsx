@@ -29,12 +29,11 @@ export default function Toast({
 
   return (
     <div
-      className={`fixed bottom-4 left-3 right-3 z-40 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:bottom-6 transition-all duration-300 ${
+      className={`fixed bottom-4 left-3 right-3 z-40 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:bottom-6 mb-safe-bottom transition-all duration-300 ${
         visible
           ? "translate-y-0 opacity-100"
           : "translate-y-4 opacity-0"
       }`}
-      style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="flex items-center justify-between gap-2 sm:gap-3 border border-[#00ff4144] bg-black px-3 py-2.5 sm:px-4 sm:py-3 shadow-[0_0_20px_rgba(0,255,65,0.1)]">
         <span className="text-[10px] font-mono uppercase tracking-wider text-[#00ff41] min-w-0 truncate">
@@ -54,7 +53,7 @@ export default function Toast({
               setVisible(false);
               setTimeout(onDismiss, 300);
             }}
-            className="p-1 text-[#00ff4144] hover:text-[#00ff41] active:text-[#00ff41] transition-colors"
+            className="p-1 text-[#ff00ff44] hover:text-[#00ff41] active:text-[#00ff41] transition-colors"
             aria-label="Dismiss"
           >
             <svg

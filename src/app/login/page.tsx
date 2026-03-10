@@ -39,11 +39,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="w-full h-full bg-black text-zinc-100 font-mono flex items-center justify-center p-4"
-      style={{
-        backgroundImage:
-          'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,65,0.02) 2px, rgba(0,255,65,0.02) 4px)',
-      }}
+      className="w-full h-full bg-black text-zinc-100 font-mono flex items-center justify-center p-4 scan-line-bg"
     >
       <div className="w-full max-w-sm">
         {/* Terminal window */}
