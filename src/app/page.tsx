@@ -10,6 +10,7 @@ import {
   Suspense,
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { PhotoRecord, PhotosResponse, MatchResult, MatchTier } from "@/lib/types";
 import { searchPhotos } from "@/lib/photos";
 import { config } from "@/lib/config";
@@ -175,7 +176,7 @@ function PhotoGrid() {
   );
   const [matchResults, setMatchResults] = useState<MatchResult[] | null>(null);
   const [matchDescription, setMatchDescription] = useState("");
-  const [_matchTier, setMatchTier] = useState<MatchTier>("text");
+  const [, setMatchTier] = useState<MatchTier>("text");
   const [shuffledPhotos, setShuffledPhotos] = useState<PhotoRecord[]>([]);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -738,11 +739,12 @@ function PhotoGrid() {
                           {[0, 1, 2, 3].map((i) => (
                             <div key={i} className="relative overflow-hidden bg-black">
                               {previews[i]?.thumbnailUrl ? (
-                                <img
+                                <Image
                                   src={previews[i].thumbnailUrl}
                                   alt=""
-                                  loading="lazy"
-                                  className="h-full w-full object-cover opacity-50 group-hover:opacity-70 transition-opacity"
+                                  fill
+                                  sizes="80px"
+                                  className="object-cover opacity-50 group-hover:opacity-70 transition-opacity"
                                 />
                               ) : (
                                 <div className="h-full w-full flex items-center justify-center">
@@ -1060,11 +1062,12 @@ function PhotoCard({
           <span className="text-[#00ff4122] text-2xl">+</span>
         </div>
       ) : (
-        <img
+        <Image
           src={photo.thumbnailUrl}
           alt={photo.filename}
-          loading="lazy"
-          className={`h-full w-full object-cover transition-opacity ${
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          className={`object-cover transition-opacity ${
             selected ? "opacity-70" : "opacity-90 group-hover:opacity-100"
           }`}
           onError={() => setImgError(true)}
