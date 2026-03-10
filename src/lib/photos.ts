@@ -214,7 +214,8 @@ export function getFolders(photos: PhotoRecord[]): string[] {
 
 /**
  * Fetch all subfolder names from the Google Drive parent folder.
- * Uses Drive API v3 — requires the folder to be publicly shared and a valid API key.
+ * Uses Drive API v3 with pagination to support any number of subdirectories.
+ * Requires the folder to be publicly shared and a valid API key.
  * Falls back to photo-derived folders if the Drive folder ID or API key is missing.
  */
 export async function fetchDriveFolders(): Promise<string[]> {
@@ -225,19 +226,36 @@ export async function fetchDriveFolders(): Promise<string[]> {
   }
 
   try {
-    const query = encodeURIComponent(
-      `'${driveFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-    );
-    const url = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(name)&orderBy=name&pageSize=200&key=${googleApiKey}`;
+    const allFolders: string[] = [];
+    let pageToken: string | undefined;
 
-    const res = await fetch(url, { next: { revalidate: 300 } });
-    if (!res.ok) {
+    do {
+      const query = encodeURIComponent(
+        `'${driveFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+      );
+      const pageTokenParam = pageToken ? `&pageToken=${pageToken}` : "";
+      const url = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(name),nextPageToken&orderBy=name&pageSize=200&key=${googleApiKey}${pageTokenParam}`;
 
-    }
+      const res = await fetch(url, { next: { revalidate: 300 } });
+      if (!res.ok) {
+        throw new Error(`Drive API error: ${res.status} ${res.statusText}`);
+      }
 
-    const data: { files?: Array<{ name: string }> } = await res.json();
-    return (data.files || []).map((f) => f.name).sort();
-  } catch {
+      const data: {
+        files?: Array<{ name: string }>;
+        nextPageToken?: string;
+      } = await res.json();
+
+      if (data.files) {
+        allFolders.push(...data.files.map((f) => f.name));
+      }
+
+      pageToken = data.nextPageToken;
+    } while (pageToken);
+
+    return allFolders.sort();
+  } catch (error) {
+    console.error("Failed to fetch Drive folders:", error);
     return [];
   }
 }
