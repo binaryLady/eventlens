@@ -1,15 +1,17 @@
-# EventLens Face Embedding API
-# Accepts a base64 image, returns 512-dim InsightFace embedding(s).
-# Deploy on Railway / Render / Fly.io (needs ~512MB RAM).
-# @TheTechMargin 2026
+"""EventLens Face Embedding API.
+
+Accepts a base64 image, returns 512-dim InsightFace embedding(s).
+Deploy on Railway / Render / Fly.io (needs ~512MB RAM).
+@TheTechMargin 2026
+"""
 
 import os
 import base64
 import numpy as np
-import cv2
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from insightface.app import FaceAnalysis
+import cv2  # type: ignore[import-untyped]
+from flask import Flask, request, jsonify  # type: ignore[import-untyped]
+from flask_cors import CORS  # type: ignore[import-untyped]
+from insightface.app import FaceAnalysis  # type: ignore[import-untyped]
 
 app = Flask(__name__)
 CORS(app)
@@ -23,11 +25,13 @@ API_SECRET = os.environ.get("API_SECRET", "")
 
 @app.route("/health", methods=["GET"])
 def health():
+    """Return service health status and model info."""
     return jsonify({"status": "ok", "model": "buffalo_l", "dims": 512})
 
 
 @app.route("/embed", methods=["POST"])
 def embed():
+    """Accept a base64 image and return face embeddings."""
     # Optional auth
     if API_SECRET:
         auth = request.headers.get("Authorization", "")
@@ -63,7 +67,7 @@ def embed():
 
         return jsonify({"faces": results, "count": len(results)})
 
-    except Exception as e:
+    except (ValueError, OSError) as e:
         return jsonify({"error": str(e)}), 500
 
 
