@@ -385,7 +385,7 @@ function ActionButton({
       disabled={disabled}
       className={`border p-3 text-left transition-colors ${
         disabled
-          ? "border-[var(--el-green-11)] text-[var(--el-green-33)] cursor-not-allowed"
+          ? "border-[var(--el-amber)]/20 text-[var(--el-amber)]/40 cursor-not-allowed"
           : "border-[var(--el-green-33)] text-[var(--el-green)] hover:border-[var(--el-magenta)] hover:bg-[var(--el-magenta-28)]"
       }`}
     >

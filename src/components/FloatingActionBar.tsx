@@ -49,7 +49,7 @@ export default function FloatingActionBar({
           <button
             onClick={onDownloadZip}
             disabled={downloading}
-            className="shrink-0 inline-flex items-center gap-1.5 md:gap-2 border border-[var(--el-green)] bg-[var(--el-green-11)] px-3 md:px-4 py-2 md:py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green)] active:bg-[var(--el-green-22)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="shrink-0 inline-flex items-center gap-1.5 md:gap-2 border border-[var(--el-green)] bg-[var(--el-green-11)] px-3 md:px-4 py-2 md:py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green)] active:bg-[var(--el-green-22)] transition-all disabled:border-[var(--el-amber)]/20 disabled:text-[var(--el-amber)]/40 disabled:bg-transparent disabled:cursor-not-allowed"
           >
             {downloading ? (
               <>
