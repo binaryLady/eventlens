@@ -2,15 +2,14 @@
 /**
  * IMAGE MATCHING API (FACE SEARCH)
  *
- * Finds photos with similar faces using:
- * 1. VECTOR/FACE SEARCH: InsightFace embeddings via face-api service (cosine similarity)
- * 2. FALLBACK: Gemini vision + description matching only when face-api is not configured
+ * Finds photos with similar faces using InsightFace embeddings via
+ * face-api service (cosine similarity against Supabase pgvector).
  *
  * Query: POST /api/match with { image: "base64...", mimeType: "image/jpeg|png|webp|gif" }
  */
 import { NextRequest, NextResponse } from "next/server";
 import { rowToPhoto } from "@/lib/photos";
-import { MatchResult } from "@/lib/types";
+import { PhotoRecord, MatchResult } from "@/lib/types";
 import { saveMatchSession, getPhotosByDriveFileIds } from "@/lib/supabase";
 
 export const maxDuration = 60;
