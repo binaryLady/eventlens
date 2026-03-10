@@ -144,7 +144,6 @@ export default function AdminPage() {
     setLoading(null);
   };
 
-  // Login screen
   if (!authenticated) {
     return (
       <div className="min-h-screen bg-[var(--el-bg)] flex items-center justify-center p-4">
@@ -342,8 +341,6 @@ export default function AdminPage() {
     </div>
   );
 }
-
-// Sub-components
 
 function StatusCard({
   label,

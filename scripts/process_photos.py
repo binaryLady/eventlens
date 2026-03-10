@@ -163,8 +163,7 @@ class DriveClient:
     def rename_file(self, file_id: str, new_name: str):
         if not self._oauth_service:  # type: ignore[attr-defined]
             raise RuntimeError("OAuth2 not configured — cannot rename files. Pass --oauth-creds.")
-        # noinspection PyUnresolvedReference
-        self._oauth_service.files().update(fileId=file_id, body={"name": new_name}).execute()  # type: ignore[attr-defined,union-attr]
+        self._oauth_service.files().update(fileId=file_id, body={"name": new_name}).execute()  # type: ignore[attr-defined,union-attr,no-any-return]
 
     def download_image_base64(self, file_id: str, width: int = 1200) -> tuple[str, str] | None:
         # Try lh3 CDN first (fast, no auth needed)
@@ -425,7 +424,7 @@ def phase_scan(drive: DriveClient, store: SupabaseStore, config: Config, folder_
 
 def phase_rename(drive: DriveClient, store: SupabaseStore, dry_run: bool, folder_filter: str | None) -> int:
     log.info("─── PHASE 2: RENAME ───")
-    if not drive._oauth_service:  # type: ignore[attr-defined]
+    if not drive._oauth_service:  # pylint: disable=protected-access  # type: ignore[attr-defined]
         log.error("OAuth2 not configured. Pass --oauth-creds to enable rename, or use --skip-rename.")
         return 0
 
