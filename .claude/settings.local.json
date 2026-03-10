@@ -13,7 +13,9 @@
       "Bash(then sed -i '' '1s/^/\\\\/\\\\/ @TheTechMargin 2026\\\\n/' \"$f\")",
       "Bash(fi)",
       "Bash(done)",
-      "Bash(do sed -i '' '1i// @TheTechMargin 2026:*)"
+      "Bash(do sed -i '' '1i// @TheTechMargin 2026:*)",
+      "Bash(npm install)",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }
