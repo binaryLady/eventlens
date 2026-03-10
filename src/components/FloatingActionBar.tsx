@@ -34,7 +34,6 @@ export default function FloatingActionBar({
           {selectedCount} {"/"} {totalCount}
         </span>
 
-        {/* Right: Actions */}
         <div className="flex items-center gap-1.5 md:gap-2">
           {selectedCount < totalCount && (
             <button

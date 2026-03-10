@@ -110,14 +110,12 @@ export default function PhotoUpload({
 
   return (
     <div className="mt-4">
-      {/* Upload buttons row */}
       {!isActive && !uploading && (
         <div className="flex items-center justify-center gap-2">
           <button
             onClick={() => fileInputRef.current?.click()}
             className="inline-flex items-center gap-2 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-4 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)]"
           >
-            {/* Crosshair/target icon */}
             <svg
               width="14"
               height="14"
@@ -138,7 +136,6 @@ export default function PhotoUpload({
             Upload Photo to Search for Matches
           </button>
 
-          {/* Camera capture (mobile) */}
           <button
             onClick={() => cameraInputRef.current?.click()}
             className="inline-flex items-center gap-2 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-4 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)] md:hidden"
@@ -159,7 +156,6 @@ export default function PhotoUpload({
             CAPTURE
           </button>
 
-          {/* Hidden file inputs */}
           <input
             ref={fileInputRef}
             type="file"
@@ -180,10 +176,8 @@ export default function PhotoUpload({
         </div>
       )}
 
-      {/* Active state: preview + status */}
       {(uploading || isActive) && (
         <div className="flex items-center justify-center gap-3">
-          {/* Photo preview thumbnail */}
           {preview && (
             <div className="relative h-10 w-10 shrink-0 overflow-hidden border border-[var(--el-green)] animate-pulse-green">
               <Image
@@ -198,7 +192,6 @@ export default function PhotoUpload({
 
           {uploading ? (
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--el-flame-dd)]">
-              {/* Scanning animation */}
               <div className="relative w-4 h-4">
                 <div className="absolute inset-0 border border-[var(--el-green)] animate-crosshair-spin" />
                 <div className="absolute inset-1 bg-[var(--el-green)] animate-pulse" />
@@ -229,7 +222,6 @@ export default function PhotoUpload({
         </div>
       )}
 
-      {/* Error message */}
       {error && (
         <p className="mt-2 text-center text-[10px] font-mono uppercase tracking-wider text-red-500">
           &#9888; {error}

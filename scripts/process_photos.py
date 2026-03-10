@@ -91,6 +91,10 @@ class DriveClient:
         if oauth_creds_path:
             self._init_oauth(oauth_creds_path)
 
+    def is_oauth_configured(self) -> bool:
+        """Check if OAuth2 credentials are configured."""
+        return self._oauth_service is not None
+
     def _init_oauth(self, creds_path: str):
         from google.oauth2.credentials import Credentials
         from google_auth_oauthlib.flow import InstalledAppFlow
@@ -160,10 +164,22 @@ class DriveClient:
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=2, min=2, max=16),
            retry=retry_if_exception(_is_rate_limited))
-    def rename_file(self, file_id: str, new_name: str):
-        if not self._oauth_service:  # type: ignore[attr-defined]
+    def rename_file(self, file_id: str, new_name: str) -> None:
+        """Rename a file in Google Drive using OAuth2.
+        
+        Args:
+            file_id: The Drive file ID
+            new_name: The new filename
+            
+        Raises:
+            RuntimeError: If OAuth2 is not configured
+        """
+        if not self._oauth_service:
             raise RuntimeError("OAuth2 not configured — cannot rename files. Pass --oauth-creds.")
-        self._oauth_service.files().update(fileId=file_id, body={"name": new_name}).execute()  # type: ignore[attr-defined,union-attr,no-any-return]
+        # Google API library uses dynamic typing; type checkers cannot resolve Resource.files()
+        self._oauth_service.files().update(  # type: ignore[attr-defined]
+            fileId=file_id, body={"name": new_name}
+        ).execute()  # type: ignore[no-any-return]
 
     def download_image_base64(self, file_id: str, width: int = 1200) -> tuple[str, str] | None:
         # Try lh3 CDN first (fast, no auth needed)
@@ -424,7 +440,7 @@ def phase_scan(drive: DriveClient, store: SupabaseStore, config: Config, folder_
 
 def phase_rename(drive: DriveClient, store: SupabaseStore, dry_run: bool, folder_filter: str | None) -> int:
     log.info("─── PHASE 2: RENAME ───")
-    if not drive._oauth_service:  # pylint: disable=protected-access  # type: ignore[attr-defined]
+    if not drive.is_oauth_configured():
         log.error("OAuth2 not configured. Pass --oauth-creds to enable rename, or use --skip-rename.")
         return 0
 

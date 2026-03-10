@@ -148,14 +148,12 @@ export default function Lightbox({
       aria-label="Photo viewer"
       ref={dialogRef}
     >
-      {/* Scan line overlay */}
       <div className="absolute inset-0 pointer-events-none z-[51] opacity-30">
         <div className="w-full h-full scan-line-bg" />
       </div>
 
       {/* Top bar — safe area aware */}
       <div className="relative z-[52] flex items-center justify-between px-3 pt-safe-area-max md:px-4">
-        {/* Counter */}
         {photos.length > 1 && (
           <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-77)]">
             {currentIndex + 1} / {photos.length}
@@ -163,7 +161,6 @@ export default function Lightbox({
         )}
         {photos.length <= 1 && <span />}
 
-        {/* Close */}
         <button
           ref={closeRef}
           onClick={onClose}
@@ -177,7 +174,6 @@ export default function Lightbox({
         </button>
       </div>
 
-      {/* Image area — takes remaining space */}
       <div
         className="relative flex-1 flex items-center justify-center min-h-0 px-2 md:px-16"
         onTouchStart={handleTouchStart}
@@ -210,7 +206,6 @@ export default function Lightbox({
           </button>
         )}
 
-        {/* Image or Video */}
         <div className="relative flex items-center justify-center w-full h-full">
           {!imageLoaded && (
             <div className="absolute inset-0 flex items-center justify-center z-10">
@@ -253,13 +248,11 @@ export default function Lightbox({
 
       {/* Bottom bar — filename + actions, safe area aware */}
       <div className="relative z-[52] border-t border-[var(--el-green-22)] bg-[var(--el-bg)] pb-safe-area-max">
-        {/* Swipe hint on mobile */}
         <div className="flex justify-center pt-1.5 pb-0.5 md:hidden">
           <div className="w-8 h-0.5 rounded-full bg-[var(--el-green-33)]" />
         </div>
 
         <div className="px-3 py-2 md:px-6 md:py-3">
-          {/* Main info row */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <h3 className="font-mono text-xs font-bold text-[var(--el-green)] uppercase tracking-wider truncate">
@@ -291,7 +284,6 @@ export default function Lightbox({
                 </button>
               )}
 
-              {/* Download */}
               <a
                 href={photo.downloadUrl}
                 className="inline-flex h-9 items-center gap-2 border border-[var(--el-green-99)] bg-[var(--el-green-11)] px-3 text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] active:bg-[var(--el-green-22)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] transition-all"
