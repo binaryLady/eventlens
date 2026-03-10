@@ -21,7 +21,7 @@ export default function FloatingActionBar({
   if (selectedCount === 0) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--el-green)] bg-black animate-slide-up safe-bottom">
+    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--el-green)] bg-[var(--el-bg)] animate-slide-up safe-bottom">
       <div className="mx-auto max-w-5xl flex items-center justify-between px-3 py-2.5 md:px-4 md:py-3 gap-2 md:gap-3">
         {/* Left: Cancel */}
         <button

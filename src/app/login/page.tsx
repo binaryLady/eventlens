@@ -39,7 +39,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="w-full h-full bg-black text-zinc-100 font-mono flex items-center justify-center p-4 scan-line-bg"
+      className="w-full h-full bg-[var(--el-bg)] text-zinc-100 font-mono flex items-center justify-center p-4 scan-line-bg"
     >
       <div className="w-full max-w-sm">
         {/* Terminal window */}
@@ -79,7 +79,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-black border border-[var(--el-green-d9)] px-3 py-2 text-xs text-[var(--el-green)] placeholder-[var(--el-magenta)] focus:border-[var(--el-green)] focus:outline-none transition-colors"
+                  className="w-full bg-[var(--el-bg)] border border-[var(--el-green-d9)] px-3 py-2 text-xs text-[var(--el-green)] placeholder-[var(--el-magenta)] focus:border-[var(--el-green)] focus:outline-none transition-colors"
                   disabled={loading}
                   autoFocus
                 />

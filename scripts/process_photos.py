@@ -17,7 +17,6 @@ import sys
 import time
 from collections import deque
 from pathlib import Path
-from urllib.parse import quote
 
 import requests
 from dotenv import load_dotenv
@@ -47,7 +46,7 @@ class RateLimiter:
             self.timestamps.popleft()
         if len(self.timestamps) >= self.max_per_minute:
             sleep_time = 60 - (now - self.timestamps[0]) + 0.1
-            log.debug(f"Rate limit: sleeping {sleep_time:.1f}s")
+            log.debug("Rate limit: sleeping %.1fs", sleep_time)
             time.sleep(sleep_time)
         self.timestamps.append(time.time())
 
@@ -72,7 +71,7 @@ class Config:
             required.add("gemini_api_key")
         missing = [k for k in required if not getattr(self, k)]
         if missing:
-            log.error(f"Missing env vars: {', '.join(missing)}")
+            log.error("Missing env vars: %s", ', '.join(missing))
             sys.exit(1)
 
 
@@ -150,7 +149,7 @@ class DriveClient:
             }
             if page_token:
                 params["pageToken"] = page_token
-            r = requests.get(DRIVE_API, params=params)
+            r = requests.get(DRIVE_API, params=params, timeout=30)
             r.raise_for_status()
             data = r.json()
             files.extend(data.get("files", []))

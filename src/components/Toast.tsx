@@ -35,7 +35,7 @@ export default function Toast({
           : "translate-y-4 opacity-0"
       }`}
     >
-      <div className="flex items-center justify-between gap-2 sm:gap-3 border border-[var(--el-green-44)] bg-black px-3 py-2.5 sm:px-4 sm:py-3 shadow-[0_0_20px_rgba(0,255,65,0.1)]">
+      <div className="flex items-center justify-between gap-2 sm:gap-3 border border-[var(--el-green-44)] bg-[var(--el-bg)] px-3 py-2.5 sm:px-4 sm:py-3 shadow-[0_0_20px_rgba(0,255,65,0.1)]">
         <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--el-green)] min-w-0 truncate">
           &#9679; {message.toUpperCase()}
         </span>

@@ -76,7 +76,7 @@ function TerminalLoader() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black grid-bg flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[var(--el-bg)] grid-bg flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         {/* Terminal window */}
         <div className="border border-[var(--el-green-d9)] bg-black/80 p-6">
@@ -513,7 +513,7 @@ function PhotoGrid() {
   };
 
   return (
-    <div className="min-h-screen bg-black grid-bg">
+    <div className="min-h-screen bg-[var(--el-bg)] grid-bg">
       {/* Header */}
       <header className="px-3 pt-4 pb-4 md:px-4 md:pt-12 md:pb-8">
         <div className="mx-auto max-w-5xl">
@@ -1006,7 +1006,7 @@ function SortDropdown({
 
       {/* Desktop: dropdown */}
       {open && (
-        <div className="hidden md:block absolute right-0 top-full mt-1 z-50 border border-[var(--el-green-99)] bg-black min-w-[120px]">
+        <div className="hidden md:block absolute right-0 top-full mt-1 z-50 border border-[var(--el-green-99)] bg-[var(--el-bg)] min-w-[120px]">
           {options.map((opt) => (
             <button
               key={opt.value}
@@ -1027,7 +1027,7 @@ function SortDropdown({
       {open && (
         <div className="md:hidden fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="absolute bottom-0 left-0 right-0 border-t border-[var(--el-green-99)] bg-black animate-slide-up safe-bottom">
+          <div className="absolute bottom-0 left-0 right-0 border-t border-[var(--el-green-99)] bg-[var(--el-bg)] animate-slide-up safe-bottom">
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-8 h-1 rounded-full bg-[var(--el-green-99)]" />
             </div>
@@ -1088,7 +1088,7 @@ function PhotoCard({
   return (
     <button
       onClick={onClick}
-      className={`group relative aspect-[4/3] overflow-hidden border bg-black cursor-pointer transition-all duration-200 motion-safe:hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,0,255,0.25)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] animate-grid-reveal ${
+      className={`group relative aspect-[4/3] overflow-hidden border bg-[var(--el-bg)] cursor-pointer transition-all duration-200 motion-safe:hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,0,255,0.25)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] animate-grid-reveal ${
         selected
           ? "border-[var(--el-green)] shadow-[0_0_15px_rgba(0,255,65,0.25)] ring-1 ring-[var(--el-green)]"
           : matchInfo && matchInfo.confidence >= 70
@@ -1098,7 +1098,7 @@ function PhotoCard({
       style={{ '--delay': `${index * 0.03}s` } as React.CSSProperties}
     >
       {imgError || !photo.thumbnailUrl ? (
-        <div className="flex h-full w-full items-center justify-center bg-[#0a0a0a]">
+        <div className="flex h-full w-full items-center justify-center bg-[var(--el-surface)]">
           <span className="text-[var(--el-green-22)] text-2xl">+</span>
         </div>
       ) : (
