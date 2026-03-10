@@ -163,7 +163,7 @@ class DriveClient:
     def rename_file(self, file_id: str, new_name: str):
         if not self._oauth_service:
             raise RuntimeError("OAuth2 not configured — cannot rename files. Pass --oauth-creds.")
-        self._oauth_service.files().update(fileId=file_id, body={"name": new_name}).execute()
+        self._oauth_service.files().update(fileId=file_id, body={"name": new_name}).execute()  # type: ignore
 
     def download_image_base64(self, file_id: str, width: int = 1200) -> tuple[str, str] | None:
         # Try lh3 CDN first (fast, no auth needed)

@@ -147,7 +147,7 @@ export default function AdminPage() {
   // Login screen
   if (!authenticated) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[var(--el-bg)] flex items-center justify-center p-4">
         <div className="border border-[var(--el-green-33)] bg-black/80 p-8 max-w-md w-full">
           <h1 className="text-[var(--el-green)] font-mono text-lg mb-6 tracking-wider">
             ADMIN ACCESS
@@ -158,7 +158,7 @@ export default function AdminPage() {
             onChange={(e) => setSecret(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleLogin()}
             placeholder="ADMIN_API_SECRET"
-            className="w-full bg-black border border-[var(--el-green-33)] text-[var(--el-green)] font-mono text-sm px-4 py-3 mb-4 focus:border-[var(--el-green)] focus:outline-none placeholder:text-[var(--el-magenta)]"
+            className="w-full bg-[var(--el-bg)] border border-[var(--el-green-33)] text-[var(--el-green)] font-mono text-sm px-4 py-3 mb-4 focus:border-[var(--el-green)] focus:outline-none placeholder:text-[var(--el-magenta)]"
           />
           <button
             onClick={handleLogin}
@@ -174,7 +174,7 @@ export default function AdminPage() {
   const pct = status && status.total > 0 ? Math.round((status.completed / status.total) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-black text-[var(--el-green)] font-mono p-4 md:p-8">
+    <div className="min-h-screen bg-[var(--el-bg)] text-[var(--el-green)] font-mono p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-xl tracking-wider mb-8 border-b border-[var(--el-green-33)] pb-4">
           PHOTO PIPELINE CONTROL

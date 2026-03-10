@@ -188,7 +188,7 @@ export default function Lightbox({
         {photos.length > 1 && (
           <button
             onClick={goPrev}
-            className="hidden md:flex absolute left-2 top-1/2 z-[52] -translate-y-1/2 h-12 w-12 items-center justify-center border border-[var(--el-green-99)] bg-black text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] transition-all md:left-4"
+            className="hidden md:flex absolute left-2 top-1/2 z-[52] -translate-y-1/2 h-12 w-12 items-center justify-center border border-[var(--el-green-99)] bg-[var(--el-bg)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] transition-all md:left-4"
             aria-label="Previous photo"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -201,7 +201,7 @@ export default function Lightbox({
         {photos.length > 1 && (
           <button
             onClick={goNext}
-            className="hidden md:flex absolute right-2 top-1/2 z-[52] -translate-y-1/2 h-12 w-12 items-center justify-center border border-[var(--el-green-99)] bg-black text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] transition-all md:right-4"
+            className="hidden md:flex absolute right-2 top-1/2 z-[52] -translate-y-1/2 h-12 w-12 items-center justify-center border border-[var(--el-green-99)] bg-[var(--el-bg)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] transition-all md:right-4"
             aria-label="Next photo"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -252,7 +252,7 @@ export default function Lightbox({
       </div>
 
       {/* Bottom bar — filename + actions, safe area aware */}
-      <div className="relative z-[52] border-t border-[var(--el-green-22)] bg-black pb-safe-area-max">
+      <div className="relative z-[52] border-t border-[var(--el-green-22)] bg-[var(--el-bg)] pb-safe-area-max">
         {/* Swipe hint on mobile */}
         <div className="flex justify-center pt-1.5 pb-0.5 md:hidden">
           <div className="w-8 h-0.5 rounded-full bg-[var(--el-green-33)]" />
@@ -280,7 +280,7 @@ export default function Lightbox({
               {hasMeta && (
                 <button
                   onClick={() => setShowMeta(!showMeta)}
-                  className="md:hidden flex h-9 w-9 items-center justify-center border border-[var(--el-green-99)] bg-black text-[var(--el-green-99)] active:bg-[var(--el-green-99)] transition-all"
+                  className="md:hidden flex h-9 w-9 items-center justify-center border border-[var(--el-green-99)] bg-[var(--el-bg)] text-[var(--el-green-99)] active:bg-[var(--el-green-99)] transition-all"
                   aria-label="Toggle details"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
