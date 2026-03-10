@@ -206,6 +206,7 @@ function PhotoGrid() {
   const setSortOrder = useCallback((order: "shuffle" | "newest" | "oldest" | "name-asc" | "name-desc") => {
     setSortOrderRaw(order);
     try { localStorage.setItem("eventlens:sortOrder", order); } catch {}
+    if (order !== "shuffle") setBrowseAll(true);
   }, []);
 
   const fetchData = useCallback(async () => {
@@ -353,7 +354,13 @@ function PhotoGrid() {
     setSelectMode(false);
   }, []);
 
-  const [browseAll, setBrowseAll] = useState(false);
+  const [browseAll, setBrowseAll] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("eventlens:sortOrder");
+      return saved !== null && saved !== "shuffle";
+    }
+    return false;
+  });
   const isSearchActive = debouncedQuery !== "" || activeFolder !== "" || matchResults !== null || browseAll;
 
   const applySorting = useCallback((photos: PhotoRecord[]): PhotoRecord[] => {
@@ -407,8 +414,9 @@ function PhotoGrid() {
   }, [shuffledPhotos]);
 
   const heroPhotos = useMemo(() => {
-    return shuffledPhotos.slice(0, 8);
-  }, [shuffledPhotos]);
+    if (sortOrder === "shuffle") return shuffledPhotos.slice(0, 8);
+    return applySorting(allPhotos).slice(0, 8);
+  }, [shuffledPhotos, allPhotos, sortOrder, applySorting]);
 
   const matchInfoMap = useMemo(() => {
     if (!matchResults) return null;
@@ -502,7 +510,7 @@ function PhotoGrid() {
       <header className="px-3 pt-4 pb-4 md:px-4 md:pt-12 md:pb-8">
         <div className="mx-auto max-w-5xl">
           {/* Top bar with coordinates */}
-          <div className="flex items-center justify-between mb-3 md:mb-4 text-[9px] md:text-[10px] text-[#00ff4144] uppercase tracking-widest font-mono">
+          <div className="flex items-center justify-between mb-3 md:mb-4 text-[9px] md:text-[10px] text-[#00ff4166] uppercase tracking-widest font-mono">
             <span className="hidden sm:inline">SYS://PHOTO_RECON</span>
             <span className="sm:hidden">EVENTLENS</span>
             <div className="flex items-center gap-2 md:gap-4">
