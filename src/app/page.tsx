@@ -558,7 +558,7 @@ function PhotoGrid() {
          
               </div>
               <p className="mt-1 md:mt-2 text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-[var(--el-green-d9)] font-mono">
-                     {timeAgo(lastUpdated) && (
+                   {isRecentlyUpdated(lastUpdated) && (
                   <span className="inline-flex items-center gap-1 md:gap-1.5 border border-[var(--el-green-99)] px-1.5 md:px-2 py-0.5 text-[8px] md:text-[10px] font-mono uppercase tracking-wider text-[var(--el-green)]">
                     <span className="h-1 w-1 md:h-1.5 md:w-1.5 bg-[var(--el-green)] animate-pulse" />
                     Last updated: {timeAgo(lastUpdated)}
