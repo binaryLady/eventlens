@@ -19,7 +19,7 @@ import Toast from "@/components/Toast";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import PhotoUpload from "@/components/PhotoUpload";
 import FloatingActionBar from "@/components/FloatingActionBar";
-import ActivityTicker from "@/components/ActivityTicker";
+
 
 function timeAgo(dateStr: string): string {
   if (!dateStr) return "";
@@ -1268,6 +1268,7 @@ function PhotoCard({
   isHot?: boolean;
 }) {
   const [imgError, setImgError] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   return (
     <button
@@ -1286,17 +1287,23 @@ function PhotoCard({
           <span className="text-[var(--el-green-22)] text-2xl">+</span>
         </div>
       ) : (
-        <Image
-          src={photo.thumbnailUrl}
-          alt={photo.filename}
-          fill
-          unoptimized
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className={`object-cover transition-opacity ${
-            selected ? "opacity-70" : "opacity-90 group-hover:opacity-100"
-          }`}
-          onError={() => setImgError(true)}
-        />
+        <>
+          {!imgLoaded && (
+            <div className="absolute inset-0 bg-[var(--el-surface)] animate-pulse" />
+          )}
+          <Image
+            src={photo.thumbnailUrl}
+            alt={photo.filename}
+            fill
+            unoptimized
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className={`object-cover transition-opacity duration-300 ${
+              !imgLoaded ? "opacity-0" : selected ? "opacity-70" : "opacity-90 group-hover:opacity-100"
+            }`}
+            onLoad={() => setImgLoaded(true)}
+            onError={() => setImgError(true)}
+          />
+        </>
       )}
 
       {/* Video play indicator */}
