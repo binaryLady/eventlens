@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx tsc --noEmit --pretty)"
+      "Bash(npx tsc --noEmit --pretty)",
+      "Bash(git -C /Users/soniacookbroen/Development/eventlens log --oneline -6)",
+      "Read(//Users/soniacookbroen/Development/eventlens/**)",
+      "Bash(npx vercel env ls)",
+      "Bash(npm install @supabase/supabase-js)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npm run build)"
     ]
   }
 }
