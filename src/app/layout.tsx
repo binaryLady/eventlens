@@ -21,6 +21,9 @@ const eventName = process.env.NEXT_PUBLIC_EVENT_NAME || "HARD MODE";
 export const metadata: Metadata = {
   title: `${eventName} // PHOTO RECON`,
   description: "Visual reconnaissance system — find yourself in event photos",
+  icons: {
+    icon: "/favicon.svg",
+  },
   openGraph: {
     title: `${eventName} // PHOTO RECON`,
     description: "Visual reconnaissance system — find yourself in event photos",

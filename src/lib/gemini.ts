@@ -51,16 +51,7 @@ async function callGemini(parts: GeminiPart[]): Promise<string> {
   return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
 
-/**
- * Phase 1: Analyze the uploaded selfie and produce a structured description
- * optimized for matching against event photo people descriptions.
- *
- * Key improvements:
- *   - Output structured attributes that align with how apps-script indexes photos
- *   - Focus on PERSISTENT features (face shape, hair, skin tone, glasses)
- *     over transient ones (expression, pose)
- *   - Produce both specific terms and broader category terms for flexible matching
- */
+// @TheTechMargin 2026
 export async function describePersonForMatching(
   imageBase64: string,
   mimeType: string,
@@ -100,17 +91,7 @@ If no person is clearly visible, respond with exactly: NO_PERSON_DETECTED`;
   ]);
 }
 
-/**
- * Phase 2: Visual face matching — compare the reference selfie against
- * a batch of event photo thumbnails.
- *
- * Key improvements over v1:
- *   - Structured output format with explicit face-feature comparison
- *   - Focus on facial geometry (face shape, eye spacing, nose, jawline)
- *   - De-emphasize clothing since it changes between photos
- *   - Require reasoning before confidence score
- *   - Tighter confidence calibration guidance
- */
+// @TheTechMargin 2026
 export async function verifyFaceMatches(
   uploadedImageBase64: string,
   uploadedMimeType: string,
@@ -193,9 +174,7 @@ Only include photos where confidence >= 35. If no matches, return [].
           reason: m.reason || "Visual match",
         }));
     }
-  } catch {
-    console.error("Failed to parse Gemini face match response:", response);
-  }
+  } catch {}
 
   return [];
 }

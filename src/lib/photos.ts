@@ -19,11 +19,11 @@ export function extractDriveFileId(driveUrl: string): string {
  * Uses the Google Visualization API (gviz/tq) which works when the sheet
  * is shared as "Anyone with the link" — no API key needed.
  */
+// @TheTechMargin 2026
 export async function fetchPhotos(): Promise<PhotoRecord[]> {
   const { sheetId } = config;
 
   if (!sheetId) {
-    console.error("Missing GOOGLE_SHEET_ID");
     return [];
   }
 
@@ -39,9 +39,6 @@ export async function fetchPhotos(): Promise<PhotoRecord[]> {
   });
 
   if (!res.ok) {
-    console.error(
-      `Google Sheets fetch error: ${res.status} ${res.statusText}`,
-    );
     return [];
   }
 
@@ -77,7 +74,6 @@ export async function fetchPhotos(): Promise<PhotoRecord[]> {
   }
 
   if (!jsonStr) {
-    console.error("Could not parse Google Sheets response. Raw:", text.slice(0, 200));
     return [];
   }
 
@@ -91,8 +87,7 @@ export async function fetchPhotos(): Promise<PhotoRecord[]> {
 
   try {
     data = JSON.parse(jsonStr);
-  } catch (e) {
-    console.error("Failed to parse sheet JSON:", e);
+  } catch {
     return [];
   }
 
@@ -237,14 +232,12 @@ export async function fetchDriveFolders(): Promise<string[]> {
 
     const res = await fetch(url, { next: { revalidate: 300 } });
     if (!res.ok) {
-      console.error(`Drive folders fetch error: ${res.status} ${res.statusText}`);
-      return [];
+
     }
 
     const data: { files?: Array<{ name: string }> } = await res.json();
     return (data.files || []).map((f) => f.name).sort();
-  } catch (error) {
-    console.error("Failed to fetch Drive folders:", error);
+  } catch {
     return [];
   }
 }

@@ -11,7 +11,8 @@
       "Bash(mkdir -p /Users/soniacookbroen/Development/eventlens/.claude/worktrees/exciting-chandrasekhar/.claude)",
       "Bash(cp /Users/soniacookbroen/Development/eventlens/.claude/launch.json /Users/soniacookbroen/Development/eventlens/.claude/worktrees/exciting-chandrasekhar/.claude/launch.json)",
       "mcp__Claude_Preview__preview_start",
-      "Bash(openssl rand -base64 32)"
+      "Bash(openssl rand -base64 32)",
+      "Bash(ls -la /Users/soniacookbroen/Development/eventlens/src/app/favicon*)"
     ]
   }
 }

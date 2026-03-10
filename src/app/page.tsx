@@ -1,3 +1,4 @@
+// @TheTechMargin 2026
 "use client";
 
 import {
@@ -39,9 +40,6 @@ function isRecentlyUpdated(dateStr: string): boolean {
   return now.getTime() - date.getTime() < 5 * 60 * 1000;
 }
 
-/* ═══════════════════════════════════════════
-   TERMINAL BOOT LOADING ANIMATION
-   ═══════════════════════════════════════════ */
 function TerminalLoader() {
   const [lines, setLines] = useState<string[]>([]);
   const [showCursor, setShowCursor] = useState(true);
@@ -127,9 +125,6 @@ function TerminalLoader() {
   );
 }
 
-/* ═══════════════════════════════════════════
-   GRID SKELETON LOADER (terminal-styled)
-   ═══════════════════════════════════════════ */
 function GridSkeleton() {
   return (
     <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
@@ -364,8 +359,7 @@ function PhotoGrid() {
 
       // Exit select mode after successful download
       clearSelection();
-    } catch (err) {
-      console.error("ZIP download error:", err);
+    } catch {
       setToast({ message: "ZIP DOWNLOAD FAILED — RETRY", count: 0 });
     } finally {
       setDownloading(false);
@@ -392,6 +386,15 @@ function PhotoGrid() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/login";
+    } catch {
+      setToast({ message: "LOGOUT FAILED", count: 0 });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black grid-bg">
       {/* Header */}
@@ -400,7 +403,16 @@ function PhotoGrid() {
           {/* Top bar with coordinates */}
           <div className="flex items-center justify-between mb-4 text-[10px] text-[#00ff4144] uppercase tracking-widest font-mono">
             <span>SYS://PHOTO_RECON</span>
-            <span>{allPhotos.length > 0 ? `${allPhotos.length} ASSETS INDEXED` : "STANDBY"}</span>
+            <div className="flex items-center gap-4">
+              <span>{allPhotos.length > 0 ? `${allPhotos.length} ASSETS INDEXED` : "STANDBY"}</span>
+              <button
+                onClick={handleLogout}
+                className="text-[#00ff4144] hover:text-[#00ff41] transition-colors underline"
+                title="Logout"
+              >
+                [LOGOUT]
+              </button>
+            </div>
           </div>
 
           {/* Title block */}
