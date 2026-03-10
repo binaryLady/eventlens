@@ -1,4 +1,13 @@
 // @TheTechMargin 2026
+/**
+ * TEXT SEARCH API
+ * 
+ * Supports two search modes:
+ * 1. TEXT ONLY: Full-text + trigram + substring search on descriptions, filenames, etc.
+ * 2. TEXT + IMAGE (SEMANTIC): Embeds query as vector and searches description embeddings + text
+ * 
+ * Query: /api/search?q={text}&folder={optional}
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { rowToPhoto } from "@/lib/photos";
 import { PhotoRow, searchPhotosSemantic } from "@/lib/supabase";

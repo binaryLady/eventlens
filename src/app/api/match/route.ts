@@ -1,4 +1,13 @@
 // @TheTechMargin 2026
+/**
+ * IMAGE MATCHING API (FACE SEARCH)
+ * 
+ * Finds photos with similar faces using:
+ * 1. VECTOR/FACE SEARCH: InsightFace embeddings via face-api service (cosine similarity)
+ * 2. FALLBACK: Gemini vision + description matching if face-api unavailable
+ * 
+ * Query: POST /api/match with { image: "base64...", mimeType: "image/jpeg|png|webp|gif" }
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { fetchPhotosWithMetadata } from "@/lib/photos";
 import { describePersonForMatching, verifyFaceMatches } from "@/lib/gemini";
