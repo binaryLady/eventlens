@@ -23,6 +23,7 @@ export default function PhotoUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const deepScanTimerRef = useRef<NodeJS.Timeout>();
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const clearDeepScanTimer = useCallback(() => {
     if (deepScanTimerRef.current) {
@@ -61,10 +62,14 @@ export default function PhotoUpload({
       const mimeType = file.type;
 
       try {
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
         const res = await fetch("/api/match", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ image: base64, mimeType }),
+          signal: controller.signal,
         });
 
         clearDeepScanTimer();
@@ -83,11 +88,13 @@ export default function PhotoUpload({
         }
 
         onMatchResults(data);
-      } catch {
+      } catch (err) {
         clearDeepScanTimer();
+        if (err instanceof DOMException && err.name === "AbortError") return;
         setError("NETWORK ERROR — RETRY");
       }
 
+      abortControllerRef.current = null;
       setUploading(false);
     };
 
@@ -99,6 +106,16 @@ export default function PhotoUpload({
     if (file) processFile(file);
     e.target.value = "";
   };
+
+  const handleCancel = useCallback(() => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    clearDeepScanTimer();
+    setPreview(null);
+    setError(null);
+    setUploading(false);
+    onClear();
+  }, [clearDeepScanTimer, onClear]);
 
   const handleClear = () => {
     clearDeepScanTimer();
@@ -191,12 +208,24 @@ export default function PhotoUpload({
           )}
 
           {uploading ? (
-            <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--el-flame-dd)]">
-              <div className="relative w-4 h-4">
-                <div className="absolute inset-0 border border-[var(--el-green)] animate-crosshair-spin" />
-                <div className="absolute inset-1 bg-[var(--el-green)] animate-pulse" />
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--el-flame-dd)]">
+                <div className="relative w-4 h-4">
+                  <div className="absolute inset-0 border border-[var(--el-green)] animate-crosshair-spin" />
+                  <div className="absolute inset-1 bg-[var(--el-green)] animate-pulse" />
+                </div>
+                {statusText}
               </div>
-              {statusText}
+              <button
+                onClick={handleCancel}
+                className="inline-flex items-center gap-1.5 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+                CANCEL
+              </button>
             </div>
           ) : (
             <button

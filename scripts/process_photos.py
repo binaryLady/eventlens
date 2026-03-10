@@ -318,6 +318,29 @@ class SupabaseStore:
             {"description_embedding": embedding}
         ).eq("drive_file_id", drive_file_id).execute()
 
+    def update_description_embeddings_batch(self, updates: list[tuple[str, list[float]]]) -> int:
+        """Batch update description embeddings.
+        
+        Args:
+            updates: List of (drive_file_id, embedding) tuples
+            
+        Returns:
+            Number of embeddings updated
+        """
+        if not updates:
+            return 0
+        
+        # Build list of update objects for batch processing
+        update_rows = [
+            {"drive_file_id": file_id, "description_embedding": emb}
+            for file_id, emb in updates
+        ]
+        
+        self.client.table("photos").upsert(
+            update_rows, on_conflict="drive_file_id"
+        ).execute()
+        return len(updates)
+
     def get_photos_missing_embedding(self) -> list[dict]:
         rows = []
         offset = 0
@@ -510,10 +533,20 @@ def _embed_descriptions(gemini: GeminiClient, store: SupabaseStore, photos: list
     log.info("Embedding %d descriptions...", len(texts))
     try:
         embeddings = gemini.embed_texts_batch(texts)
-        for fid, emb in tqdm(zip(file_ids, embeddings), total=len(file_ids), desc="Storing embeddings"):
-            store.update_description_embedding(fid, emb)
-        log.info("Stored %d description embeddings", len(embeddings))
-        return len(embeddings)
+        
+        # Save embeddings in sub-batches for better performance and error recovery
+        batch_size = 100
+        total_saved = 0
+        for i in range(0, len(file_ids), batch_size):
+            batch_end = min(i + batch_size, len(file_ids))
+            batch_updates = list(zip(file_ids[i:batch_end], embeddings[i:batch_end]))
+            saved = store.update_description_embeddings_batch(batch_updates)
+            total_saved += saved
+            if saved < batch_size and batch_end < len(file_ids):
+                log.warning("Partial batch save: expected %d, saved %d", batch_size, saved)
+        
+        log.info("Stored %d description embeddings", total_saved)
+        return total_saved
     except (IOError, ValueError, RuntimeError) as e:
         log.error("Embedding batch failed: %s", e)
         return 0

@@ -328,8 +328,6 @@ function PhotoGrid() {
       setMatchResults(data.matches);
       setMatchDescription(data.description);
       setMatchTier(data.tier || "text");
-      setSearchInput("");
-      setDebouncedQuery("");
       setActiveFolder("");
     },
     [],
@@ -393,7 +391,11 @@ function PhotoGrid() {
 
   const filteredPhotos = useMemo(() => {
     if (matchResults !== null) {
-      return matchResults.map((m) => m.photo);
+      const matchPhotos = matchResults.map((m) => m.photo);
+      if (debouncedQuery) {
+        return searchPhotos(debouncedQuery, matchPhotos);
+      }
+      return matchPhotos;
     }
     if (debouncedQuery) {
       // Prefer server-side semantic results if available
@@ -645,7 +647,7 @@ function PhotoGrid() {
           {/* Row 2: sort + select */}
           <div className="flex items-center justify-between gap-2">
             <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-d9)]">
-              {debouncedQuery && searchSource === "server" ? "SEMANTIC SEARCH" : debouncedQuery ? "TEXT SEARCH" : ""}
+              {matchResults !== null && debouncedQuery ? "FACE + TEXT" : debouncedQuery && searchSource === "server" ? "SEMANTIC SEARCH" : debouncedQuery ? "TEXT SEARCH" : ""}
             </span>
             <div className="flex items-center gap-1.5">
               <SortDropdown sortOrder={sortOrder} onChange={setSortOrder} />
