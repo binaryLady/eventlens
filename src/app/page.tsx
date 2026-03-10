@@ -1329,14 +1329,7 @@ function PhotoCard({
         </>
       )}
 
-      {/* Live photo indicator */}
-      {(photo.mimeType?.startsWith("video/") || /\.(mp4|mov|webm|avi)$/i.test(photo.filename)) && (
-        <div className="absolute top-1.5 left-1.5 pointer-events-none">
-          <span className="px-1.5 py-0.5 text-[8px] font-mono font-bold uppercase tracking-wider border border-[var(--el-green-d9)] bg-[rgba(26,26,26,0.7)] text-[var(--el-green-d9)]">
-            LIVE
-          </span>
-        </div>
-      )}
+  
 
       {/* Select mode checkbox overlay */}
       {selectMode && (
