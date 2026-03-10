@@ -7,7 +7,14 @@ export function createServerClient(): SupabaseClient {
   if (!url || !key) {
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
   }
-  return createClient(url, key, { auth: { persistSession: false } });
+  return createClient(url, key, {
+    auth: { persistSession: false },
+    global: {
+      // Opt out of Next.js fetch cache — Supabase responses can exceed
+      // the 2 MB limit and should not be cached by the data cache.
+      fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+    },
+  });
 }
 
 export function createAnonClient(): SupabaseClient {
