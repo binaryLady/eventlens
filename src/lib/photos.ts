@@ -48,6 +48,13 @@ function driveFilesToPhotos(files: DriveFile[], folder: string): PhotoRecord[] {
   }));
 }
 
+const METADATA_COLUMNS = [
+  "id", "drive_file_id", "filename", "drive_url", "folder",
+  "visible_text", "people_descriptions", "scene_description",
+  "face_count", "mime_type", "processed_at", "created_at",
+  "status", "error_message",
+].join(",");
+
 async function fetchSupabaseMetadata(): Promise<Map<string, PhotoRow>> {
   if (!supabaseAvailable()) return new Map();
   try {
@@ -55,7 +62,7 @@ async function fetchSupabaseMetadata(): Promise<Map<string, PhotoRow>> {
     const supabase = createServerClient();
     const { data, error } = await supabase
       .from("photos")
-      .select("*")
+      .select(METADATA_COLUMNS)
       .eq("status", "completed");
     if (error) return new Map();
     const map = new Map<string, PhotoRow>();
