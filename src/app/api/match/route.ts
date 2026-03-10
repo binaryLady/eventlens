@@ -17,6 +17,24 @@ export const maxDuration = 60;
 const FACE_API_URL = process.env.FACE_API_URL || "";
 const FACE_API_SECRET = process.env.FACE_API_SECRET || "";
 const EMBED_TIMEOUT_MS = 15_000;
+const VECTOR_THRESHOLD = 0.68;
+const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const MAX_BASE64_SIZE = 10 * 1024 * 1024;
+
+function vectorResponse(
+  matches: MatchResult[],
+  embedding: number[] | null,
+  error?: string,
+) {
+  saveMatchSession({
+    tier: "vector",
+    matchCount: matches.length,
+    topConfidence: matches[0]?.confidence ?? null,
+    queryEmbedding: embedding,
+    matchedPhotoIds: matches.map((m) => m.photo.driveFileId),
+  });
+  return NextResponse.json({ matches, description: "", tier: "vector", ...(error ? { error } : {}) });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,36 +42,23 @@ export async function POST(request: NextRequest) {
     if (!image || !mimeType) {
       return NextResponse.json({ error: "Missing image or mimeType" }, { status: 400 });
     }
-
-    const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp", "image/gif"];
     if (!ALLOWED_MIME.includes(mimeType)) {
       return NextResponse.json({ error: "Invalid image type" }, { status: 400 });
     }
-
-    const MAX_BASE64_SIZE = 10 * 1024 * 1024;
     if (typeof image !== "string" || image.length > MAX_BASE64_SIZE) {
       return NextResponse.json({ error: "Image too large" }, { status: 400 });
     }
-
     if (!FACE_API_URL) {
-      return NextResponse.json(
-        { error: "Face matching service is not configured." },
-        { status: 503 },
-      );
+      return NextResponse.json({ error: "Face matching service is not configured." }, { status: 503 });
     }
 
     return vectorMatch(image);
   } catch {
-    return NextResponse.json(
-      { error: "Failed to process photo match" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to process photo match" }, { status: 500 });
   }
 }
 
-// ── Vector search path ─────────────────────────────────────────────────
-
-const VECTOR_THRESHOLD = 0.68;
+// ── Vector search ──────────────────────────────────────────────────────
 
 async function vectorMatch(imageBase64: string) {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -87,13 +92,7 @@ async function vectorMatch(imageBase64: string) {
   } = await embedRes.json();
 
   if (embedData.count === 0) {
-    saveMatchSession({ tier: "vector", matchCount: 0, topConfidence: null, queryEmbedding: null, matchedPhotoIds: [] });
-    return NextResponse.json({
-      matches: [],
-      description: "",
-      tier: "vector",
-      error: "No face detected in the uploaded photo. Please upload a clear photo of a person.",
-    });
+    return vectorResponse([], null, "No face detected in the uploaded photo. Please upload a clear photo of a person.");
   }
 
   const bestFace = embedData.faces.reduce((a, b) => (a.det_score > b.det_score ? a : b));
@@ -102,8 +101,7 @@ async function vectorMatch(imageBase64: string) {
   const faceMatches = await matchFacesByEmbedding(bestFace.embedding, VECTOR_THRESHOLD, 30);
 
   if (faceMatches.length === 0) {
-    saveMatchSession({ tier: "vector", matchCount: 0, topConfidence: null, queryEmbedding: bestFace.embedding, matchedPhotoIds: [] });
-    return NextResponse.json({ matches: [], description: "", tier: "vector" });
+    return vectorResponse([], bestFace.embedding);
   }
 
   // Deduplicate: keep best similarity per photo
@@ -116,8 +114,7 @@ async function vectorMatch(imageBase64: string) {
   }
 
   // Fetch only the matched photo rows from Supabase (not the entire catalog)
-  const matchedFileIds = Array.from(bestByPhoto.keys());
-  const photoRows = await getPhotosByDriveFileIds(matchedFileIds);
+  const photoRows = await getPhotosByDriveFileIds(Array.from(bestByPhoto.keys()));
   const photoByFileId = new Map<string, PhotoRecord>();
   for (const row of photoRows) photoByFileId.set(row.drive_file_id, rowToPhoto(row));
 
@@ -132,17 +129,7 @@ async function vectorMatch(imageBase64: string) {
       tier: "vector",
     });
   });
-
   matches.sort((a, b) => b.confidence - a.confidence);
 
-  saveMatchSession({
-    tier: "vector",
-    matchCount: matches.length,
-    topConfidence: matches[0]?.confidence ?? null,
-    queryEmbedding: bestFace.embedding,
-    matchedPhotoIds: matches.map((m) => m.photo.driveFileId),
-  });
-
-  return NextResponse.json({ matches, description: "", tier: "vector" });
+  return vectorResponse(matches, bestFace.embedding);
 }
-
