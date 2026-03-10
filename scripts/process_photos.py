@@ -319,7 +319,7 @@ class SupabaseStore:
         ).eq("drive_file_id", drive_file_id).execute()
 
     def update_description_embeddings_batch(self, updates: list[tuple[str, list[float]]]) -> int:
-        """Batch update description embeddings.
+        """Batch update description embeddings, only if not already set.
         
         Args:
             updates: List of (drive_file_id, embedding) tuples
@@ -330,16 +330,16 @@ class SupabaseStore:
         if not updates:
             return 0
         
-        # Build list of update objects for batch processing
-        update_rows = [
-            {"drive_file_id": file_id, "description_embedding": emb}
-            for file_id, emb in updates
-        ]
+        updated_count = 0
+        for file_id, emb in updates:
+            # Only update if description_embedding is null (add only, don't overwrite)
+            resp = self.client.table("photos").update(
+                {"description_embedding": emb}
+            ).eq("drive_file_id", file_id).is_("description_embedding", "null").execute()
+            if resp.data:
+                updated_count += 1
         
-        self.client.table("photos").upsert(
-            update_rows, on_conflict="drive_file_id"
-        ).execute()
-        return len(updates)
+        return updated_count
 
     def get_photos_missing_embedding(self) -> list[dict]:
         rows = []
@@ -435,11 +435,7 @@ def phase_describe(
     log.info("─── PHASE 2: DESCRIBE ───")
     if not _check_embedding_column(store):
         return 0
-    statuses = ["pending"]
-    if retry_errors:
-        statuses.append("error")
-
-    photos = store.get_photos_by_status(statuses)
+    photos = store.get_photos_missing_embedding()
     if folder_filter:
         photos = [p for p in photos if p["folder"] == folder_filter]
 
