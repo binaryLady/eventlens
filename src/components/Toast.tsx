@@ -34,14 +34,16 @@ export default function Toast({
           : "translate-y-4 opacity-0"
       }`}
     >
-      <div className="flex items-center gap-3 rounded-xl bg-zinc-800 px-4 py-3 shadow-2xl border border-zinc-700">
-        <span className="text-sm text-zinc-200">{message}</span>
+      <div className="flex items-center gap-3 border border-[#00ff4144] bg-black px-4 py-3 shadow-[0_0_20px_rgba(0,255,65,0.1)]">
+        <span className="text-[10px] font-mono uppercase tracking-wider text-[#00ff41]">
+          &#9679; {message.toUpperCase()}
+        </span>
         {action && (
           <button
             onClick={action.onClick}
-            className="rounded-lg bg-[var(--color-primary)] px-3 py-1 text-sm font-medium text-white hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
+            className="border border-[#00ff41] px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-[#00ff41] hover:bg-[#00ff4111] transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41]"
           >
-            {action.label}
+            [{action.label}]
           </button>
         )}
         <button
@@ -49,12 +51,12 @@ export default function Toast({
             setVisible(false);
             setTimeout(onDismiss, 300);
           }}
-          className="ml-1 text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="ml-1 text-[#00ff4144] hover:text-[#00ff41] transition-colors"
           aria-label="Dismiss"
         >
           <svg
-            width="16"
-            height="16"
+            width="14"
+            height="14"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"

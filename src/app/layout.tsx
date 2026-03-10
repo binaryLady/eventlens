@@ -1,29 +1,40 @@
 import type { Metadata } from "next";
-import { Barlow_Condensed, DM_Sans } from "next/font/google";
+import { JetBrains_Mono, Space_Mono, Pacifico } from "next/font/google";
 import "./globals.css";
+import Footer from "@/components/Footer";
 
-const barlowCondensed = Barlow_Condensed({
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-mono",
+  display: "swap",
+});
+
+const spaceMono = Space_Mono({
+  subsets: ["latin"],
+  weight: ["400", "700"],
   variable: "--font-heading",
   display: "swap",
 });
 
-const dmSans = DM_Sans({
+const pacifico = Pacifico({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-body",
+  weight: ["400"],
+  variable: "--font-pacifico",
   display: "swap",
 });
 
-const eventName = process.env.NEXT_PUBLIC_EVENT_NAME || "Event Photos";
+const eventName = process.env.NEXT_PUBLIC_EVENT_NAME || "HARD MODE";
 
 export const metadata: Metadata = {
-  title: `${eventName} — Find Your Photos`,
-  description: "Search through event photos by text, people, or scenes",
+  title: `${eventName} // PHOTO RECON`,
+  description: "Visual reconnaissance system — find yourself in event photos",
+  icons: {
+    icon: "/favicon.svg",
+  },
   openGraph: {
-    title: `${eventName} — Find Your Photos`,
-    description: "Search through event photos by text, people, or scenes",
+    title: `${eventName} // PHOTO RECON`,
+    description: "Visual reconnaissance system — find yourself in event photos",
   },
 };
 
@@ -32,8 +43,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const primaryColor = process.env.NEXT_PUBLIC_PRIMARY_COLOR || "#3b82f6";
-  const accentColor = process.env.NEXT_PUBLIC_ACCENT_COLOR || "#f59e0b";
+  const primaryColor = process.env.NEXT_PUBLIC_PRIMARY_COLOR || "#00ff41";
+  const accentColor = process.env.NEXT_PUBLIC_ACCENT_COLOR || "#00ff41";
 
   return (
     <html lang="en" className="dark">
@@ -45,9 +56,12 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${barlowCondensed.variable} ${dmSans.variable} font-body antialiased bg-zinc-950 text-zinc-100`}
+        className={`${jetbrainsMono.variable} ${spaceMono.variable} ${pacifico.variable} font-mono antialiased bg-black text-zinc-100 scan-lines flex flex-col min-h-screen`}
       >
-        {children}
+        <div className="flex-1">
+          {children}
+        </div>
+        <Footer />
       </body>
     </html>
   );

@@ -24,7 +24,7 @@ async function callGemini(parts: GeminiPart[]): Promise<string> {
   }
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${geminiApiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -51,29 +51,34 @@ async function callGemini(parts: GeminiPart[]): Promise<string> {
   return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
 
-/**
- * Phase 1: Analyze the uploaded photo and describe the person in detail
- * for matching against event photo descriptions.
- */
+// @TheTechMargin 2026
 export async function describePersonForMatching(
   imageBase64: string,
   mimeType: string,
 ): Promise<string> {
-  const prompt = `You are analyzing a photo to help find this person in event photos.
+  const prompt = `You are analyzing a selfie/photo to find this person in a large set of event photos.
 
-Describe the person in this photo with specific, searchable attributes. Focus on:
-- Hair: color, length, style (e.g., "short brown hair", "long blonde curly hair")
-- Skin tone and approximate ethnicity if clearly visible
-- Clothing: colors, type, patterns (e.g., "red plaid shirt", "blue blazer")
-- Accessories: glasses, hat, jewelry, lanyard, badge
-- Facial hair: beard, mustache, clean-shaven
-- Build: approximate build
-- Any other distinctive features
+Describe this person using SPECIFIC, SEARCHABLE attributes. Prioritize PERSISTENT physical features over clothing (clothing helps but faces are primary).
 
-Output ONLY the description as comma-separated attributes, nothing else.
-Example: "short brown hair, glasses, blue polo shirt, beard, lanyard with badge"
+Output format: comma-separated attributes, grouped by category. Example:
+"male, dark skin, short black hair, beard, glasses, mid-30s, blue polo shirt, lanyard"
 
-If no person is clearly visible, respond with "NO_PERSON_DETECTED".`;
+Categories to cover (in order of matching importance):
+1. GENDER: male/female/non-binary presentation
+2. SKIN TONE: light, medium, dark, etc.
+3. HAIR: color + length + style (e.g., "long blonde curly hair", "bald", "short brown hair")
+4. FACIAL HAIR: beard, mustache, goatee, clean-shaven
+5. GLASSES: glasses, sunglasses, no glasses
+6. AGE RANGE: approximate decade (20s, 30s, 40s, etc.)
+7. BUILD: slim, medium, heavy
+8. CLOTHING: top color + type (e.g., "red flannel shirt", "black hoodie")
+9. ACCESSORIES: hat, lanyard, badge, jewelry, headphones
+10. DISTINCTIVE FEATURES: tattoos, piercings, unique characteristics
+
+Be precise with colors (don't say "dark shirt" — say "black t-shirt" or "navy blazer").
+Output ONLY the comma-separated description, nothing else.
+
+If no person is clearly visible, respond with exactly: NO_PERSON_DETECTED`;
 
   return callGemini([
     { text: prompt },
@@ -86,10 +91,7 @@ If no person is clearly visible, respond with "NO_PERSON_DETECTED".`;
   ]);
 }
 
-/**
- * Phase 3: Visual face matching — send the uploaded photo and a batch of
- * candidate thumbnails to Gemini for face comparison.
- */
+// @TheTechMargin 2026
 export async function verifyFaceMatches(
   uploadedImageBase64: string,
   uploadedMimeType: string,
@@ -101,12 +103,11 @@ export async function verifyFaceMatches(
 ): Promise<Array<{ id: string; confidence: number; reason: string }>> {
   if (candidateThumbnails.length === 0) return [];
 
-  // Build the prompt with numbered candidate images
   const parts: GeminiPart[] = [
     {
-      text: `You are a face matching system for an event photo finder app.
+      text: `You are an expert face matching system. Your job is to determine if the SAME PERSON from the reference photo appears in any of the event photos below.
 
-REFERENCE PHOTO (the person we're looking for):`,
+REFERENCE PHOTO (the person we are looking for):`,
     },
     {
       inline_data: {
@@ -115,16 +116,31 @@ REFERENCE PHOTO (the person we're looking for):`,
       },
     },
     {
-      text: `\nBelow are ${candidateThumbnails.length} EVENT PHOTOS numbered 1 through ${candidateThumbnails.length}.
-For each photo, determine if the SAME PERSON from the reference photo appears in it.
+      text: `
+Below are ${candidateThumbnails.length} EVENT PHOTOS. For each one, compare faces carefully.
 
-Consider: face shape, hair, skin tone, glasses, and overall appearance.
-Clothing may differ between photos — focus on facial features.
+MATCHING CRITERIA (in priority order):
+1. FACE SHAPE & STRUCTURE: jawline, forehead shape, cheekbones
+2. EYES: shape, spacing, brow line
+3. NOSE: size, shape, bridge width
+4. SKIN TONE: should be consistent (accounting for lighting)
+5. HAIR: color, style, hairline (but people can change hairstyles)
+6. FACIAL HAIR: beard, mustache presence (can change but informative)
+7. GLASSES: frame style if present (can be removed/changed)
+8. BUILD & POSTURE: body type consistency
+
+IGNORE: clothing, background, expression, pose, lighting differences.
+
+CONFIDENCE CALIBRATION:
+- 80-99: Very confident match — multiple facial features clearly match
+- 60-79: Likely match — face structure matches, some features unclear due to angle/lighting
+- 40-59: Possible match — some similarities but can't confirm due to image quality or angle
+- Below 40: Not a match or too uncertain
 
 Respond in JSON format ONLY (no markdown, no backticks):
-[{"id": "<photo_id>", "confidence": <0-100>, "reason": "<brief reason>"}]
+[{"id": "<photo_id>", "confidence": <0-100>, "reason": "<which facial features matched or didn't>"}]
 
-Only include photos where confidence >= 30. If no matches, return [].
+Only include photos where confidence >= 35. If no matches, return [].
 `,
     },
   ];
@@ -144,24 +160,75 @@ Only include photos where confidence >= 30. If no matches, return [].
   const response = await callGemini(parts);
 
   try {
-    // Extract JSON from response (handle potential markdown wrapping)
     const jsonStr = response.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     const parsed = JSON.parse(jsonStr);
     if (Array.isArray(parsed)) {
       return parsed
         .filter(
           (m: { confidence?: number }) =>
-            typeof m.confidence === "number" && m.confidence >= 30,
+            typeof m.confidence === "number" && m.confidence >= 35,
         )
         .map((m: { id: string; confidence: number; reason?: string }) => ({
           id: String(m.id),
           confidence: m.confidence,
-          reason: m.reason || "",
+          reason: m.reason || "Visual match",
         }));
     }
-  } catch {
-    console.error("Failed to parse Gemini face match response:", response);
-  }
+  } catch {}
 
   return [];
+}
+
+// @TheTechMargin 2026
+export async function analyzeEventPhoto(
+  imageBase64: string,
+  mimeType: string,
+): Promise<{
+  visible_text: string;
+  people_descriptions: string;
+  scene_description: string;
+  face_count: number;
+}> {
+  const prompt = `Analyze this event photo and provide structured information in JSON format.
+
+Return ONLY valid JSON with this exact structure:
+{
+  "visible_text": "any text visible in the photo (signs, banners, clothing text, etc.) - if none, use empty string",
+  "people_descriptions": "brief descriptions of people visible, separated by semicolons - focus on appearance, clothing, activities",
+  "scene_description": "description of the setting, event type, atmosphere, and notable objects",
+  "face_count": number of distinct faces visible in the photo
+}
+
+Be specific and factual. For visible_text, only include actual readable text. For people_descriptions, describe each person briefly. For scene_description, describe the environment and context.`;
+
+  const response = await callGemini([
+    { text: prompt },
+    {
+      inline_data: {
+        mime_type: mimeType,
+        data: imageBase64,
+      },
+    },
+  ]);
+
+  try {
+    const jsonStr = response.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const parsed = JSON.parse(jsonStr);
+
+    // Validate and provide defaults
+    return {
+      visible_text: parsed.visible_text || "",
+      people_descriptions: parsed.people_descriptions || "",
+      scene_description: parsed.scene_description || "",
+      face_count: typeof parsed.face_count === "number" ? parsed.face_count : 0,
+    };
+  } catch (error) {
+    console.error("Failed to parse Gemini response for analyzeEventPhoto:", error);
+    return {
+      visible_text: "",
+      people_descriptions: "",
+      scene_description: "",
+      face_count: 0,
+    };
+  }
 }

@@ -3,15 +3,219 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #3b82f6;
-  --color-accent: #f59e0b;
+  --color-primary: #00ff41;
+  --color-accent: #00ff41;
+  --color-bg: #000000;
+  --color-surface: #0a0a0a;
+  --color-border: #00ff4133;
+  --color-border-bright: #00ff4166;
+  --color-text: #00ff41;
+  --color-text-dim: #00ff4199;
+  --color-text-muted: #00ff4155;
 }
 
 body {
-  color: #e4e4e7;
-  background: #09090b;
+  color: #e0e0e0;
+  background: #000000;
+  font-family: var(--font-mono), "JetBrains Mono", "Fira Code", monospace;
 }
 
+/* ═══════════════════════════════════════════
+   TERMINAL SCAN LINES OVERLAY
+   ═══════════════════════════════════════════ */
+.scan-lines::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 100;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 255, 65, 0.015) 2px,
+    rgba(0, 255, 65, 0.015) 4px
+  );
+}
+
+/* ═══════════════════════════════════════════
+   TERMINAL GLOW EFFECT
+   ═══════════════════════════════════════════ */
+.glow-text {
+  text-shadow: 0 0 10px rgba(0, 255, 65, 0.5), 0 0 20px rgba(0, 255, 65, 0.3),
+    0 0 40px rgba(0, 255, 65, 0.1);
+}
+
+.glow-text-subtle {
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+}
+
+.glow-border {
+  box-shadow: 0 0 8px rgba(0, 255, 65, 0.15), inset 0 0 8px rgba(0, 255, 65, 0.05);
+}
+
+/* ═══════════════════════════════════════════
+   BOOT SEQUENCE LOADING ANIMATION
+   ═══════════════════════════════════════════ */
+@keyframes boot-line {
+  0% { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes scan-sweep {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes slide-up {
+  0% { transform: translateY(100%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out forwards;
+}
+
+@keyframes grid-reveal {
+  0% { opacity: 0; clip-path: inset(0 100% 0 0); }
+  100% { opacity: 1; clip-path: inset(0 0 0 0); }
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.6; }
+  94% { opacity: 1; }
+  96% { opacity: 0.8; }
+  97% { opacity: 1; }
+}
+
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 4px rgba(0, 255, 65, 0.3); }
+  50% { box-shadow: 0 0 16px rgba(0, 255, 65, 0.6), 0 0 32px rgba(0, 255, 65, 0.2); }
+}
+
+@keyframes matrix-drop {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+@keyframes data-stream {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 0% 100%; }
+}
+
+@keyframes terminal-type {
+  0% { width: 0; }
+  100% { width: 100%; }
+}
+
+@keyframes crosshair-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes skeleton-scan {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% center; }
+  100% { background-position: 100% center; }
+}
+
+.animate-boot-line {
+  animation: boot-line 0.4s ease-out forwards;
+}
+
+.animate-cursor-blink {
+  animation: cursor-blink 1s step-end infinite;
+}
+
+.animate-flicker {
+  animation: flicker 4s ease-in-out infinite;
+}
+
+.animate-pulse-green {
+  animation: pulse-green 2s ease-in-out infinite;
+}
+
+.animate-grid-reveal {
+  animation: grid-reveal 0.6s ease-out forwards;
+}
+
+.animate-crosshair-spin {
+  animation: crosshair-spin 3s linear infinite;
+}
+
+/* Terminal skeleton scan effect */
+.skeleton-terminal {
+  background: linear-gradient(
+    90deg,
+    #0a0a0a 0%,
+    #001a00 25%,
+    #003300 50%,
+    #001a00 75%,
+    #0a0a0a 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-scan 2s linear infinite;
+}
+
+/* ═══════════════════════════════════════════
+   CROSSHAIR DECORATIONS
+   ═══════════════════════════════════════════ */
+.crosshair-corner {
+  position: relative;
+}
+.crosshair-corner::before,
+.crosshair-corner::after {
+  content: "";
+  position: absolute;
+  border-color: var(--color-primary);
+  opacity: 0.3;
+}
+.crosshair-corner::before {
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+.crosshair-corner::after {
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+}
+
+/* ═══════════════════════════════════════════
+   GRID BACKGROUND PATTERN
+   ═══════════════════════════════════════════ */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(0, 255, 65, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 65, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ═══════════════════════════════════════════
+   UTILITY OVERRIDES
+   ═══════════════════════════════════════════ */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
@@ -23,6 +227,37 @@ body {
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* Custom scrollbar for terminal aesthetic */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+::-webkit-scrollbar-thumb {
+  background: #00ff4133;
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00ff4166;
+}
+
+/* Input/focus overrides for green theme */
+input::placeholder {
+  color: #00ff4144;
+}
+
+input:focus {
+  outline: none;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(0, 255, 65, 0.25);
+  color: #00ff41;
 }
 
 @media (prefers-reduced-motion: reduce) {
