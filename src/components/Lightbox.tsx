@@ -3,6 +3,7 @@
 
 import { PhotoRecord } from "@/lib/types";
 import { useEffect, useRef, useState, useCallback } from "react";
+import Image from "next/image";
 
 interface LightboxProps {
   photo: PhotoRecord | null;
@@ -209,10 +210,12 @@ export default function Lightbox({
             </div>
           )}
           {fullImageUrl && (
-            <img
+            <Image
               src={fullImageUrl}
               alt={photo.filename}
-              className="max-h-full max-w-full object-contain select-none"
+              fill
+              unoptimized
+              className="object-contain select-none"
               style={{
                 boxShadow: imageLoaded ? '0 0 30px rgba(0,255,65,0.1)' : 'none',
                 transform: swipeOffset ? `translateX(${swipeOffset * 0.3}px)` : undefined,
