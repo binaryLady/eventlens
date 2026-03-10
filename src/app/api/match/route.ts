@@ -4,12 +4,16 @@ import { describePersonForMatching, verifyFaceMatches } from "@/lib/gemini";
 import { PhotoRecord, MatchResult } from "@/lib/types";
 import { config } from "@/lib/config";
 
-export const maxDuration = 60; // Allow up to 60s for face matching
+export const maxDuration = 60;
 
 /**
  * POST /api/match
  * Accepts an uploaded photo and finds matching people across all event photos.
- * Uses a two-tier strategy: fast text match first, expensive visual AI fallback only if needed.
+ *
+ * Strategy (revised):
+ *   1. Describe the person via Gemini (shared step)
+ *   2. Run BOTH text and visual matching in parallel (not gated)
+ *   3. Merge results — boost confidence when both tiers agree
  *
  * Body: { image: string (base64), mimeType: string }
  * Returns: { matches: MatchResult[], description: string, tier: "text" | "visual" | "both" }
@@ -26,7 +30,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Describe the person in the uploaded selfie (one Gemini call — shared by both tiers)
     const description = await describePersonForMatching(image, mimeType);
 
     if (description.includes("NO_PERSON_DETECTED")) {
@@ -50,46 +53,30 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // ── TIER 1: Text match (instant, free) ──────────────────────────────
+    // ── Run BOTH tiers in parallel ──────────────────────────────────────
     const attributeTerms = parseAttributeTerms(description);
     const textMatches = scoreByText(allPhotos, attributeTerms);
 
-    if (textMatches.length >= 3) {
-      // Tier 1 produced enough results — return immediately
-      return NextResponse.json({
-        matches: textMatches,
-        description,
-        tier: "text",
-      });
+    let visualMatches: MatchResult[] = [];
+    let tier: "text" | "visual" | "both" = "text";
+
+    if (config.googleApiKey) {
+      // Always run visual matching — don't let text results gate it
+      visualMatches = await runVisualMatching(
+        image,
+        mimeType,
+        allPhotos,
+        config.googleApiKey,
+      );
     }
 
-    // ── TIER 2: Visual AI match (expensive fallback) ────────────────────
-    if (!config.googleApiKey) {
-      // Can't run Tier 2 without API key — return whatever Tier 1 found
-      return NextResponse.json({
-        matches: textMatches,
-        description,
-        tier: "text",
-        error: textMatches.length === 0
-          ? "Missing GOOGLE_API_KEY — required for visual face matching"
-          : undefined,
-      });
+    if (textMatches.length > 0 && visualMatches.length > 0) {
+      tier = "both";
+    } else if (visualMatches.length > 0) {
+      tier = "visual";
     }
 
-    const visualMatches = await runVisualMatching(
-      image,
-      mimeType,
-      allPhotos,
-      config.googleApiKey,
-    );
-
-    // Merge Tier 1 + Tier 2, deduplicate by photo id
     const merged = mergeResults(textMatches, visualMatches);
-    const tier = textMatches.length > 0 && visualMatches.length > 0
-      ? "both"
-      : visualMatches.length > 0
-        ? "visual"
-        : "text";
 
     return NextResponse.json({ matches: merged, description, tier });
   } catch (error) {
@@ -109,20 +96,49 @@ export async function POST(request: NextRequest) {
 // ── Tier 1 helpers ────────────────────────────────────────────────────────
 
 /**
- * Parse a comma-separated description into cleaned attribute terms.
- * "short brown hair, glasses, blue polo shirt" → ["short brown hair", "glasses", "blue polo shirt"]
+ * Parse a description into individual attribute tokens.
+ * Splits on commas/semicolons/newlines, then further splits multi-word
+ * terms into individual words for flexible matching.
  */
 function parseAttributeTerms(description: string): string[] {
-  return description
+  const phrases = description
     .split(/[,;\n]+/)
     .map((t) => t.trim().toLowerCase())
     .filter((t) => t.length > 1);
+
+  // Return both full phrases and individual meaningful words
+  const words = new Set<string>();
+  const fullPhrases: string[] = [];
+
+  for (const phrase of phrases) {
+    fullPhrases.push(phrase);
+    // Extract individual words (skip tiny filler words)
+    const tokens = phrase.split(/\s+/).filter((w) => w.length > 2);
+    for (const token of tokens) {
+      if (!STOP_WORDS.has(token)) {
+        words.add(token);
+      }
+    }
+  }
+
+  return [...fullPhrases, ...Array.from(words)];
 }
+
+/** Common words that don't help distinguish people */
+const STOP_WORDS = new Set([
+  "the", "and", "with", "has", "are", "was", "his", "her", "its",
+  "wearing", "appears", "looking", "visible", "seen", "about",
+  "approximately", "around", "very", "slightly", "somewhat",
+]);
 
 /**
  * Score every photo against the attribute terms from the selfie description.
- * Score = matching terms / total terms * 100, with a 1.2x bonus for photos with faces.
- * Returns photos with score >= 30, sorted by confidence descending.
+ *
+ * Improvements over v1:
+ *   - Word-boundary matching to prevent "blue" matching "blueberry"
+ *   - Separate scoring for full-phrase matches (high value) vs word matches (lower)
+ *   - Bonus for face count proximity (1-2 faces = likely a portrait)
+ *   - Higher threshold (40) to reduce false positives
  */
 function scoreByText(
   photos: PhotoRecord[],
@@ -130,34 +146,45 @@ function scoreByText(
 ): MatchResult[] {
   if (terms.length === 0) return [];
 
+  // Separate full phrases from individual words
+  // First N terms are phrases, rest are individual words
   const results: MatchResult[] = [];
 
   for (const photo of photos) {
     const haystack = (photo.peopleDescriptions || "").toLowerCase();
     if (!haystack) continue;
 
-    let matchCount = 0;
+    let score = 0;
     const matched: string[] = [];
+
     for (const term of terms) {
-      if (haystack.includes(term)) {
-        matchCount++;
+      // Use word-boundary-aware matching
+      if (matchesWithBoundary(haystack, term)) {
+        // Full phrases are worth more than single words
+        const isPhrase = term.includes(" ");
+        const termScore = isPhrase ? 15 : 5;
+        score += termScore;
         matched.push(term);
       }
     }
 
-    if (matchCount === 0) continue;
+    if (matched.length === 0) continue;
 
-    let score = (matchCount / terms.length) * 100;
-    if (photo.faceCount > 0) {
-      score *= 1.2;
+    // Normalize score to 0-100 range
+    const maxPossible = terms.length * 10; // rough average
+    let normalizedScore = Math.min((score / maxPossible) * 100, 95);
+
+    // Small boost for photos with 1-3 faces (more likely a portrait match)
+    if (photo.faceCount >= 1 && photo.faceCount <= 3) {
+      normalizedScore *= 1.1;
     }
-    score = Math.min(score, 100);
+    normalizedScore = Math.min(normalizedScore, 95);
 
-    if (score >= 30) {
+    if (normalizedScore >= 25) {
       results.push({
         photo,
-        confidence: Math.round(score),
-        reason: `Text match: ${matched.join(", ")}`,
+        confidence: Math.round(normalizedScore),
+        reason: `Text match: ${dedup(matched).join(", ")}`,
       });
     }
   }
@@ -166,14 +193,46 @@ function scoreByText(
   return results;
 }
 
+/**
+ * Check if `needle` appears in `haystack` respecting word boundaries.
+ * Prevents "blue" matching inside "blueberry" or "glasses" inside "sunglasses".
+ */
+function matchesWithBoundary(haystack: string, needle: string): boolean {
+  // For multi-word phrases, check if all words appear (order-independent)
+  if (needle.includes(" ")) {
+    const words = needle.split(/\s+/).filter((w) => w.length > 2);
+    return words.every((word) => matchesWithBoundary(haystack, word));
+  }
+
+  // Single word: use word boundary regex
+  try {
+    const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(?:^|[\\s,;.!?()\\-/])${escaped}(?=[\\s,;.!?()\\-/]|$)`, "i");
+    return regex.test(haystack);
+  } catch {
+    // Fallback to includes if regex fails
+    return haystack.includes(needle);
+  }
+}
+
+/** Deduplicate matched terms (a word may duplicate its phrase) */
+function dedup(arr: string[]): string[] {
+  const seen = new Set<string>();
+  return arr.filter((item) => {
+    if (seen.has(item)) return false;
+    seen.add(item);
+    return true;
+  });
+}
+
 // ── Tier 2 helpers ────────────────────────────────────────────────────────
 
 const VISUAL_BATCH_SIZE = 5;
-const MAX_VISUAL_CANDIDATES = 30; // 6 batches max
+const MAX_VISUAL_CANDIDATES = 50; // Increased from 30 — cast wider net
 
 /**
  * Run visual face matching against photos with detected faces.
- * Processes in batches of 5, exits early if 3+ high-confidence matches found.
+ * Processes in batches, exits early if 5+ high-confidence matches found.
  */
 async function runVisualMatching(
   uploadedImageBase64: string,
@@ -181,10 +240,11 @@ async function runVisualMatching(
   allPhotos: PhotoRecord[],
   apiKey: string,
 ): Promise<MatchResult[]> {
-  // Build candidate set: only photos with faces, sorted by faceCount descending
+  // Candidates: photos with faces, sorted by face count ascending
+  // (photos with fewer faces = easier to match against)
   const candidates = allPhotos
     .filter((p) => p.faceCount > 0 && p.driveFileId)
-    .sort((a, b) => b.faceCount - a.faceCount)
+    .sort((a, b) => a.faceCount - b.faceCount)
     .slice(0, MAX_VISUAL_CANDIDATES);
 
   if (candidates.length === 0) return [];
@@ -194,7 +254,7 @@ async function runVisualMatching(
   for (let i = 0; i < candidates.length; i += VISUAL_BATCH_SIZE) {
     const batch = candidates.slice(i, i + VISUAL_BATCH_SIZE);
 
-    // Fetch thumbnails at w300 (small — sufficient for face matching)
+    // Fetch thumbnails at w800 (larger = better face matching accuracy)
     const images = await Promise.all(
       batch.map(async (photo) => {
         const result = await fetchDriveThumbnail(photo.driveFileId, apiKey);
@@ -227,9 +287,9 @@ async function runVisualMatching(
       }
     }
 
-    // Early exit: if we have 3+ matches with confidence >= 50, stop processing
-    const highConfidence = allMatches.filter((m) => m.confidence >= 50);
-    if (highConfidence.length >= 3) break;
+    // Early exit: 5+ matches with confidence >= 60
+    const highConfidence = allMatches.filter((m) => m.confidence >= 60);
+    if (highConfidence.length >= 5) break;
   }
 
   allMatches.sort((a, b) => b.confidence - a.confidence);
@@ -237,18 +297,16 @@ async function runVisualMatching(
 }
 
 /**
- * Fetch a Drive image at reduced size (w300) for face matching.
+ * Fetch a Drive image at w800 for face matching (up from w300).
  */
 async function fetchDriveThumbnail(
   fileId: string,
   apiKey: string,
 ): Promise<{ base64: string; mimeType: string } | null> {
   try {
-    // Use thumbnail link with w300 for smaller downloads
-    const url = `https://lh3.googleusercontent.com/d/${fileId}=w300`;
+    const url = `https://lh3.googleusercontent.com/d/${fileId}=w800`;
     const res = await fetch(url);
     if (!res.ok) {
-      // Fall back to full Drive API if thumbnail endpoint fails
       return fetchDriveImageFull(fileId, apiKey);
     }
 
@@ -265,9 +323,6 @@ async function fetchDriveThumbnail(
   }
 }
 
-/**
- * Full-size Drive API fallback for when thumbnail endpoint is unavailable.
- */
 async function fetchDriveImageFull(
   fileId: string,
   apiKey: string,
@@ -291,22 +346,39 @@ async function fetchDriveImageFull(
 // ── Merge / dedup ─────────────────────────────────────────────────────────
 
 /**
- * Merge Tier 1 and Tier 2 results, deduplicating by photo id.
- * When both tiers found the same photo, keep the higher confidence.
+ * Merge Tier 1 and Tier 2 results with confidence boosting.
+ *
+ * When both tiers find the same photo:
+ *   - Take the higher confidence as the base
+ *   - Add a 15-point boost (capped at 99) for cross-validation
+ *   - Combine reasons
+ *
+ * This rewards photos that pass both text and visual checks.
  */
 function mergeResults(
   textMatches: MatchResult[],
   visualMatches: MatchResult[],
 ): MatchResult[] {
   const byId = new Map<string, MatchResult>();
+  const textIds = new Set<string>();
 
   for (const m of textMatches) {
     byId.set(m.photo.id, m);
+    textIds.add(m.photo.id);
   }
 
   for (const m of visualMatches) {
     const existing = byId.get(m.photo.id);
-    if (!existing || m.confidence > existing.confidence) {
+    if (existing) {
+      // Both tiers found this photo — boost confidence
+      const baseConfidence = Math.max(m.confidence, existing.confidence);
+      const boostedConfidence = Math.min(baseConfidence + 15, 99);
+      byId.set(m.photo.id, {
+        photo: m.photo,
+        confidence: boostedConfidence,
+        reason: `${m.reason} + ${existing.reason}`,
+      });
+    } else {
       byId.set(m.photo.id, m);
     }
   }

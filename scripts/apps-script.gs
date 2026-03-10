@@ -84,7 +84,7 @@ function analyzeEventPhotos() {
 
   collectImages(folder);
 
-  Logger.log(`Found ${files.length} unprocessed images. Processing ${Math.min(files.length, BATCH_SIZE)}...`);
+  Logger.log('Found ' + files.length + ' unprocessed images. Processing ' + Math.min(files.length, BATCH_SIZE) + '...');
 
   // Process in batches to avoid Apps Script 6-minute timeout
   const batch = files.slice(0, BATCH_SIZE);
@@ -102,11 +102,11 @@ function analyzeEventPhotos() {
         new Date().toISOString()
       ]);
 
-      Logger.log(`✓ ${folderName}/${file.getName()}`);
+      Logger.log('✓ ' + folderName + '/' + file.getName());
       // Small delay to respect rate limits
       Utilities.sleep(1000);
     } catch (error) {
-      Logger.log(`✗ ${file.getName()}: ${error.message}`);
+      Logger.log('✗ ' + file.getName() + ': ' + error.message);
       sheet.appendRow([
         file.getName(),
         file.getUrl(),
@@ -124,13 +124,13 @@ function analyzeEventPhotos() {
   const errorCount = sheet.getRange(2, 4, totalProcessed, 1).getValues()
     .flat().filter(v => String(v).startsWith('ERROR')).length;
 
-  const summary = [
+  var summary = [
     '📸 Event Photo Analyzer Progress',
-    `Processed this batch: ${batch.length}`,
-    `Total processed so far: ${totalProcessed}`,
-    `Remaining: ${Math.max(0, remaining)}`,
-    `Errors: ${errorCount}`,
-    `Sheet: ${SpreadsheetApp.getActiveSpreadsheet().getUrl()}`
+    'Processed this batch: ' + batch.length,
+    'Total processed so far: ' + totalProcessed,
+    'Remaining: ' + Math.max(0, remaining),
+    'Errors: ' + errorCount,
+    'Sheet: ' + SpreadsheetApp.getActiveSpreadsheet().getUrl()
   ].join('\n');
 
   Logger.log(summary);
@@ -139,14 +139,14 @@ function analyzeEventPhotos() {
     MailApp.sendEmail({
       to: Session.getActiveUser().getEmail(),
       subject: '✅ Event Photo Analysis Complete',
-      body: `All images have been processed!\n\n${summary}\n\nThe auto-process trigger has been removed.`
+      body: 'All images have been processed!\n\n' + summary + '\n\nThe auto-process trigger has been removed.'
     });
     deleteAutoProcess();
     Logger.log('🎉 All images processed! Trigger removed. Email sent.');
   } else if (NOTIFY_EVERY > 0 && totalProcessed % NOTIFY_EVERY < BATCH_SIZE) {
     MailApp.sendEmail({
       to: Session.getActiveUser().getEmail(),
-      subject: `📸 Photo Analysis Progress: ${totalProcessed} done, ${remaining} remaining`,
+      subject: '📸 Photo Analysis Progress: ' + totalProcessed + ' done, ' + remaining + ' remaining',
       body: summary
     });
   }
@@ -161,16 +161,16 @@ function analyzeImage_(file) {
   const base64Data = Utilities.base64Encode(blob.getBytes());
   const mimeType = file.getMimeType();
 
-  const prompt = `Analyze this event photo. Return ONLY valid JSON with these fields:
-{
-  "visible_text": "ALL text visible in the image - banners, signs, screens, t-shirts, lanyards, stickers, name tags. Include everything, even partial text. If no text, return empty string.",
-  "people_descriptions": "Describe each person visible. Include: approximate age range, gender presentation, hair color/style, glasses y/n, notable clothing (color of shirt, hoodie, etc), any visible name tag or lanyard text. Separate multiple people with semicolons.",
-  "scene_description": "Brief description of what's happening - presentation, networking, coding, panel, etc. Include notable objects like laptops, microphones, whiteboards.",
-  "face_count": number_of_faces_visible
-}
-Be thorough with visible_text - this will be used for search. Return ONLY the JSON, no markdown formatting.`;
+  var prompt = 'Analyze this event photo. Return ONLY valid JSON with these fields:\n' +
+    '{\n' +
+    '  "visible_text": "ALL text visible in the image - banners, signs, screens, t-shirts, lanyards, stickers, name tags. Include everything, even partial text. If no text, return empty string.",\n' +
+    '  "people_descriptions": "For EACH person visible, provide a structured description using this format separated by semicolons: [gender], [skin tone], [hair color] [hair length] [hair style], [facial hair or clean-shaven], [glasses/no glasses], [age range], [build], [clothing color and type], [accessories], [any distinctive features]. Be SPECIFIC with colors (say navy blazer not dark jacket). Example: male, medium skin, short black hair, beard, glasses, 30s, medium build, blue polo shirt, lanyard with badge; female, light skin, long blonde hair, no glasses, 20s, slim, red flannel shirt, no accessories",\n' +
+    '  "scene_description": "Brief description of what is happening - presentation, networking, coding, panel, etc. Include notable objects like laptops, microphones, whiteboards.",\n' +
+    '  "face_count": number_of_faces_visible\n' +
+    '}\n' +
+    'Be thorough with visible_text and people_descriptions - both are used for search and face matching. Return ONLY the JSON, no markdown formatting.';
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + MODEL + ':generateContent?key=' + GEMINI_API_KEY;
 
   const payload = {
     contents: [{
@@ -264,7 +264,7 @@ function searchPhotos() {
   }
 
   resultsSheet.clear();
-  resultsSheet.appendRow([`Search: "${query}"`, `${matches.length} results`, new Date().toISOString()]);
+  resultsSheet.appendRow(['Search: "' + query + '"', matches.length + ' results', new Date().toISOString()]);
   resultsSheet.appendRow(['Filename', 'Drive URL', 'Folder', 'Match Context']);
   resultsSheet.getRange(2, 1, 1, 4).setFontWeight('bold');
 
@@ -273,7 +273,7 @@ function searchPhotos() {
   }
 
   SpreadsheetApp.getActiveSpreadsheet().setActiveSheet(resultsSheet);
-  Browser.msgBox(`Found ${matches.length} photos matching "${query}"`);
+  Browser.msgBox('Found ' + matches.length + ' photos matching "' + query + '"');
 }
 
 /**
@@ -307,8 +307,8 @@ function countImages() {
   }
 
   countRecursive(folder);
-  Logger.log(`Total images in folder + subfolders: ${count}`);
-  Browser.msgBox(`Total images in folder + subfolders: ${count}`);
+  Logger.log('Total images in folder + subfolders: ' + count);
+  Browser.msgBox('Total images in folder + subfolders: ' + count);
 }
 
 /**
@@ -330,7 +330,7 @@ function setupAutoProcess() {
     .everyMinutes(10)
     .create();
 
-  Logger.log(`Auto-process trigger created. Will process ${BATCH_SIZE} images every 10 minutes.`);
+  Logger.log('Auto-process trigger created. Will process ' + BATCH_SIZE + ' images every 10 minutes.');
   Logger.log('Trigger auto-removes when all images are done.');
 }
 
