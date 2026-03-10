@@ -16,7 +16,7 @@ export function extractDriveFileId(driveUrl: string): string {
 
 /**
  * Fetch all image files from a Google Drive folder and its subfolders.
- * Recursively searches for images (jpg, jpeg, png, gif, webp, bmp).
+ * Recursively searches subfolders for images (jpg, jpeg, png, gif, webp, bmp).
  */
 export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
   const { driveFolderId, googleApiKey } = config;
@@ -25,7 +25,6 @@ export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
     return [];
   }
 
-  const allPhotos: PhotoRecord[] = [];
   const mimeTypes = [
     "image/jpeg",
     "image/png",
@@ -35,23 +34,34 @@ export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
   ];
   const mimeQuery = mimeTypes.map((t) => `mimeType='${t}'`).join(" or ");
 
-  try {
-    // Fetch all image files in the entire folder hierarchy
+  // Cache folder names to avoid redundant API calls
+  const folderNameCache = new Map<string, string>();
+
+  async function cachedGetFolderName(folderId: string): Promise<string> {
+    const cached = folderNameCache.get(folderId);
+    if (cached !== undefined) return cached;
+    const name = await getFolderName(folderId, googleApiKey);
+    folderNameCache.set(folderId, name);
+    return name;
+  }
+
+  /** Fetch all image files from a single folder (paginated) */
+  async function fetchImagesInFolder(
+    folderId: string,
+    folderName: string,
+  ): Promise<PhotoRecord[]> {
+    const photos: PhotoRecord[] = [];
     const query = encodeURIComponent(
-      `'${driveFolderId}' in parents and (${mimeQuery}) and trashed = false`,
+      `'${folderId}' in parents and (${mimeQuery}) and trashed = false`,
     );
 
     let pageToken: string | undefined;
-    let photoId = 1;
-
     do {
       const pageTokenParam = pageToken ? `&pageToken=${pageToken}` : "";
-      const url = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,parents,mimeType,modifiedTime),nextPageToken&orderBy=modifiedTime%20desc&pageSize=1000&key=${googleApiKey}${pageTokenParam}`;
+      const url = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,mimeType,modifiedTime),nextPageToken&orderBy=modifiedTime%20desc&pageSize=1000&key=${googleApiKey}${pageTokenParam}`;
 
       const res = await fetch(url, { next: { revalidate: 300 } });
-      if (!res.ok) {
-        throw new Error(`Drive API error: ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`Drive API error: ${res.status}`);
 
       const data: {
         files?: Array<{
@@ -59,25 +69,18 @@ export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
           name: string;
           mimeType: string;
           modifiedTime: string;
-          parents?: string[];
         }>;
         nextPageToken?: string;
       } = await res.json();
 
       if (data.files) {
         for (const file of data.files) {
-          // Get folder name from parent folder ID
-          let folder = "Root";
-          if (file.parents && file.parents[0] !== driveFolderId) {
-            folder = await getFolderName(file.parents[0], googleApiKey);
-          }
-
-          allPhotos.push({
-            id: String(photoId++),
+          photos.push({
+            id: "",
             filename: file.name,
             driveUrl: `https://drive.google.com/file/d/${file.id}/view`,
             driveFileId: file.id,
-            folder,
+            folder: folderName,
             visibleText: "",
             peopleDescriptions: "",
             sceneDescription: "",
@@ -92,11 +95,69 @@ export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
       pageToken = data.nextPageToken;
     } while (pageToken);
 
-    // Sort by modification time descending
+    return photos;
+  }
+
+  /** Fetch all subfolder IDs and names from a folder (paginated) */
+  async function fetchSubfolders(
+    parentId: string,
+  ): Promise<Array<{ id: string; name: string }>> {
+    const subfolders: Array<{ id: string; name: string }> = [];
+    const query = encodeURIComponent(
+      `'${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+    );
+
+    let pageToken: string | undefined;
+    do {
+      const pageTokenParam = pageToken ? `&pageToken=${pageToken}` : "";
+      const url = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name),nextPageToken&orderBy=name&pageSize=200&key=${googleApiKey}${pageTokenParam}`;
+
+      const res = await fetch(url, { next: { revalidate: 300 } });
+      if (!res.ok) throw new Error(`Drive API error: ${res.status}`);
+
+      const data: {
+        files?: Array<{ id: string; name: string }>;
+        nextPageToken?: string;
+      } = await res.json();
+
+      if (data.files) {
+        subfolders.push(...data.files);
+      }
+
+      pageToken = data.nextPageToken;
+    } while (pageToken);
+
+    return subfolders;
+  }
+
+  try {
+    const allPhotos: PhotoRecord[] = [];
+
+    // Fetch images from root folder and discover subfolders in parallel
+    const [rootImages, subfolders] = await Promise.all([
+      fetchImagesInFolder(driveFolderId, "Root"),
+      fetchSubfolders(driveFolderId),
+    ]);
+    allPhotos.push(...rootImages);
+
+    // Fetch images from all subfolders in parallel
+    if (subfolders.length > 0) {
+      const subfolderResults = await Promise.all(
+        subfolders.map((sf) => fetchImagesInFolder(sf.id, sf.name)),
+      );
+      for (const photos of subfolderResults) {
+        allPhotos.push(...photos);
+      }
+    }
+
+    // Assign sequential IDs and sort by modification time descending
     allPhotos.sort(
       (a, b) =>
         new Date(b.processedAt).getTime() - new Date(a.processedAt).getTime(),
     );
+    allPhotos.forEach((p, i) => {
+      p.id = String(i + 1);
+    });
 
     return allPhotos;
   } catch (error) {
