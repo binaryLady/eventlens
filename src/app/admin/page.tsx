@@ -234,22 +234,6 @@ export default function AdminPage() {
           />
         </div>
 
-        {/* Migration */}
-        <div className="mb-8 border border-[#00ff4133] p-4">
-          <h2 className="text-sm tracking-wider mb-3 text-[#00ff4199]">
-            ONE-TIME MIGRATION
-          </h2>
-          <ActionButton
-            label="MIGRATE FROM SHEET"
-            description="Copy Google Sheet → Supabase"
-            loading={loading === "migrate"}
-            disabled={loading !== null}
-            onClick={() =>
-              runAction("/api/admin/migrate", "POST", "migrate")
-            }
-          />
-        </div>
-
         {/* Recent Errors */}
         {status && status.recentErrors.length > 0 && (
           <div className="mb-8">

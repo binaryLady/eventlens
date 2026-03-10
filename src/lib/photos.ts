@@ -3,34 +3,19 @@ import { config } from "./config";
 import { createAnonClient, PhotoRow } from "./supabase";
 
 export function extractDriveFileId(driveUrl: string): string {
-  // https://drive.google.com/file/d/{ID}/view
-  // https://drive.google.com/file/d/{ID}/view?usp=sharing
   const fileMatch = driveUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
   if (fileMatch) return fileMatch[1];
 
-  // https://drive.google.com/open?id={ID}
   const openMatch = driveUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   if (openMatch) return openMatch[1];
 
   return "";
 }
 
-// ── Main fetch (routes through feature flag) ──────────────────────────────
-
 /**
- * Fetch photo records from the configured data source.
- * Controlled by DATA_SOURCE env var: "supabase" (default) or "sheet" (legacy fallback).
+ * Fetch completed photo records from Supabase.
  */
 export async function fetchPhotos(): Promise<PhotoRecord[]> {
-  if (config.dataSource === "sheet") {
-    return fetchPhotosFromSheet();
-  }
-  return fetchPhotosFromSupabase();
-}
-
-// ── Supabase data source ──────────────────────────────────────────────────
-
-async function fetchPhotosFromSupabase(): Promise<PhotoRecord[]> {
   try {
     const supabase = createAnonClient();
 
@@ -68,142 +53,6 @@ async function fetchPhotosFromSupabase(): Promise<PhotoRecord[]> {
     return [];
   }
 }
-
-// ── Google Sheet data source (legacy, kept for migration + fallback) ──────
-
-/**
- * Fetch photo metadata from a public Google Sheet.
- * Uses the Google Visualization API (gviz/tq) which works when the sheet
- * is shared as "Anyone with the link" — no API key needed.
- */
-export async function fetchPhotosFromSheet(): Promise<PhotoRecord[]> {
-  const { sheetId } = config;
-
-  if (!sheetId) {
-    console.error("Missing GOOGLE_SHEET_ID");
-    return [];
-  }
-
-  // Google Visualization API — works with "Anyone with the link" sharing
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
-
-  const res = await fetch(url, {
-    next: { revalidate: 30 },
-    headers: {
-      // Avoid Google returning an HTML sign-in page
-      "X-DataSource-Auth": "true",
-    },
-  });
-
-  if (!res.ok) {
-    console.error(
-      `Google Sheets fetch error: ${res.status} ${res.statusText}`,
-    );
-    return [];
-  }
-
-  const text = await res.text();
-
-  // Google returns two possible formats depending on context:
-  // 1. JSONP: google.visualization.Query.setResponse({...})
-  // 2. Anti-XSSI prefix: )]}'  followed by raw JSON on next line
-  let jsonStr: string | null = null;
-
-  // Try JSONP format first
-  const jsonpMatch = text.match(
-    /google\.visualization\.Query\.setResponse\(({[\s\S]*})\)/,
-  );
-  if (jsonpMatch) {
-    jsonStr = jsonpMatch[1];
-  }
-
-  // Try anti-XSSI prefix format: )]}'  or )]}' followed by JSON
-  if (!jsonStr) {
-    const xssiMatch = text.match(/^\)\]\}'\s*\n?([\s\S]+)/);
-    if (xssiMatch) {
-      jsonStr = xssiMatch[1].trim();
-    }
-  }
-
-  // Fallback: try to find any JSON object in the response
-  if (!jsonStr) {
-    const braceStart = text.indexOf("{");
-    if (braceStart !== -1) {
-      jsonStr = text.slice(braceStart);
-    }
-  }
-
-  if (!jsonStr) {
-    console.error(
-      "Could not parse Google Sheets response. Raw:",
-      text.slice(0, 200),
-    );
-    return [];
-  }
-
-  let data: {
-    table?: {
-      rows?: Array<{
-        c: Array<{ v?: string | number | null } | null>;
-      }>;
-    };
-  };
-
-  try {
-    data = JSON.parse(jsonStr);
-  } catch (e) {
-    console.error("Failed to parse sheet JSON:", e);
-    return [];
-  }
-
-  const rows = data.table?.rows || [];
-
-  const photos: PhotoRecord[] = rows
-    .map((row, index) => {
-      const cells = row.c || [];
-      const filename = String(cells[0]?.v ?? "");
-      const driveUrl = String(cells[1]?.v ?? "");
-      const folder = String(cells[2]?.v ?? "");
-      const visibleText = String(cells[3]?.v ?? "");
-      const peopleDescriptions = String(cells[4]?.v ?? "");
-      const sceneDescription = String(cells[5]?.v ?? "");
-      const faceCount = parseInt(String(cells[6]?.v ?? "0"), 10) || 0;
-      const processedAt = String(cells[7]?.v ?? "");
-
-      if (!filename) return null;
-
-      const driveFileId = extractDriveFileId(driveUrl);
-
-      return {
-        id: String(index + 2),
-        filename,
-        driveUrl,
-        driveFileId,
-        folder,
-        visibleText,
-        peopleDescriptions,
-        sceneDescription,
-        faceCount,
-        processedAt,
-        thumbnailUrl: driveFileId
-          ? `https://lh3.googleusercontent.com/d/${driveFileId}=w400`
-          : "",
-        downloadUrl: driveFileId
-          ? `https://drive.google.com/uc?export=download&id=${driveFileId}`
-          : "",
-      };
-    })
-    .filter((p): p is PhotoRecord => p !== null);
-
-  photos.sort(
-    (a, b) =>
-      new Date(b.processedAt).getTime() - new Date(a.processedAt).getTime(),
-  );
-
-  return photos;
-}
-
-// ── Client-side helpers ───────────────────────────────────────────────────
 
 /** Client-side text search — runs in the browser, no server round-trip */
 export function searchPhotos(
@@ -281,8 +130,6 @@ export function getFolders(photos: PhotoRecord[]): string[] {
 
 /**
  * Fetch all subfolder names from the Google Drive parent folder.
- * Uses Drive API v3 — requires the folder to be publicly shared and a valid API key.
- * Falls back to photo-derived folders if the Drive folder ID or API key is missing.
  */
 export async function fetchDriveFolders(): Promise<string[]> {
   const { driveFolderId, googleApiKey } = config;
