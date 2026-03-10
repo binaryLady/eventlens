@@ -19,51 +19,11 @@ interface StatusData {
 interface ActionResult {
   message?: string;
   error?: string;
+  output?: string;
+  stderr?: string;
+  hint?: string;
   [key: string]: unknown;
 }
-
-const PIPELINE_COMMANDS = [
-  {
-    label: "FULL PIPELINE",
-    desc: "Scan + describe + embed (skip rename without OAuth)",
-    cmd: "scripts/.venv/bin/python scripts/process_photos.py --skip-rename --skip-face-embed",
-  },
-  {
-    label: "SCAN ONLY",
-    desc: "Discover new photos from Drive",
-    cmd: "scripts/.venv/bin/python scripts/process_photos.py --only-scan",
-  },
-  {
-    label: "DESCRIBE + EMBED",
-    desc: "Gemini descriptions + text embeddings",
-    cmd: "scripts/.venv/bin/python scripts/process_photos.py --only-describe",
-  },
-  {
-    label: "TEXT EMBEDDINGS ONLY",
-    desc: "Embed already-described photos",
-    cmd: "scripts/.venv/bin/python scripts/process_photos.py --only-embeddings",
-  },
-  {
-    label: "FACE EMBEDDINGS",
-    desc: "InsightFace embeddings (needs face-api running)",
-    cmd: "scripts/.venv/bin/python scripts/process_photos.py --only-face-embed --face-api-url http://localhost:8080",
-  },
-  {
-    label: "RENAME FILES",
-    desc: "Rename in Drive (needs OAuth credentials.json)",
-    cmd: "scripts/.venv/bin/python scripts/process_photos.py --only-rename --oauth-creds credentials.json",
-  },
-  {
-    label: "RETRY ERRORS",
-    desc: "Re-process failed photos",
-    cmd: "scripts/.venv/bin/python scripts/process_photos.py --only-describe --retry-errors",
-  },
-  {
-    label: "DRY RUN",
-    desc: "Preview all operations without changes",
-    cmd: "scripts/.venv/bin/python scripts/process_photos.py --dry-run --verbose",
-  },
-];
 
 export default function AdminPage() {
   const [secret, setSecret] = useState("");
@@ -71,7 +31,6 @@ export default function AdminPage() {
   const [status, setStatus] = useState<StatusData | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
   const [activityLog, setActivityLog] = useState<string[]>([]);
-  const [copied, setCopied] = useState<string | null>(null);
 
   const addLog = useCallback((msg: string) => {
     setActivityLog((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
@@ -120,6 +79,43 @@ export default function AdminPage() {
     return () => clearInterval(interval);
   }, [authenticated, fetchStatus]);
 
+  const runPipeline = async (phase: string, label: string, options?: { retryErrors?: boolean }) => {
+    setLoading(label);
+    addLog(`Starting: ${label}...`);
+    try {
+      const res = await fetch("/api/admin/pipeline", {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ phase, ...options }),
+      });
+      const contentType = res.headers.get("content-type");
+      let data: ActionResult;
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        throw new Error("Unexpected response format");
+      }
+      if (!res.ok) {
+        addLog(`ERROR: ${data.error || res.statusText}`);
+        if (data.stderr) addLog(`STDERR: ${data.stderr.slice(0, 300)}`);
+        if (data.hint) addLog(`HINT: ${data.hint}`);
+      } else {
+        addLog(`Done: ${label}`);
+        if (data.output) {
+          const lines = data.output.trim().split("\n");
+          const lastLines = lines.slice(-5);
+          for (const line of lastLines) {
+            addLog(`  ${line}`);
+          }
+        }
+      }
+      await fetchStatus();
+    } catch (error) {
+      addLog(`ERROR: ${error instanceof Error ? error.message : "Network error"}`);
+    }
+    setLoading(null);
+  };
+
   const runAction = async (endpoint: string, method: string, label: string, body?: object) => {
     setLoading(label);
     addLog(`Starting: ${label}...`);
@@ -148,14 +144,7 @@ export default function AdminPage() {
     setLoading(null);
   };
 
-  const copyCommand = (cmd: string, label: string) => {
-    navigator.clipboard.writeText(cmd);
-    setCopied(label);
-    addLog(`Copied: ${label}`);
-    setTimeout(() => setCopied(null), 2000);
-  };
-
-  // ── Login screen ──
+  // Login screen
   if (!authenticated) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
@@ -182,7 +171,6 @@ export default function AdminPage() {
     );
   }
 
-  // ── Admin dashboard ──
   const pct = status && status.total > 0 ? Math.round((status.completed / status.total) * 100) : 0;
 
   return (
@@ -235,17 +223,59 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Quick Actions (server-side) */}
+        {/* Pipeline Actions */}
         <div className="mb-8">
-          <h2 className="text-sm tracking-wider mb-3 text-[#00ff4199]">QUICK ACTIONS</h2>
+          <h2 className="text-sm tracking-wider mb-3 text-[#00ff4199]">PIPELINE</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <ActionButton
               label="SCAN DRIVE"
-              description="Discover new images from Drive"
+              description="Discover new images from Drive folders"
               loading={loading === "scan"}
               disabled={loading !== null}
               onClick={() => runAction("/api/admin/scan", "POST", "scan")}
             />
+            <ActionButton
+              label="FULL PIPELINE"
+              description="Scan + describe + text embeddings"
+              loading={loading === "full"}
+              disabled={loading !== null}
+              onClick={() => runPipeline("full", "full")}
+            />
+            <ActionButton
+              label="DESCRIBE + EMBED"
+              description="Gemini descriptions + text embeddings"
+              loading={loading === "describe"}
+              disabled={loading !== null}
+              onClick={() => runPipeline("describe", "describe")}
+            />
+            <ActionButton
+              label="TEXT EMBEDDINGS"
+              description="Embed already-described photos"
+              loading={loading === "embeddings"}
+              disabled={loading !== null}
+              onClick={() => runPipeline("embeddings", "embeddings")}
+            />
+            <ActionButton
+              label="FACE EMBEDDINGS"
+              description="InsightFace embeddings (needs face-api)"
+              loading={loading === "face-embed"}
+              disabled={loading !== null}
+              onClick={() => runPipeline("face-embed", "face-embed")}
+            />
+            <ActionButton
+              label="RETRY ERRORS"
+              description="Re-process failed photos"
+              loading={loading === "retry"}
+              disabled={loading !== null}
+              onClick={() => runPipeline("describe", "retry", { retryErrors: true })}
+            />
+          </div>
+        </div>
+
+        {/* Utility Actions */}
+        <div className="mb-8">
+          <h2 className="text-sm tracking-wider mb-3 text-[#00ff4199]">UTILITIES</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <ActionButton
               label="REFRESH STATUS"
               description="Re-fetch pipeline status"
@@ -265,64 +295,6 @@ export default function AdminPage() {
               disabled={false}
               onClick={() => setActivityLog([])}
             />
-          </div>
-        </div>
-
-        {/* Pipeline Commands */}
-        <div className="mb-8">
-          <h2 className="text-sm tracking-wider mb-2 text-[#00ff4199]">
-            PIPELINE COMMANDS
-          </h2>
-          <p className="text-[10px] text-[#00ff4155] mb-3">
-            Run these from the project root. Click to copy.
-          </p>
-          <div className="grid gap-2">
-            {PIPELINE_COMMANDS.map((c) => (
-              <button
-                key={c.label}
-                onClick={() => copyCommand(c.cmd, c.label)}
-                className={`border text-left px-3 py-2 transition-all group ${
-                  copied === c.label
-                    ? "border-[#00ff41] bg-[#00ff4111]"
-                    : "border-[#00ff4122] hover:border-[#00ff4166] hover:bg-[#00ff4108]"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] tracking-wider text-[#00ff4199]">
-                      {c.label}
-                    </span>
-                    <span className="text-[10px] text-[#00ff4144] ml-2">{c.desc}</span>
-                  </div>
-                  <span className="text-[10px] text-[#00ff4144] group-hover:text-[#00ff4199]">
-                    {copied === c.label ? "COPIED" : "COPY"}
-                  </span>
-                </div>
-                <div className="text-[11px] text-[#00ff4166] mt-1 font-mono break-all">
-                  $ {c.cmd}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Setup Instructions */}
-        <div className="mb-8 border border-[#00ff4122] p-4">
-          <h2 className="text-sm tracking-wider mb-3 text-[#00ff4199]">SETUP</h2>
-          <div className="text-[11px] text-[#00ff4166] space-y-2">
-            <p>1. Install Python dependencies (one-time):</p>
-            <code className="block bg-[#00ff4108] px-2 py-1 text-[#00ff4199]">
-              python3 -m venv scripts/.venv && scripts/.venv/bin/pip install -r scripts/requirements.txt
-            </code>
-            <p className="mt-3">2. For file rename, create OAuth credentials in Google Cloud Console and download as credentials.json</p>
-            <p className="mt-3">3. For face embeddings, start the InsightFace service:</p>
-            <code className="block bg-[#00ff4108] px-2 py-1 text-[#00ff4199]">
-              cd services/face-api && python app.py
-            </code>
-            <p className="mt-3">4. Run the migration in Supabase SQL Editor:</p>
-            <code className="block bg-[#00ff4108] px-2 py-1 text-[#00ff4199]">
-              supabase/migrations/003_description_embeddings.sql
-            </code>
           </div>
         </div>
 
@@ -351,7 +323,7 @@ export default function AdminPage() {
           <div className="border border-[#00ff4133] bg-[#00ff4108] h-48 overflow-y-auto p-3">
             {activityLog.length === 0 ? (
               <p className="text-xs text-[#00ff4144]">
-                No activity yet. Use Quick Actions above or run pipeline commands from terminal.
+                No activity yet. Use Pipeline buttons above to process photos.
               </p>
             ) : (
               activityLog.map((entry, i) => (
@@ -371,7 +343,7 @@ export default function AdminPage() {
   );
 }
 
-// ── Sub-components ──
+// Sub-components
 
 function StatusCard({
   label,
