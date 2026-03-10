@@ -617,7 +617,7 @@ function PhotoGrid() {
                   onClick={() => setActiveFolder("")}
                   className={`shrink-0 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                     activeFolder === ""
-                      ? "border border-[var(--el-green)] text-[var(--el-green)] bg-[var(--el-green-11)] glow-border"
+                      ? "border border-[var(--el-magenta)] text-[var(--el-magenta)] bg-[var(--el-magenta-28)] glow-border-magenta"
                       : "border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
                   }`}
                 >
@@ -631,7 +631,7 @@ function PhotoGrid() {
                     }
                     className={`shrink-0 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                       activeFolder === folder
-                        ? "border border-[var(--el-green)] text-[var(--el-green)] bg-[var(--el-green-11)] glow-border"
+                        ? "border border-[var(--el-magenta)] text-[var(--el-magenta)] bg-[var(--el-magenta-28)] glow-border-magenta"
                         : "border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
                     }`}
                   >
@@ -653,7 +653,7 @@ function PhotoGrid() {
                 onClick={toggleSelectMode}
                 className={`px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                   selectMode
-                    ? "border border-[var(--el-green)] text-[var(--el-green)] bg-[var(--el-green-11)] glow-border"
+                    ? "border border-[var(--el-magenta)] text-[var(--el-magenta)] bg-[var(--el-magenta-28)] glow-border-magenta"
                     : "border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
                 }`}
               >
@@ -1013,7 +1013,7 @@ function SortDropdown({
               onClick={() => { onChange(opt.value); setOpen(false); }}
               className={`block w-full text-left px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider transition-all ${
                 sortOrder === opt.value
-                  ? "text-[var(--el-green)] bg-[var(--el-green-11)]"
+                  ? "text-[var(--el-magenta)] bg-[var(--el-magenta-28)]"
                   : "text-[var(--el-green-99)] hover:text-[var(--el-magenta)] hover:bg-[var(--el-magenta-28)]"
               }`}
             >
@@ -1040,7 +1040,7 @@ function SortDropdown({
                 onClick={() => { onChange(opt.value); setOpen(false); }}
                 className={`flex items-center w-full text-left px-4 py-3.5 text-sm font-mono uppercase tracking-wider transition-all active:bg-[var(--el-green-99)] ${
                   sortOrder === opt.value
-                    ? "text-[var(--el-green)]"
+                    ? "text-[var(--el-magenta)]"
                     : "text-[var(--el-green-99)]"
                 }`}
               >
