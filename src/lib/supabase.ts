@@ -115,6 +115,30 @@ export async function searchPhotosSemantic(
   return (data as SemanticMatch[]) || [];
 }
 
+/**
+ * Save a match session for analytics. Fire-and-forget — never blocks the response.
+ */
+export async function saveMatchSession(params: {
+  tier: string;
+  matchCount: number;
+  topConfidence: number | null;
+  queryEmbedding: number[] | null;
+  matchedPhotoIds: string[];
+}): Promise<void> {
+  try {
+    const supabase = createServerClient();
+    await supabase.from("match_sessions").insert({
+      tier: params.tier,
+      match_count: params.matchCount,
+      top_confidence: params.topConfidence,
+      query_embedding: params.queryEmbedding,
+      matched_photo_ids: params.matchedPhotoIds,
+    });
+  } catch {
+    // Non-critical — don't break match flow
+  }
+}
+
 export interface PhotoRow {
   id: string;
   drive_file_id: string;

@@ -1,7 +1,7 @@
 """EventLens Face Embedding API.
 
 Accepts a base64 image, returns 512-dim InsightFace embedding(s).
-Deploy on Railway / Render / Fly.io (needs ~512MB RAM).
+Deploy on Railway / Render / Fly.io. buffalo_sc ~300MB RAM, buffalo_l ~1.5GB.
 @TheTechMargin 2026
 """
 
@@ -19,7 +19,8 @@ ALLOWED_ORIGINS = os.environ.get("CORS_ORIGINS", "*").split(",")
 CORS(app, origins=ALLOWED_ORIGINS)
 
 # Initialize InsightFace (same model as Colab notebook)
-face_app = FaceAnalysis(name="buffalo_l", providers=["CPUExecutionProvider"])
+MODEL_NAME = os.environ.get("INSIGHTFACE_MODEL", "buffalo_l")
+face_app = FaceAnalysis(name=MODEL_NAME, providers=["CPUExecutionProvider"])
 face_app.prepare(ctx_id=0, det_size=(640, 640))
 
 API_SECRET = os.environ.get("API_SECRET", "")
@@ -28,7 +29,7 @@ API_SECRET = os.environ.get("API_SECRET", "")
 @app.route("/health", methods=["GET"])
 def health():
     """Return service health status and model info."""
-    return jsonify({"status": "ok", "model": "buffalo_l", "dims": 512})
+    return jsonify({"status": "ok", "model": MODEL_NAME, "dims": 512})
 
 
 @app.route("/embed", methods=["POST"])

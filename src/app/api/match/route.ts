@@ -4,7 +4,7 @@ import { fetchPhotosWithMetadata } from "@/lib/photos";
 import { describePersonForMatching, verifyFaceMatches } from "@/lib/gemini";
 import { fetchDriveImage } from "@/lib/drive";
 import { PhotoRecord, MatchResult, MatchTier } from "@/lib/types";
-import { enrichPhotoDescriptions } from "@/lib/supabase";
+import { enrichPhotoDescriptions, saveMatchSession } from "@/lib/supabase";
 import { config } from "@/lib/config";
 
 export const maxDuration = 60;
@@ -66,7 +66,10 @@ async function tryVectorMatch(
       count: number;
     } = await embedRes.json();
 
-    if (embedData.count === 0) return { matches: [], description: "", tier: "vector" };
+    if (embedData.count === 0) {
+      saveMatchSession({ tier: "vector", matchCount: 0, topConfidence: null, queryEmbedding: null, matchedPhotoIds: [] });
+      return { matches: [], description: "", tier: "vector" };
+    }
 
     const bestFace = embedData.faces.reduce((a, b) => (a.det_score > b.det_score ? a : b));
 
@@ -99,6 +102,16 @@ async function tryVectorMatch(
     });
 
     matches.sort((a, b) => b.confidence - a.confidence);
+
+    // Fire-and-forget: save session with the query embedding for re-matching
+    saveMatchSession({
+      tier: "vector",
+      matchCount: matches.length,
+      topConfidence: matches[0]?.confidence ?? null,
+      queryEmbedding: bestFace.embedding,
+      matchedPhotoIds: matches.map((m) => m.photo.driveFileId),
+    });
+
     return { matches, description: "", tier: "vector" };
   } catch {
     return null;
@@ -158,6 +171,15 @@ async function geminiMatch(imageBase64: string, mimeType: string) {
   if (description && visualMatches.length > 0) {
     enrichMatchedPhotos(description, visualMatches);
   }
+
+  // Fire-and-forget: save session (no embedding available in Gemini path)
+  saveMatchSession({
+    tier,
+    matchCount: merged.length,
+    topConfidence: merged[0]?.confidence ?? null,
+    queryEmbedding: null,
+    matchedPhotoIds: merged.map((m) => m.photo.driveFileId),
+  });
 
   return NextResponse.json({ matches: merged, description, tier });
 }
