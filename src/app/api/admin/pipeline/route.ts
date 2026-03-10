@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "@/lib/auth";
 import { spawn } from "child_process";
+import { existsSync } from "fs";
 import path from "path";
 
 export const maxDuration = 300;
@@ -66,6 +67,17 @@ export async function POST(request: NextRequest) {
 
   const projectRoot = process.cwd();
   const venvPython = path.join(projectRoot, "scripts", ".venv", "bin", "python");
+
+  if (!existsSync(venvPython)) {
+    return NextResponse.json(
+      {
+        error: "Pipeline not available in this environment",
+        hint: "The Python pipeline requires a local server with the venv set up. Run: python3 -m venv scripts/.venv && scripts/.venv/bin/pip install -r scripts/requirements.txt",
+      },
+      { status: 501 },
+    );
+  }
+
   const args = phaseToArgs(phase, { retryErrors: body.retryErrors, folder: body.folder });
 
   return new Promise<NextResponse>((resolve) => {

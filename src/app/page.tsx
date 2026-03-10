@@ -1097,6 +1097,17 @@ function PhotoCard({
         />
       )}
 
+      {/* Video play indicator */}
+      {(photo.mimeType?.startsWith("video/") || /\.(mp4|mov|webm|avi)$/i.test(photo.filename)) && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 border border-[#00ff4166]">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#00ff41">
+              <polygon points="8,5 20,12 8,19" />
+            </svg>
+          </div>
+        </div>
+      )}
+
       {/* Select mode checkbox overlay */}
       {selectMode && (
         <div className="absolute top-1.5 left-1.5 z-10">
