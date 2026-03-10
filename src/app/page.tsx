@@ -175,7 +175,7 @@ function PhotoGrid() {
   );
   const [matchResults, setMatchResults] = useState<MatchResult[] | null>(null);
   const [matchDescription, setMatchDescription] = useState("");
-  const [matchTier, setMatchTier] = useState<MatchTier>("text");
+  const [_matchTier, setMatchTier] = useState<MatchTier>("text");
   const [shuffledPhotos, setShuffledPhotos] = useState<PhotoRecord[]>([]);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
