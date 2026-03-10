@@ -1,58 +1,75 @@
 # EventLens
 
-Instant photo search for any event.
-
-Drop your event photos into Google Drive, let AI analyze them, and give your attendees a fast, searchable gallery. They find their photos by typing what they remember — text on a banner, what someone was wearing, or the kind of scene.
+AI-powered event photo reconnaissance system. Upload event photos to Google Drive, let AI analyze them, and give attendees a fast gallery with face matching, semantic search, and text search.
 
 ---
 
 ## How It Works
 
-EventLens is a template you deploy once per event. The setup has three parts:
+EventLens combines Google Drive for storage, Supabase for metadata and vector search, and multiple AI models for photo analysis:
 
-1. **Google Drive** — Your event photos live here, organized in folders however you like (by day, session, photographer, etc.)
-2. **Apps Script + Gemini AI** — A script reads every photo, uses Gemini to describe what's in it (people, text, scenes), and writes the results to a Google Sheet
-3. **This app** — A read-only frontend that searches the Sheet and displays photos with thumbnails pulled directly from Drive
-
-The app never touches your Drive folder. It only reads the Sheet. The Apps Script is the bridge between Drive and the app.
+1. **Google Drive** — Event photos organized in folders (by day, session, photographer, etc.)
+2. **Processing pipeline** — A Python script scans Drive, uses Gemini Vision to describe each photo, generates text embeddings (Gemini) and face embeddings (InsightFace), and stores everything in Supabase
+3. **Next.js app** — A searchable gallery with face matching, semantic search, full-text search, and batch downloads
 
 ---
 
-## What Attendees Can Do
+## Features
 
-### Search photos
+### For attendees
 
-Type anything into the search bar:
+- **Face matching** — Upload a selfie to find photos you're in. Uses InsightFace 512-dim face embeddings with pgvector cosine similarity search
+- **Semantic search** — Natural language queries like "people near the stage" or "outdoor group photo". Uses Gemini 768-dim description embeddings
+- **Text search** — Search visible text (banners, badges, slides), people descriptions, scene descriptions, filenames, and folders. Full-text + trigram matching
+- **Browse by folder** — Filter chips for each Drive subfolder
+- **Lightbox viewer** — Full-resolution photos with metadata panel, keyboard/touch navigation, Drive link, and download
+- **Batch download** — Select multiple photos and download as ZIP (up to 50)
+- **Video playback** — Stream event videos directly from Drive with range request support
+- **Password-protected access** — Simple password gate for private events
 
-- **Text from the event** — banners, signs, name badges, slide titles, t-shirt logos
-- **Descriptions of people** — "red shirt", "glasses", "group of four"
-- **Scene types** — "stage", "laptop", "outdoor", "panel discussion"
-- **Filenames or folder names** — "DSC_4021", "Day 2"
+### For organizers
 
-Search uses AND logic — typing "red shirt laptop" returns photos that match all three terms. Results are ranked by relevance, with text matches weighted highest.
+- **Admin dashboard** — Pipeline status, folder breakdown, error logs, activity feed
+- **Processing pipeline** — Orchestrate photo scanning and AI analysis in phases:
+  - **Scan** — Discover new files from Google Drive folders
+  - **Describe** — Generate AI metadata with Gemini Vision (visible text, people descriptions, scene description, face count)
+  - **Embeddings** — Create 768-dim text embeddings for semantic search
+  - **Face embed** — Generate 512-dim face embeddings via InsightFace microservice
+- **Error retry** — Re-process failed photos without redoing everything
 
-### Browse by folder
+---
 
-If your Drive photos are organized into subfolders, those appear as filter chips below the search bar. Tap a folder to narrow down, tap again to clear. Folder filtering combines with search.
+## Architecture
 
-### View full-size photos
-
-Click any thumbnail to open the lightbox:
-
-- Full-resolution image loaded from Drive
-- **Metadata panel** showing the AI analysis — detected text, people descriptions, scene description, face count
-- **Open in Drive** to see the original file
-- **Download** to save a copy
-- Navigate with arrow keys, swipe on mobile, or click the side buttons
-- Press Escape or click outside to close
-
-### Shareable links
-
-Search state is synced to the URL. Copy the link to share a specific search with someone else — they'll see the same filtered results.
-
-### Live updates
-
-If the Apps Script is still processing photos, the app polls for new data every 30 seconds. A "Photos updating live" indicator appears in the header, and a toast notification lets you refresh when new photos arrive without losing your scroll position.
+```
+Google Drive (photo/video files)
+       │
+       ▼
+Processing Pipeline (Python script or Admin API)
+  ├── Gemini Vision → text, people, scene analysis
+  ├── Gemini Embedding → 768-dim description vectors
+  └── InsightFace (face-api service) → 512-dim face vectors
+       │
+       ▼
+Supabase (PostgreSQL + pgvector)
+  ├── photos table (metadata, description embeddings, search vectors)
+  ├── face_embeddings table (face vectors, bounding boxes)
+  ├── match_sessions table (analytics)
+  └── RPC functions (match_faces, search_photos, search_photos_semantic)
+       │
+       ▼
+Next.js App (Vercel)
+  ├── /api/photos      → photo list from Supabase
+  ├── /api/match       → face embedding → pgvector similarity
+  ├── /api/search      → semantic + text hybrid search
+  ├── /api/video       → Drive video streaming proxy
+  ├── /api/download-zip → batch ZIP export
+  ├── /api/auth/*      → cookie-based login/logout
+  └── /api/admin/*     → pipeline orchestration (protected)
+       │
+       ▼
+Attendees (search + browse + match + download)
+```
 
 ---
 
@@ -60,43 +77,74 @@ If the Apps Script is still processing photos, the app polls for new data every 
 
 ### Prerequisites
 
-- A Google Cloud project with the **Sheets API** enabled and an API key
-- A Google Drive folder with your event photos
-- The EventLens Apps Script (creates and populates the Google Sheet)
-- Both the Sheet and Drive folder shared as **"Anyone with the link"**
+- Google Cloud project with **Drive API** enabled and an API key
+- Google Drive folder with event photos (shared as "Anyone with the link")
+- Supabase project with pgvector extension
+- Gemini API key (from aistudio.google.com)
+- (Optional) Face-api microservice deployed for face matching
 
-### 1. Run the Apps Script
+### 1. Set up Supabase
 
-Set up the companion Apps Script pointing at your Drive folder. It will:
+Create a Supabase project and run the migrations in order:
 
-- Walk through all photos (and subfolders)
-- Analyze each one with Gemini AI
-- Write the results to a Google Sheet with these columns:
+```bash
+# In the Supabase SQL editor, run each file from:
+supabase/migrations/001_match_faces.sql
+supabase/migrations/002_search_photos.sql
+supabase/migrations/003_description_embeddings.sql
+supabase/migrations/004_match_sessions.sql
+supabase/migrations/005_add_face_embedding_unique_constraint.sql
+```
 
-| Filename | Drive URL | Folder | Visible Text | People Descriptions | Scene Description | Face Count | Processed At |
+### 2. Deploy the face-api service (optional)
 
-Processing time depends on photo count — roughly 1 hour for 3,000 photos.
+The face embedding microservice lives in `services/face-api/`. Deploy it to Railway, Render, or Fly.io:
 
-### 2. Set environment variables
+```bash
+cd services/face-api
+docker build -t face-api .
+# Deploy to your platform of choice
+```
 
-Copy `.env.example` to `.env.local`:
+### 3. Set environment variables
+
+Copy `.env.example` to `.env.local` and fill in values:
 
 ```bash
 cp .env.example .env.local
 ```
 
-Fill in the required values:
-
 | Variable | Required | Description |
 |---|---|---|
-| `GOOGLE_SHEETS_API_KEY` | Yes | Your Google Cloud API key with Sheets API enabled |
-| `GOOGLE_SHEET_ID` | Yes | The Sheet ID from the URL: `docs.google.com/spreadsheets/d/{THIS}/edit` |
-| `NEXT_PUBLIC_EVENT_NAME` | No | Display name shown in the header (default: "Event Photos") |
-| `NEXT_PUBLIC_EVENT_TAGLINE` | No | Subtitle below the event name (default: "Find your photos") |
-| `NEXT_PUBLIC_PRIMARY_COLOR` | No | Hex color for buttons, links, and active states (default: `#3b82f6`) |
-| `NEXT_PUBLIC_ACCENT_COLOR` | No | Hex color for face count badges (default: `#f59e0b`) |
+| `GOOGLE_SHEET_ID` | Yes | Google Sheet ID (legacy photo source, still used as fallback) |
+| `GOOGLE_API_KEY` | Yes | Google Cloud API key with Drive API enabled |
+| `GOOGLE_DRIVE_FOLDER_ID` | Yes | Root Drive folder ID for photo scanning |
+| `GEMINI_API_KEY` | Yes | Gemini API key for vision analysis and embeddings |
+| `APP_PASSWORD` | Yes | Password for attendee access |
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Supabase service role key (server-side only) |
+| `ADMIN_API_SECRET` | Yes | Bearer token for admin API endpoints |
+| `FACE_API_URL` | No | URL to deployed face-api service |
+| `FACE_API_SECRET` | No | Bearer token for face-api authentication |
+| `NEXT_PUBLIC_EVENT_NAME` | No | Event title (default: "HARD MODE") |
+| `NEXT_PUBLIC_EVENT_TAGLINE` | No | Subtitle (default: "PHOTO RECONNAISSANCE SYSTEM") |
+| `NEXT_PUBLIC_PRIMARY_COLOR` | No | Primary color hex (default: `#00ff41`) |
+| `NEXT_PUBLIC_ACCENT_COLOR` | No | Accent color hex (default: `#00ff41`) |
 
-### 3. Deploy
+### 4. Process photos
+
+Run the Python pipeline to scan Drive and generate AI metadata:
+
+```bash
+cd scripts
+pip install -r requirements.txt
+python process_photos.py --full  # scan + describe + embeddings
+python process_photos.py --only-face-embed  # face embeddings (requires face-api service)
+```
+
+Or use the admin dashboard at `/admin` to trigger processing via the API.
+
+### 5. Deploy
 
 **Local:**
 
@@ -113,49 +161,58 @@ vercel
 vercel --prod
 ```
 
-Or use the one-click deploy button and set your env vars in the Vercel dashboard.
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FYOUR_USERNAME%2Feventlens&env=GOOGLE_SHEETS_API_KEY,GOOGLE_SHEET_ID&envDescription=API%20key%20and%20Sheet%20ID%20for%20your%20event%20photos)
+Set all environment variables in the Vercel dashboard.
 
 ---
 
-## Reusing for Another Event
+## Project Structure
 
-This is a template. Each event gets its own deployment:
+```
+src/
+  app/
+    page.tsx                    # Main gallery
+    login/page.tsx              # Auth page
+    admin/page.tsx              # Admin dashboard
+    api/
+      photos/route.ts           # Photo list endpoint
+      match/route.ts            # Face matching endpoint
+      search/route.ts           # Semantic + text search
+      video/route.ts            # Drive video proxy
+      download-zip/route.ts     # Batch ZIP export
+      auth/login/route.ts       # Login
+      auth/logout/route.ts      # Logout
+      admin/scan/route.ts       # Drive scanning
+      admin/pipeline/route.ts   # Processing pipeline
+      admin/status/route.ts     # Pipeline status
+  components/
+    PhotoUpload.tsx             # Selfie upload for face matching
+    Lightbox.tsx                # Full-screen photo viewer
+    FloatingActionBar.tsx       # Selection + download toolbar
+  lib/
+    supabase.ts                 # Supabase client + RPC calls
+    gemini.ts                   # Gemini Vision API
+    drive.ts                    # Google Drive API client
+    photos.ts                   # Photo fetching logic
+    auth.ts                     # Auth utilities
+    config.ts                   # Environment config
+    types.ts                    # TypeScript interfaces
+  middleware.ts                 # Auth middleware
 
-1. Create a new Drive folder and add your photos
-2. Copy the Apps Script Sheet (File > Make a copy) or create a new one
-3. Point the script at the new folder and run it
-4. Deploy again with the new `GOOGLE_SHEET_ID` and `NEXT_PUBLIC_EVENT_NAME`
-
-Same app, new data, new URL.
+services/face-api/              # InsightFace microservice (Flask)
+scripts/process_photos.py       # Python processing pipeline
+supabase/migrations/            # Database schema
+```
 
 ---
 
-## Architecture
+## Tech Stack
 
-```
-Google Drive (photos)
-       |
-       v
-Apps Script + Gemini AI (analysis)
-       |
-       v
-Google Sheet (metadata database)
-       |
-       v
-EventLens app (read-only frontend)
-       |
-       v
-Attendees (search + browse + download)
-```
-
-- **No database** — the Google Sheet is the only data source
-- **No backend** — the app reads the Sheet via the public Sheets API
-- **No auth** — everything is public read-only (Sheet and Drive both shared with link)
-- **No file uploads** — photos stay in Drive, the app just renders thumbnails and links
-
-The app caches Sheet data for 30 seconds (ISR), so changes from the Apps Script appear within a minute.
+- **Framework**: Next.js 15, React 19, TypeScript
+- **Styling**: Tailwind CSS (retro terminal aesthetic)
+- **Database**: Supabase (PostgreSQL + pgvector)
+- **AI**: Gemini Vision (photo analysis), Gemini Embedding (semantic search), InsightFace (face matching)
+- **Storage**: Google Drive (photos/videos)
+- **Deployment**: Vercel (app), Railway/Render/Fly.io (face-api service)
 
 ---
 

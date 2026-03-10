@@ -39,7 +39,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="w-full h-full bg-[var(--el-bg)] text-zinc-100 font-mono flex items-center justify-center p-4 scan-line-bg"
+      className="w-full min-h-screen bg-[var(--el-bg)] text-zinc-100 font-mono flex items-center justify-center p-4 scan-line-bg"
     >
       <div className="w-full max-w-sm">
         <div className="border border-[var(--el-green-d9)] bg-[rgba(26,26,26,0.8)] p-6 backdrop-blur">

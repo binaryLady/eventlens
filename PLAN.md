@@ -1,112 +1,109 @@
-# EventLens Finalization Plan
+# EventLens — Status & Plan
+
+## Completed
+
+### Infrastructure
+
+- [x] Supabase PostgreSQL with pgvector extension
+- [x] `photos` table — metadata, description embeddings, search vectors, processing status
+- [x] `face_embeddings` table — 512-dim InsightFace vectors with bounding boxes, HNSW index
+- [x] `match_sessions` table — analytics for face match queries
+- [x] RPC functions: `match_faces()`, `search_photos()`, `search_photos_semantic()`
+- [x] Supabase migrations (5 migration files)
+
+### Processing Pipeline
+
+- [x] Python script (`scripts/process_photos.py`) with phased processing:
+  - Scan: discover files from Google Drive
+  - Describe: Gemini Vision analysis (visible text, people, scene, face count)
+  - Embeddings: 768-dim Gemini text embeddings for semantic search
+  - Face embed: 512-dim InsightFace embeddings via face-api service
+- [x] Rate limiting, retry logic (tenacity), progress bars (tqdm)
+- [x] Admin API endpoints for triggering pipeline phases from the dashboard
+- [x] Admin dashboard UI with status, folder breakdown, error logs, activity feed
+
+### Search
+
+- [x] Face matching — selfie upload → InsightFace embedding → pgvector cosine similarity
+- [x] Semantic search — query → Gemini embedding → pgvector cosine similarity on descriptions
+- [x] Text search — full-text (tsvector) + trigram similarity on all text fields
+- [x] Multi-tier search combining vector, text, and semantic results
+
+### Face-API Microservice
+
+- [x] Flask service (`services/face-api/`) using InsightFace
+- [x] Dockerized for deployment on Railway/Render/Fly.io
+- [x] `POST /embed` endpoint returning 512-dim face embeddings + bounding boxes
+
+### Frontend
+
+- [x] Photo gallery with folder filtering
+- [x] Face matching UI (PhotoUpload component with camera capture)
+- [x] Lightbox with metadata, keyboard/touch navigation
+- [x] Batch selection + ZIP download (up to 50 files)
+- [x] Video streaming proxy with range request support
+- [x] Password authentication (cookie-based)
+- [x] Retro terminal UI theme (configurable colors)
+
+### API Endpoints
+
+- [x] `GET /api/photos` — fetch photos from Supabase (Google Sheets fallback)
+- [x] `POST /api/match` — face embedding search
+- [x] `GET /api/search` — semantic + text hybrid search
+- [x] `GET /api/video` — Drive video streaming proxy
+- [x] `POST /api/download-zip` — batch ZIP export
+- [x] `POST /api/auth/login` + `POST /api/auth/logout`
+- [x] `POST /api/admin/scan` — Drive folder scanning
+- [x] `POST /api/admin/pipeline` — processing pipeline orchestration
+- [x] `GET /api/admin/status` — pipeline status dashboard data
+
+---
 
 ## Current State
-- **Drive**: stores image files (source of truth)
-- **Supabase `face_embeddings`**: 7k rows from Colab (InsightFace buffalo_l, 512-dim vectors). Possibly has duplicates.
-- **Supabase `photos`**: empty table, never populated
-- **`/api/photos`**: hits Drive API every request, returns empty metadata fields
-- **`/api/match`**: uses Gemini Vision (slow, ignores the 7k embeddings entirely)
-- **Admin system**: 3 API routes + UI page + cron job, never used
 
-## Target State
-- **`/api/photos`**: reads from Supabase `face_embeddings` (deduplicated by `drive_file_id`), uses Drive CDN for thumbnails
-- **`/api/match`**: runs InsightFace ONNX model via `onnxruntime-node` on uploaded photo, queries pgvector for cosine similarity
-- **Admin system**: removed entirely
-- **Text search**: searches against `filename` and `folder` fields from `face_embeddings`
+- Photos table is populated with AI-generated metadata
+- Face embeddings table has vectors from InsightFace
+- All search modes (face, semantic, text) are functional
+- Admin pipeline can process new photos end-to-end
+- App is deployed on Vercel
+- Face-api service needs separate deployment (Railway/Render/Fly.io)
 
 ---
 
-## Steps
+## Potential Next Steps
 
-### 1. Deduplicate `face_embeddings`
-- Query Supabase to check for duplicate `(drive_file_id, face_index)` pairs
-- Delete duplicates, keeping the most recent row per pair
-- Can be done via SQL in Supabase dashboard or a one-off script
+These are ideas for future improvement, not committed work:
 
-### 2. Create pgvector similarity function in Supabase
-- Create a Postgres RPC function `match_faces(query_embedding vector(512), match_threshold float, match_count int)`
-- Uses cosine similarity (`<=>` operator) against `face_embeddings.embedding`
-- Returns matching rows with similarity score, grouped by `drive_file_id`
+### Polish
 
-### 3. Rewire `/api/photos` to read from Supabase
-- Query `face_embeddings` with `SELECT DISTINCT ON (drive_file_id)` to get unique photos
-- Map to `PhotoRecord` format: derive `thumbnailUrl` and `downloadUrl` from `drive_file_id`
-- Search filters against `filename` and `folder` (the metadata we have)
-- Remove `fetchPhotosFromDriveFolder()`, `fetchPhotos()`, Google Sheet fallback
+- [ ] Improve loading states and skeleton screens
+- [ ] Better error messages for failed face matches (no face detected, etc.)
+- [ ] Progress indicator for large ZIP downloads
 
-### 4. Add InsightFace ONNX runtime to Next.js
-- Install `onnxruntime-node`
-- Download InsightFace buffalo_l ONNX model files:
-  - `det_10g.onnx` (~16MB) — face detection
-  - `w600k_r50.onnx` (~166MB) — face recognition (512-dim embeddings)
-- Store in `public/models/` or a separate directory
-- Create `src/lib/insightface.ts` — loads models, detects faces, extracts embeddings
-- **Risk**: Vercel serverless function size limit is 250MB. Models total ~182MB. May need to use Vercel Fluid Compute or store models externally and download at cold start.
+### Search Quality
 
-### 5. Rewire `/api/match` to use pgvector
-- Accept uploaded image (base64)
-- Run InsightFace ONNX to extract 512-dim face embedding
-- Call Supabase RPC `match_faces()` for cosine similarity search
-- Return matched photos with confidence scores
-- Remove Gemini visual matching, text-based attribute matching, thumbnail downloading
+- [ ] Tune similarity thresholds (face: 0.68, semantic: 0.35) based on real usage
+- [ ] Add search result scoring/ranking explanations
+- [ ] Filter search results by folder
 
-### 6. Remove admin system
-- Delete `src/app/admin/page.tsx`
-- Delete `src/app/api/admin/scan/route.ts`
-- Delete `src/app/api/admin/index/route.ts`
-- Delete `src/app/api/admin/status/route.ts`
-- Remove `analyzeEventPhoto` from `src/lib/gemini.ts`
-- Remove `adminSecret` from `src/lib/config.ts`
-- Remove cron config and admin function config from `vercel.json`
+### Performance
 
-### 7. Clean up dead code
-- Remove `fetchPhotos()` (Google Sheet reader) from `src/lib/photos.ts`
-- Remove `fetchPhotosFromDriveFolder()` — replaced by Supabase query
-- Remove `fetchDriveFolders()` — folders come from Supabase `face_embeddings.folder`
-- Remove Google Sheet config (`sheetId`) from `src/lib/config.ts`
-- Keep `describePersonForMatching` and `verifyFaceMatches` in gemini.ts only if needed as fallback
-- Remove `src/lib/supabase.ts` PhotoRow interface (photos table not used)
+- [ ] Paginate photo list (currently loads all photos)
+- [ ] Lazy-load thumbnails with intersection observer
+- [ ] Cache Supabase queries with Next.js ISR
 
-### 8. Update Colab notebook
-- Add Gemini text analysis cell: for each photo, call Gemini to get `visible_text`, `people_descriptions`, `scene_description`
-- Store in a new `photo_metadata` table or add columns to `face_embeddings`
-- This enables richer text search in the future
-- Add deduplication check before inserting embeddings
+### Admin
 
----
+- [ ] Show processing progress in real-time (SSE or polling)
+- [ ] Bulk re-process by folder
+- [ ] Preview processed metadata before committing
 
-## Architecture After
+### Analytics
 
-```
-┌──────────────────────────────────────────────────┐
-│ Google Drive (image files)                       │
-│  └── thumbnails via lh3.googleusercontent.com    │
-└──────────────────────────────────────────────────┘
+- [ ] Dashboard for match_sessions data (popular searches, match rates)
+- [ ] Export analytics as CSV
 
-┌──────────────────────────────────────────────────┐
-│ Google Colab (batch processing)                  │
-│  └── InsightFace → face_embeddings → Supabase    │
-│  └── (future) Gemini → text metadata → Supabase  │
-└──────────────────────────────────────────────────┘
+### Cleanup
 
-┌──────────────────────────────────────────────────┐
-│ Supabase                                         │
-│  ├── face_embeddings (7k rows, pgvector)         │
-│  │   drive_file_id, filename, folder,            │
-│  │   face_index, embedding(512), bbox            │
-│  └── match_faces() RPC function                  │
-└──────────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────────┐
-│ Next.js App (Vercel)                             │
-│  ├── /api/photos    → reads Supabase             │
-│  ├── /api/match     → ONNX embedding → pgvector  │
-│  ├── /api/download-zip → Drive download          │
-│  └── /api/auth/*    → cookie login/logout        │
-└──────────────────────────────────────────────────┘
-```
-
-## Open Questions
-- Vercel 250MB limit vs ~182MB of ONNX models — may need Fluid Compute or external model hosting
-- Do we want Gemini as a fallback if ONNX face detection finds no face in the uploaded photo?
-- Text search: currently limited to filename+folder. Richer search needs Colab to generate text metadata.
+- [ ] Remove Google Sheets fallback from `/api/photos` (fully migrated to Supabase)
+- [ ] Remove legacy `GOOGLE_SHEET_ID` env var if Sheets fallback is dropped

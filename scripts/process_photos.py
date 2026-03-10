@@ -183,7 +183,29 @@ Be specific and factual. For visible_text, only include actual readable text. Fo
 def _parse_gemini_json(text: str) -> dict:
     cleaned = re.sub(r"```json\n?", "", text)
     cleaned = re.sub(r"```\n?", "", cleaned).strip()
-    return json.loads(cleaned)
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        # Response may be truncated — attempt to salvage by closing open structures
+        salvaged = cleaned
+        # Close any open string
+        open_strings = salvaged.count('"') % 2
+        if open_strings:
+            salvaged += '"'
+        # Close open objects/arrays
+        salvaged += "}" * (salvaged.count("{") - salvaged.count("}"))
+        salvaged += "]" * (salvaged.count("[") - salvaged.count("]"))
+        try:
+            return json.loads(salvaged)
+        except json.JSONDecodeError:
+            # Last resort: extract whatever fields we can via regex
+            result = {}
+            for field in ("visible_text", "people_descriptions", "scene_description"):
+                m = re.search(rf'"{field}"\s*:\s*"((?:[^"\\]|\\.)*)', salvaged)
+                result[field] = m.group(1) if m else ""
+            m = re.search(r'"face_count"\s*:\s*(\d+)', salvaged)
+            result["face_count"] = int(m.group(1)) if m else 0
+            return result
 
 
 class GeminiClient:
@@ -201,7 +223,7 @@ class GeminiClient:
                 {"text": ANALYZE_PROMPT},
                 {"inline_data": {"mime_type": mime_type, "data": base64_data}},
             ]}],
-            "generationConfig": {"temperature": 0.1, "maxOutputTokens": 2048},
+            "generationConfig": {"temperature": 0.1, "maxOutputTokens": 8192},
         }
         r = requests.post(url, json=body, timeout=120)
         r.raise_for_status()
