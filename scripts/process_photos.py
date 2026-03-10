@@ -227,7 +227,7 @@ class GeminiClient:
            retry=retry_if_exception(_is_rate_limited))
     def analyze_photo(self, base64_data: str, mime_type: str) -> dict:
         self.limiter.wait()
-        url = GEMINI_GENERATE.format(model="gemini-3.5-photo") + f"?key={self.api_key}"
+        url = GEMINI_GENERATE.format(model="gemini-2.5-flash") + f"?key={self.api_key}"
         body = {
             "contents": [{"parts": [
                 {"text": ANALYZE_PROMPT},
