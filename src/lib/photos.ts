@@ -15,7 +15,116 @@ export function extractDriveFileId(driveUrl: string): string {
 }
 
 /**
- * Fetch photo metadata from a public Google Sheet.
+ * Fetch all image files from a Google Drive folder and its subfolders.
+ * Recursively searches for images (jpg, jpeg, png, gif, webp, bmp).
+ */
+export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
+  const { driveFolderId, googleApiKey } = config;
+
+  if (!driveFolderId || !googleApiKey) {
+    return [];
+  }
+
+  const allPhotos: PhotoRecord[] = [];
+  const mimeTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/bmp",
+  ];
+  const mimeQuery = mimeTypes.map((t) => `mimeType='${t}'`).join(" or ");
+
+  try {
+    // Fetch all image files in the entire folder hierarchy
+    const query = encodeURIComponent(
+      `'${driveFolderId}' in parents and (${mimeQuery}) and trashed = false`,
+    );
+
+    let pageToken: string | undefined;
+    let photoId = 1;
+
+    do {
+      const pageTokenParam = pageToken ? `&pageToken=${pageToken}` : "";
+      const url = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,parents,mimeType,modifiedTime),nextPageToken&orderBy=modifiedTime%20desc&pageSize=1000&key=${googleApiKey}${pageTokenParam}`;
+
+      const res = await fetch(url, { next: { revalidate: 300 } });
+      if (!res.ok) {
+        throw new Error(`Drive API error: ${res.status}`);
+      }
+
+      const data: {
+        files?: Array<{
+          id: string;
+          name: string;
+          mimeType: string;
+          modifiedTime: string;
+          parents?: string[];
+        }>;
+        nextPageToken?: string;
+      } = await res.json();
+
+      if (data.files) {
+        for (const file of data.files) {
+          // Get folder name from parent folder ID
+          let folder = "Root";
+          if (file.parents && file.parents[0] !== driveFolderId) {
+            folder = await getFolderName(file.parents[0], googleApiKey);
+          }
+
+          allPhotos.push({
+            id: String(photoId++),
+            filename: file.name,
+            driveUrl: `https://drive.google.com/file/d/${file.id}/view`,
+            driveFileId: file.id,
+            folder,
+            visibleText: "",
+            peopleDescriptions: "",
+            sceneDescription: "",
+            faceCount: 0,
+            processedAt: file.modifiedTime,
+            thumbnailUrl: `https://lh3.googleusercontent.com/d/${file.id}=w400`,
+            downloadUrl: `https://drive.google.com/uc?export=download&id=${file.id}`,
+          });
+        }
+      }
+
+      pageToken = data.nextPageToken;
+    } while (pageToken);
+
+    // Sort by modification time descending
+    allPhotos.sort(
+      (a, b) =>
+        new Date(b.processedAt).getTime() - new Date(a.processedAt).getTime(),
+    );
+
+    return allPhotos;
+  } catch (error) {
+    console.error("Failed to fetch photos from Drive folder:", error);
+    return [];
+  }
+}
+
+/**
+ * Helper to get folder name from folder ID
+ */
+async function getFolderName(
+  folderId: string,
+  apiKey: string,
+): Promise<string> {
+  try {
+    const url = `https://www.googleapis.com/drive/v3/files/${folderId}?fields=name&key=${apiKey}`;
+    const res = await fetch(url);
+    if (!res.ok) return "Unknown";
+    const data: { name?: string } = await res.json();
+    return data.name || "Unknown";
+  } catch {
+    return "Unknown";
+  }
+}
+
+/**
+ * Fetch photo metadata from a public Google Sheet (fallback if Drive isn't configured).
  * Uses the Google Visualization API (gviz/tq) which works when the sheet
  * is shared as "Anyone with the link" — no API key needed.
  */

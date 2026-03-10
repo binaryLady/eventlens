@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
-import { fetchPhotos, getFolders, fetchDriveFolders } from "@/lib/photos";
+import { config } from "@/lib/config";
+import { fetchPhotosFromDriveFolder, fetchPhotos, getFolders, fetchDriveFolders } from "@/lib/photos";
 
 export const revalidate = 30;
 
 // @TheTechMargin 2026
 export async function GET() {
   try {
-    const [photos, driveFolders] = await Promise.all([
-      fetchPhotos(),
-      fetchDriveFolders(),
-    ]);
+    // Use Drive folder if configured, otherwise fall back to Google Sheet
+    const photos = config.driveFolderId
+      ? await fetchPhotosFromDriveFolder()
+      : await fetchPhotos();
+
+    const [driveFolders] = await Promise.all([fetchDriveFolders()]);
 
     // Use Drive folders when available, fall back to photo-derived folders
     const indexedFolders = getFolders(photos);
