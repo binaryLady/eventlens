@@ -517,10 +517,10 @@ function PhotoGrid() {
   return (
     <div className="min-h-screen bg-[var(--el-bg)] grid-bg">
       {/* Header */}
-      <header className="px-3 pt-4 pb-4 md:px-4 md:pt-12 md:pb-8">
+      <header className="px-3 pt-2 pb-2 md:px-4 md:pt-12 md:pb-8">
         <div className="mx-auto max-w-5xl">
           {/* Top bar with coordinates */}
-          <div className="flex items-center justify-between mb-3 md:mb-4 text-[9px] md:text-[10px] text-[var(--el-green-d9)] uppercase tracking-widest font-mono">
+          <div className="flex items-center justify-between mb-2 md:mb-4 text-[9px] md:text-[10px] text-[var(--el-green-d9)] uppercase tracking-widest font-mono">
             <span className="hidden sm:inline">SYS://PHOTO_RECON</span>
             <span className="sm:hidden">EVENTLENS</span>
             <div className="flex items-center gap-2 md:gap-4">
@@ -537,7 +537,7 @@ function PhotoGrid() {
           </div>
 
           {/* Title block */}
-          <div className="border border-[var(--el-green-99)] p-4 md:p-8 relative">
+          <div className="border border-[var(--el-green-99)] px-3 py-2.5 md:p-8 relative">
             {/* Corner brackets */}
             <div className="absolute top-0 left-0 w-3 h-3 md:w-4 md:h-4 border-t-2 border-l-2 border-[var(--el-green)] -translate-x-px -translate-y-px" />
             <div className="absolute top-0 right-0 w-3 h-3 md:w-4 md:h-4 border-t-2 border-r-2 border-[var(--el-green)] translate-x-px -translate-y-px" />
@@ -546,7 +546,7 @@ function PhotoGrid() {
 
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 md:gap-3">
-                <h1 className="font-heading text-2xl font-bold tracking-wider text-[var(--el-green)] uppercase glow-text sm:text-3xl md:text-5xl lg:text-6xl animate-flicker">
+                <h1 className="font-heading text-xl font-bold tracking-wider text-[var(--el-green)] uppercase glow-text sm:text-3xl md:text-5xl lg:text-6xl animate-flicker">
                   {config.eventName}
                 </h1>
                 {isRecentlyUpdated(lastUpdated) && (
@@ -556,13 +556,13 @@ function PhotoGrid() {
                   </span>
                 )}
               </div>
-              <p className="mt-1.5 md:mt-2 text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-[var(--el-green-d9)] font-mono">
+              <p className="mt-1 md:mt-2 text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-[var(--el-green-d9)] font-mono">
                 {config.eventTagline}
               </p>
             </div>
 
             {/* Search */}
-            <div className="relative mt-4 md:mt-6 max-w-xl mx-auto">
+            <div className="relative mt-2.5 md:mt-6 max-w-xl mx-auto">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--el-green-d9)] text-sm font-mono">
                 {">_"}
               </span>
@@ -571,7 +571,7 @@ function PhotoGrid() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="SEARCH PHOTOS, PEOPLE, SCENES..."
-                className="w-full border border-[var(--el-green-d9)] bg-[rgba(26,26,26,0.6)] py-3 pl-10 pr-10 text-base md:text-sm text-[var(--el-green)] font-mono placeholder-[var(--el-magenta)] outline-none transition-all focus:border-[var(--el-green)] focus:shadow-[0_0_15px_rgba(0,255,65,0.15)]"
+                className="w-full border border-[var(--el-green-d9)] bg-[rgba(26,26,26,0.6)] py-2 md:py-3 pl-10 pr-10 text-base md:text-sm text-[var(--el-green)] font-mono placeholder-[var(--el-magenta)] outline-none transition-all focus:border-[var(--el-green)] focus:shadow-[0_0_15px_rgba(0,255,65,0.15)]"
                 aria-label="Search photos"
                 enterKeyHint="search"
               />
@@ -610,14 +610,14 @@ function PhotoGrid() {
 
       {/* Filter bar — always visible when we have photos */}
       {!loading && !error && allPhotos.length > 0 && (
-        <div className="mx-auto max-w-5xl px-3 md:px-4 pb-3 md:pb-4 space-y-2">
+        <div className="mx-auto max-w-5xl px-3 md:px-4 pb-2 md:pb-4 space-y-1.5 md:space-y-2">
           {/* Row 1: folder tabs (scrollable) */}
           {folders.length > 0 && (
             <div className="scrollbar-hide overflow-x-auto -mx-3 px-3 md:-mx-4 md:px-4">
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setActiveFolder("")}
-                  className={`shrink-0 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
+                  className={`shrink-0 px-2.5 py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                     activeFolder === ""
                       ? "border border-[var(--el-magenta)] text-[var(--el-magenta)] bg-[var(--el-magenta-28)] glow-border-magenta"
                       : "border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
@@ -631,7 +631,7 @@ function PhotoGrid() {
                     onClick={() =>
                       setActiveFolder(activeFolder === folder ? "" : folder)
                     }
-                    className={`shrink-0 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
+                    className={`shrink-0 px-2.5 py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                       activeFolder === folder
                         ? "border border-[var(--el-magenta)] text-[var(--el-magenta)] bg-[var(--el-magenta-28)] glow-border-magenta"
                         : "border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
@@ -653,7 +653,7 @@ function PhotoGrid() {
               <SortDropdown sortOrder={sortOrder} onChange={setSortOrder} />
               <button
                 onClick={toggleSelectMode}
-                className={`px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
+                className={`px-2.5 py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                   selectMode
                     ? "border border-[var(--el-magenta)] text-[var(--el-magenta)] bg-[var(--el-magenta-28)] glow-border-magenta"
                     : "border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
@@ -760,8 +760,8 @@ function PhotoGrid() {
           <>
             {/* Folder cards — visual grid for quick browse */}
             {folders.length > 1 && (
-              <section className="mb-6 md:mb-8">
-                <div className="flex items-center gap-3 mb-3 md:mb-4">
+              <section className="mb-4 md:mb-8">
+                <div className="flex items-center gap-2 mb-2 md:gap-3 md:mb-4">
                   <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">
                     &#x2500;&#x2500; ALBUMS
                   </span>
@@ -999,7 +999,7 @@ function SortDropdown({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] transition-all"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] transition-all"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 6h18M6 12h12M9 18h6" />

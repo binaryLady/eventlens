@@ -126,16 +126,16 @@ export default function PhotoUpload({
   };
 
   return (
-    <div className="mt-4">
+    <div className="mt-2.5 md:mt-4">
       {!isActive && !uploading && (
         <div className="flex items-center justify-center gap-2">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-2 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-4 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)]"
+            className="inline-flex items-center gap-1.5 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-3 py-1.5 text-[10px] md:text-xs md:px-4 md:py-2 font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)]"
           >
             <svg
-              width="14"
-              height="14"
+              width="12"
+              height="12"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -150,16 +150,17 @@ export default function PhotoUpload({
               <line x1="2" y1="12" x2="6" y2="12" />
               <line x1="18" y1="12" x2="22" y2="12" />
             </svg>
-            Upload Photo to Search for Matches
+            <span className="sm:hidden">SCAN FACE</span>
+            <span className="hidden sm:inline">Upload Photo to Search for Matches</span>
           </button>
 
           <button
             onClick={() => cameraInputRef.current?.click()}
-            className="inline-flex items-center gap-2 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-4 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)] md:hidden"
+            className="inline-flex items-center gap-1.5 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)] md:hidden"
           >
             <svg
-              width="14"
-              height="14"
+              width="12"
+              height="12"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
