@@ -348,6 +348,16 @@ input:focus {
   }
 }
 
+/* ═══════════════════════════════════════════
+   RAINBOW TEXT GRADIENT
+   ═══════════════════════════════════════════ */
+.rainbow-text {
+  background: linear-gradient(45deg, #ff6b6b, #ffa500, #ffff00, #32cd32, #1e90ff, #9370db, #ff69b4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 /* Smooth scroll but not during search */
 html {
   scroll-behavior: smooth;
