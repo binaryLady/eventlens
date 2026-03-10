@@ -716,10 +716,22 @@ function PhotoGrid() {
               if (parts.length === 0) return null;
               return (
                 <span
-                  className="flex-1 min-w-0 truncate text-[9px] md:text-[10px] font-mono uppercase tracking-wider"
+                  className="flex-1 min-w-0 flex items-center gap-1.5 text-[9px] md:text-[10px] font-mono uppercase tracking-wider"
                   style={{ color: "var(--el-cyan)" }}
                 >
-                  {parts.join(" // ")}
+                  <span className="truncate">{parts.join(" // ")}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveFolder("");
+                      setActiveType("all");
+                      setSortOrder("shuffle");
+                    }}
+                    className="shrink-0 ml-0.5 w-4 h-4 flex items-center justify-center rounded-full border border-current opacity-60 hover:opacity-100 hover:bg-[var(--el-cyan-28)] transition-all"
+                    aria-label="Clear filters"
+                  >
+                    ×
+                  </button>
                 </span>
               );
             })()}
