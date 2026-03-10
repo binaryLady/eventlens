@@ -115,7 +115,7 @@ class DriveClient:
         files = []
         page_token = None
         while True:
-            q = f"'{folder_id}' in parents and mimeType contains 'image/' and trashed = false"
+            q = f"'{folder_id}' in parents and (mimeType contains 'image/' or mimeType = 'video/quicktime' or mimeType = 'video/mp4') and trashed = false"
             params = {
                 "q": q,
                 "fields": "files(id,name,mimeType,modifiedTime),nextPageToken",
@@ -134,13 +134,13 @@ class DriveClient:
                 break
         return files
 
-    def download_image_base64(self, file_id: str, width: int = 1200) -> tuple[str, str] | None:
+    def download_media_base64(self, file_id: str, width: int = 1200) -> tuple[str, str] | None:
         # Try lh3 CDN first (fast, no auth needed)
         try:
             r = requests.get(f"https://lh3.googleusercontent.com/d/{file_id}=w{width}", timeout=30)
             if r.ok:
                 ct = r.headers.get("content-type", "")
-                if ct.startswith("image/"):
+                if ct.startswith("image/") or ct.startswith("video/"):
                     return base64.b64encode(r.content).decode(), ct
         except requests.RequestException:
             pass
@@ -155,7 +155,7 @@ class DriveClient:
             if not r.ok:
                 return None
             ct = r.headers.get("content-type", "")
-            if not ct.startswith("image/"):
+            if not (ct.startswith("image/") or ct.startswith("video/")):
                 return None
             return base64.b64encode(r.content).decode(), ct
         except requests.RequestException:
@@ -429,7 +429,6 @@ def phase_describe(
     gemini: GeminiClient,
     store: SupabaseStore,
     batch_size: int,
-    retry_errors: bool,
     folder_filter: str | None,
 ) -> int:
     log.info("─── PHASE 2: DESCRIBE ───")
@@ -454,7 +453,7 @@ def phase_describe(
         for photo in tqdm(batch, desc=f"Describe batch {i // batch_size + 1}"):
             fid = photo["drive_file_id"]
             try:
-                img = drive.download_image_base64(fid)
+                img = drive.download_media_base64(fid)
                 if not img:
                     log.warning("  Could not download %s", photo['filename'])
                     store.update_photo_metadata(fid, {"status": "error", "error_message": "Download failed"})
@@ -586,13 +585,17 @@ def phase_face_embed(
     for photo in tqdm(todo, desc="Face embeddings"):
         fid = photo["drive_file_id"]
         try:
-            img = drive.download_image_base64(fid)
+            img = drive.download_media_base64(fid)
             if not img:
                 log.warning("  Could not download %s", photo['filename'])
                 errors.append(photo["filename"])
                 continue
 
-            b64, _ = img
+            b64, mime = img
+            if mime.startswith('video/'):
+                log.info("  Skipping video %s for face embedding", photo['filename'])
+                continue
+
             faces = face_api.get_embeddings(b64)
             for face in faces:
                 bbox = face.get("bbox", [0, 0, 0, 0])
@@ -708,7 +711,7 @@ def main():
                 log.error("Gemini API key required for describe phase")
             else:
                 results["describe"] = phase_describe(
-                    drive, gemini, store, args.batch_size, args.retry_errors, args.folder
+                    drive, gemini, store, args.batch_size, args.folder
                 )
 
         if "embeddings" in phases:
