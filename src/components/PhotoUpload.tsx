@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import Image from "next/image";
 import { MatchResponse } from "@/lib/types";
 
 interface PhotoUploadProps {
@@ -185,10 +186,12 @@ export default function PhotoUpload({
           {/* Photo preview thumbnail */}
           {preview && (
             <div className="relative h-10 w-10 shrink-0 overflow-hidden border border-[#00ff41] animate-pulse-green">
-              <img
+              <Image
                 src={preview}
                 alt="Your photo"
-                className="h-full w-full object-cover"
+                fill
+                unoptimized
+                className="object-cover"
               />
             </div>
           )}

@@ -168,9 +168,14 @@ function PhotoGrid() {
   );
   const [serverResults, setServerResults] = useState<PhotoRecord[] | null>(null);
   const [searchSource, setSearchSource] = useState<"client" | "server">("client");
-  const [activeFolder, setActiveFolder] = useState(
-    searchParams.get("folder") || "",
-  );
+  const [activeFolder, setActiveFolderRaw] = useState(() => {
+    const fromUrl = searchParams.get("folder");
+    if (fromUrl) return fromUrl;
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("eventlens:activeFolder") || "";
+    }
+    return "";
+  });
   const [toast, setToast] = useState<{ message: string; count: number } | null>(
     null,
   );
@@ -181,9 +186,27 @@ function PhotoGrid() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [downloading, setDownloading] = useState(false);
-  const [sortOrder, setSortOrder] = useState<"shuffle" | "newest" | "oldest" | "name-asc" | "name-desc">("shuffle");
+  const [sortOrder, setSortOrderRaw] = useState<"shuffle" | "newest" | "oldest" | "name-asc" | "name-desc">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("eventlens:sortOrder");
+      if (saved === "shuffle" || saved === "newest" || saved === "oldest" || saved === "name-asc" || saved === "name-desc") {
+        return saved;
+      }
+    }
+    return "shuffle";
+  });
   const pendingPhotosRef = useRef<PhotoRecord[] | null>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
+
+  const setActiveFolder = useCallback((folder: string) => {
+    setActiveFolderRaw(folder);
+    try { localStorage.setItem("eventlens:activeFolder", folder); } catch {}
+  }, []);
+
+  const setSortOrder = useCallback((order: "shuffle" | "newest" | "oldest" | "name-asc" | "name-desc") => {
+    setSortOrderRaw(order);
+    try { localStorage.setItem("eventlens:sortOrder", order); } catch {}
+  }, []);
 
   const fetchData = useCallback(async () => {
     try {
