@@ -21,8 +21,9 @@
   --el-green-77: #00ff4177;
   --el-green-88: #00ff4188;
   --el-green-99: #00ff4199;
+  --el-green-d9: #00ff41d9; /* primary dimmed 15% */
 
-  /* ── Magenta palette (accent) ── */
+  /* ── Magenta palette (accent — use for highlights & intermediate states only) ── */
   --el-magenta-28: #ff00ff28;
   --el-magenta-bb: #ff00ff;
   --el-magenta-cc: #ff00ffcc;

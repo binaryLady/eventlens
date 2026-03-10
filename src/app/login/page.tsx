@@ -43,13 +43,13 @@ export default function LoginPage() {
     >
       <div className="w-full max-w-sm">
         {/* Terminal window */}
-        <div className="border border-[var(--el-magenta-cc)] bg-black/80 p-6 backdrop-blur">
+        <div className="border border-[var(--el-green-d9)] bg-black/80 p-6 backdrop-blur">
           {/* Terminal header */}
-          <div className="flex items-center gap-2 border-b border-[var(--el-magenta-bb)] pb-3 mb-6">
+          <div className="flex items-center gap-2 border-b border-[var(--el-green-99)] pb-3 mb-6">
             <div className="h-2 w-2 rounded-full bg-[var(--el-green)]" />
-            <div className="h-2 w-2 rounded-full bg-[var(--el-flame-dd)]" />
-            <div className="h-2 w-2 rounded-full bg-[var(--el-magenta-cc)]" />
-            <span className="ml-2 text-[10px] uppercase tracking-widest text-[var(--el-flame-dd)]">
+            <div className="h-2 w-2 rounded-full bg-[var(--el-green-d9)]" />
+            <div className="h-2 w-2 rounded-full bg-[var(--el-green-d9)]" />
+            <span className="ml-2 text-[10px] uppercase tracking-widest text-[var(--el-green-d9)]">
               eventlens://auth
             </span>
           </div>
@@ -60,7 +60,7 @@ export default function LoginPage() {
               <h1 className="text-lg font-bold text-[var(--el-green)] uppercase tracking-wider mb-2">
                 ACCESS REQUIRED
               </h1>
-              <p className="text-xs text-[var(--el-flame-dd)] uppercase tracking-wider">
+              <p className="text-xs text-[var(--el-green-d9)] uppercase tracking-wider">
                 Enter your access credential to continue
               </p>
             </div>
@@ -69,7 +69,7 @@ export default function LoginPage() {
               <div>
                 <label
                   htmlFor="password"
-                  className="block text-[10px] uppercase tracking-wider text-[var(--el-flame-dd)] mb-2"
+                  className="block text-[10px] uppercase tracking-wider text-[var(--el-green-d9)] mb-2"
                 >
                   PASSWORD
                 </label>
@@ -79,7 +79,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-black border border-[var(--el-magenta-cc)] px-3 py-2 text-xs text-[var(--el-green)] placeholder-[var(--el-magenta-cc)] focus:border-[var(--el-green)] focus:outline-none transition-colors"
+                  className="w-full bg-black border border-[var(--el-green-d9)] px-3 py-2 text-xs text-[var(--el-green)] placeholder-[var(--el-green-d9)] focus:border-[var(--el-green)] focus:outline-none transition-colors"
                   disabled={loading}
                   autoFocus
                 />
@@ -100,8 +100,8 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <div className="border-t border-[var(--el-magenta-bb)] pt-4">
-              <p className="text-[10px] text-[var(--el-magenta-bb)] uppercase tracking-widest">
+            <div className="border-t border-[var(--el-green-99)] pt-4">
+              <p className="text-[10px] text-[var(--el-green-99)] uppercase tracking-widest">
                 © @TheTechMargin 2026
               </p>
             </div>

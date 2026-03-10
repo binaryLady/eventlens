@@ -79,13 +79,13 @@ function TerminalLoader() {
     <div className="min-h-screen bg-black grid-bg flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         {/* Terminal window */}
-        <div className="border border-[var(--el-magenta-cc)] bg-black/80 p-6">
+        <div className="border border-[var(--el-green-d9)] bg-black/80 p-6">
           {/* Terminal header bar */}
-          <div className="flex items-center gap-2 border-b border-[var(--el-magenta-bb)] pb-3 mb-4">
+          <div className="flex items-center gap-2 border-b border-[var(--el-green-99)] pb-3 mb-4">
             <div className="h-2 w-2 rounded-full bg-[var(--el-green)]" />
-            <div className="h-2 w-2 rounded-full bg-[var(--el-flame-dd)]" />
-            <div className="h-2 w-2 rounded-full bg-[var(--el-magenta-cc)]" />
-            <span className="ml-2 text-[10px] uppercase tracking-widest text-[var(--el-flame-dd)]">
+            <div className="h-2 w-2 rounded-full bg-[var(--el-green-d9)]" />
+            <div className="h-2 w-2 rounded-full bg-[var(--el-green-d9)]" />
+            <span className="ml-2 text-[10px] uppercase tracking-widest text-[var(--el-green-d9)]">
               eventlens://boot
             </span>
           </div>
@@ -100,7 +100,7 @@ function TerminalLoader() {
               >
                 {line}
                 {i < 2 && (
-                  <span className="ml-2 text-[var(--el-flame-dd)]">[OK]</span>
+                  <span className="ml-2 text-[var(--el-green-d9)]">[OK]</span>
                 )}
               </div>
             ))}
@@ -116,7 +116,7 @@ function TerminalLoader() {
         </div>
 
         {/* Crosshair decoration */}
-        <div className="mt-4 flex items-center justify-center gap-2 text-[10px] text-[var(--el-magenta-bb)] uppercase tracking-widest">
+        <div className="mt-4 flex items-center justify-center gap-2 text-[10px] text-[var(--el-green-99)] uppercase tracking-widest">
           <span>&#x2500;&#x2500;&#x253c;&#x2500;&#x2500;</span>
           <span>LOADING</span>
           <span>&#x2500;&#x2500;&#x253c;&#x2500;&#x2500;</span>
@@ -518,7 +518,7 @@ function PhotoGrid() {
       <header className="px-3 pt-4 pb-4 md:px-4 md:pt-12 md:pb-8">
         <div className="mx-auto max-w-5xl">
           {/* Top bar with coordinates */}
-          <div className="flex items-center justify-between mb-3 md:mb-4 text-[9px] md:text-[10px] text-[var(--el-flame-dd)] uppercase tracking-widest font-mono">
+          <div className="flex items-center justify-between mb-3 md:mb-4 text-[9px] md:text-[10px] text-[var(--el-green-d9)] uppercase tracking-widest font-mono">
             <span className="hidden sm:inline">SYS://PHOTO_RECON</span>
             <span className="sm:hidden">EVENTLENS</span>
             <div className="flex items-center gap-2 md:gap-4">
@@ -526,7 +526,7 @@ function PhotoGrid() {
               <span className="sm:hidden">{allPhotos.length > 0 ? `${allPhotos.length}` : ""}</span>
               <button
                 onClick={handleLogout}
-                className="text-[var(--el-magenta-bb)] hover:text-[var(--el-green)] active:text-[var(--el-green)] transition-colors underline"
+                className="text-[var(--el-green-99)] hover:text-[var(--el-green)] active:text-[var(--el-green)] transition-colors underline"
                 title="Logout"
               >
                 [LOGOUT]
@@ -535,7 +535,7 @@ function PhotoGrid() {
           </div>
 
           {/* Title block */}
-          <div className="border border-[var(--el-magenta-bb)] p-4 md:p-8 relative">
+          <div className="border border-[var(--el-green-99)] p-4 md:p-8 relative">
             {/* Corner brackets */}
             <div className="absolute top-0 left-0 w-3 h-3 md:w-4 md:h-4 border-t-2 border-l-2 border-[var(--el-green)] -translate-x-px -translate-y-px" />
             <div className="absolute top-0 right-0 w-3 h-3 md:w-4 md:h-4 border-t-2 border-r-2 border-[var(--el-green)] translate-x-px -translate-y-px" />
@@ -548,20 +548,20 @@ function PhotoGrid() {
                   {config.eventName}
                 </h1>
                 {isRecentlyUpdated(lastUpdated) && (
-                  <span className="inline-flex items-center gap-1 md:gap-1.5 border border-[var(--el-magenta-bb)] px-1.5 md:px-2 py-0.5 text-[8px] md:text-[10px] font-mono uppercase tracking-wider text-[var(--el-green)]">
+                  <span className="inline-flex items-center gap-1 md:gap-1.5 border border-[var(--el-green-99)] px-1.5 md:px-2 py-0.5 text-[8px] md:text-[10px] font-mono uppercase tracking-wider text-[var(--el-green)]">
                     <span className="h-1 w-1 md:h-1.5 md:w-1.5 bg-[var(--el-green)] animate-pulse" />
                     LIVE
                   </span>
                 )}
               </div>
-              <p className="mt-1.5 md:mt-2 text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-[var(--el-flame-dd)] font-mono">
+              <p className="mt-1.5 md:mt-2 text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-[var(--el-green-d9)] font-mono">
                 {config.eventTagline}
               </p>
             </div>
 
             {/* Search */}
             <div className="relative mt-4 md:mt-6 max-w-xl mx-auto">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--el-flame-dd)] text-sm font-mono">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--el-green-d9)] text-sm font-mono">
                 {">_"}
               </span>
               <input
@@ -569,14 +569,14 @@ function PhotoGrid() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="SEARCH PHOTOS, PEOPLE, SCENES..."
-                className="w-full border border-[var(--el-magenta-cc)] bg-black/60 py-3 pl-10 pr-10 text-base md:text-sm text-[var(--el-green)] font-mono placeholder-[var(--el-magenta-cc)] outline-none transition-all focus:border-[var(--el-green)] focus:shadow-[0_0_15px_rgba(0,255,65,0.15)]"
+                className="w-full border border-[var(--el-green-d9)] bg-black/60 py-3 pl-10 pr-10 text-base md:text-sm text-[var(--el-green)] font-mono placeholder-[var(--el-green-d9)] outline-none transition-all focus:border-[var(--el-green)] focus:shadow-[0_0_15px_rgba(0,255,65,0.15)]"
                 aria-label="Search photos"
                 enterKeyHint="search"
               />
               {searchInput && (
                 <button
                   onClick={() => setSearchInput("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--el-flame-dd)] hover:text-[var(--el-green)] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--el-green-d9)] hover:text-[var(--el-green)] transition-colors"
                   aria-label="Clear search"
                 >
                   <svg
@@ -618,7 +618,7 @@ function PhotoGrid() {
                   className={`shrink-0 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                     activeFolder === ""
                       ? "border border-[var(--el-green)] text-[var(--el-green)] bg-[var(--el-green-11)] glow-border"
-                      : "border border-[var(--el-magenta-bb)] text-[var(--el-flame-dd)] hover:border-[var(--el-magenta-bb)] hover:text-[var(--el-green)]"
+                      : "border border-[var(--el-green-99)] text-[var(--el-green-d9)] hover:border-[var(--el-green-99)] hover:text-[var(--el-green)]"
                   }`}
                 >
                   ALL [{allPhotos.length}]
@@ -632,7 +632,7 @@ function PhotoGrid() {
                     className={`shrink-0 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                       activeFolder === folder
                         ? "border border-[var(--el-green)] text-[var(--el-green)] bg-[var(--el-green-11)] glow-border"
-                        : "border border-[var(--el-magenta-bb)] text-[var(--el-flame-dd)] hover:border-[var(--el-magenta-bb)] hover:text-[var(--el-green)]"
+                        : "border border-[var(--el-green-99)] text-[var(--el-green-d9)] hover:border-[var(--el-green-99)] hover:text-[var(--el-green)]"
                     }`}
                   >
                     {folder} [{folderCounts[folder] || 0}]
@@ -644,7 +644,7 @@ function PhotoGrid() {
 
           {/* Row 2: sort + select */}
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[var(--el-flame-dd)]">
+            <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-d9)]">
               {debouncedQuery && searchSource === "server" ? "SEMANTIC SEARCH" : debouncedQuery ? "TEXT SEARCH" : ""}
             </span>
             <div className="flex items-center gap-1.5">
@@ -654,7 +654,7 @@ function PhotoGrid() {
                 className={`px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                   selectMode
                     ? "border border-[var(--el-green)] text-[var(--el-green)] bg-[var(--el-green-11)] glow-border"
-                    : "border border-[var(--el-magenta-bb)] text-[var(--el-flame-dd)] hover:border-[var(--el-magenta-bb)] hover:text-[var(--el-green)]"
+                    : "border border-[var(--el-green-99)] text-[var(--el-green-d9)] hover:border-[var(--el-green-99)] hover:text-[var(--el-green)]"
                 }`}
               >
                 {selectMode ? "EXIT" : "SELECT"}
@@ -668,7 +668,7 @@ function PhotoGrid() {
       {isSearchActive && (debouncedQuery || matchResults !== null) && (
         <div className="mx-auto max-w-5xl px-3 md:px-4 pb-2 md:pb-3">
           {!loading && !error && (
-            <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-magenta-bb)]">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">
               {matchResults !== null ? (
                 <>
                   {matchResults.length} MATCH{matchResults.length !== 1 ? "ES" : ""}
@@ -686,7 +686,7 @@ function PhotoGrid() {
                     );
                   })()}
                   {matchDescription && (
-                    <span className="text-[var(--el-magenta-cc)]">
+                    <span className="text-[var(--el-green-d9)]">
                       {" // "}
                       {matchDescription}
                     </span>
@@ -741,9 +741,9 @@ function PhotoGrid() {
 
         {/* Empty: no photos yet */}
         {!loading && !error && allPhotos.length === 0 && (
-          <div className="flex flex-col items-center py-20 text-center border border-[var(--el-magenta-bb)] p-8">
-            <div className="text-4xl text-[var(--el-magenta-cc)] mb-4">+</div>
-            <p className="text-xs font-mono uppercase tracking-wider text-[var(--el-magenta-bb)]">
+          <div className="flex flex-col items-center py-20 text-center border border-[var(--el-green-99)] p-8">
+            <div className="text-4xl text-[var(--el-green-d9)] mb-4">+</div>
+            <p className="text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)]">
               {"NO ASSETS DETECTED // UPLOAD PHOTO TO BEGIN FACIAL SCAN"}
             </p>
           </div>
@@ -756,10 +756,10 @@ function PhotoGrid() {
             {folders.length > 1 && (
               <section className="mb-6 md:mb-8">
                 <div className="flex items-center gap-3 mb-3 md:mb-4">
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-magenta-bb)]">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">
                     &#x2500;&#x2500; ALBUMS
                   </span>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-magenta-cc)]">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-d9)]">
                     [{folders.length}]
                   </span>
                 </div>
@@ -800,7 +800,7 @@ function PhotoGrid() {
                           <span className="text-[11px] md:text-xs font-mono font-bold uppercase tracking-wider text-[var(--el-green)] group-hover:glow-text transition-all">
                             {folder}
                           </span>
-                          <span className="mt-0.5 md:mt-1 text-[9px] font-mono uppercase tracking-widest text-[var(--el-magenta-bb)]">
+                          <span className="mt-0.5 md:mt-1 text-[9px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">
                             {count} PHOTO{count !== 1 ? "S" : ""}
                           </span>
                         </div>
@@ -819,10 +819,10 @@ function PhotoGrid() {
             {heroPhotos.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
-                  <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[var(--el-magenta-bb)]">
+                  <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">
                     &#x2500;&#x2500; {sortOrder === "shuffle" ? "FEATURED" : sortOrder === "newest" ? "NEWEST" : sortOrder === "oldest" ? "OLDEST" : sortOrder === "name-asc" ? "NAME A\u2192Z" : "NAME Z\u2192A"}
                   </span>
-                  <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[var(--el-magenta-cc)]">
+                  <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-d9)]">
                     [{allPhotos.length} TOTAL]
                   </span>
                 </div>
@@ -848,7 +848,7 @@ function PhotoGrid() {
                 <div className="mt-4 md:mt-6 flex justify-center">
                   <button
                     onClick={() => setBrowseAll(true)}
-                    className="inline-flex items-center gap-2 border border-[var(--el-magenta-cc)] bg-black/60 px-5 py-2.5 text-[11px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-flame-dd)] transition-all hover:border-[var(--el-green)] hover:text-[var(--el-green)] hover:shadow-[0_0_10px_rgba(0,255,65,0.15)] active:bg-[var(--el-magenta-bb)]"
+                    className="inline-flex items-center gap-2 border border-[var(--el-green-d9)] bg-black/60 px-5 py-2.5 text-[11px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green-d9)] transition-all hover:border-[var(--el-green)] hover:text-[var(--el-green)] hover:shadow-[0_0_10px_rgba(0,255,65,0.15)] active:bg-[var(--el-green-99)]"
                   >
                     BROWSE ALL {allPhotos.length} PHOTOS
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -866,8 +866,8 @@ function PhotoGrid() {
           <>
             {/* No search results */}
             {filteredPhotos.length === 0 && matchResults === null && (
-              <div className="flex flex-col items-center py-20 text-center border border-[var(--el-magenta-bb)] p-8">
-                <p className="text-xs font-mono uppercase tracking-wider text-[var(--el-magenta-bb)]">
+              <div className="flex flex-col items-center py-20 text-center border border-[var(--el-green-99)] p-8">
+                <p className="text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)]">
                   NO MATCHES FOR &quot;{debouncedQuery.toUpperCase()}&quot; {"//"} TRY ALTERNATE QUERY
                 </p>
               </div>
@@ -875,9 +875,9 @@ function PhotoGrid() {
 
             {/* No face matches */}
             {matchResults !== null && matchResults.length === 0 && (
-              <div className="flex flex-col items-center py-20 text-center border border-[var(--el-magenta-bb)] p-8">
-                <div className="text-4xl text-[var(--el-magenta-cc)] mb-4 animate-crosshair-spin">&#x2295;</div>
-                <p className="text-xs font-mono uppercase tracking-wider text-[var(--el-magenta-bb)]">
+              <div className="flex flex-col items-center py-20 text-center border border-[var(--el-green-99)] p-8">
+                <div className="text-4xl text-[var(--el-green-d9)] mb-4 animate-crosshair-spin">&#x2295;</div>
+                <p className="text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)]">
                   {"NO FACIAL MATCH DETECTED // TRY HIGHER RESOLUTION INPUT"}
                 </p>
               </div>
@@ -911,8 +911,8 @@ function PhotoGrid() {
 
       {/* Footer */}
       {!loading && !error && allPhotos.length > 0 && (
-        <footer className="border-t border-[var(--el-magenta-28)] px-4 py-6 text-center">
-          <div className="flex items-center justify-center gap-4 text-[10px] font-mono uppercase tracking-widest text-[var(--el-magenta-cc)]">
+        <footer className="border-t border-[var(--el-green-22)] px-4 py-6 text-center">
+          <div className="flex items-center justify-center gap-4 text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-d9)]">
             <span>&#x2500;&#x2500;&#x253c;&#x2500;&#x2500;</span>
             <span>
               {allPhotos.length} PHOTOS {"//"} {folders.length} FOLDER{folders.length !== 1 ? "S" : ""}
@@ -920,7 +920,7 @@ function PhotoGrid() {
             </span>
             <span>&#x2500;&#x2500;&#x253c;&#x2500;&#x2500;</span>
           </div>
-          <p className="mt-2 text-[10px] font-mono tracking-wider text-[var(--el-magenta-bb)]">
+          <p className="mt-2 text-[10px] font-mono tracking-wider text-[var(--el-green-99)]">
             POWERED BY EVENTLENS
           </p>
         </footer>
@@ -996,7 +996,7 @@ function SortDropdown({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider border border-[var(--el-magenta-bb)] text-[var(--el-flame-dd)] hover:border-[var(--el-magenta-bb)] hover:text-[var(--el-green)] transition-all"
+        className="flex items-center gap-1.5 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider border border-[var(--el-green-99)] text-[var(--el-green-d9)] hover:border-[var(--el-green-99)] hover:text-[var(--el-green)] transition-all"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 6h18M6 12h12M9 18h6" />
@@ -1006,7 +1006,7 @@ function SortDropdown({
 
       {/* Desktop: dropdown */}
       {open && (
-        <div className="hidden md:block absolute right-0 top-full mt-1 z-50 border border-[var(--el-magenta-cc)] bg-black min-w-[120px]">
+        <div className="hidden md:block absolute right-0 top-full mt-1 z-50 border border-[var(--el-green-d9)] bg-black min-w-[120px]">
           {options.map((opt) => (
             <button
               key={opt.value}
@@ -1014,7 +1014,7 @@ function SortDropdown({
               className={`block w-full text-left px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider transition-all ${
                 sortOrder === opt.value
                   ? "text-[var(--el-green)] bg-[var(--el-green-11)]"
-                  : "text-[var(--el-flame-dd)] hover:text-[var(--el-green)] hover:bg-[var(--el-green-08)]"
+                  : "text-[var(--el-green-d9)] hover:text-[var(--el-green)] hover:bg-[var(--el-green-08)]"
               }`}
             >
               {opt.label}
@@ -1027,21 +1027,21 @@ function SortDropdown({
       {open && (
         <div className="md:hidden fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="absolute bottom-0 left-0 right-0 border-t border-[var(--el-magenta-cc)] bg-black animate-slide-up safe-bottom">
+          <div className="absolute bottom-0 left-0 right-0 border-t border-[var(--el-green-d9)] bg-black animate-slide-up safe-bottom">
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-8 h-1 rounded-full bg-[var(--el-magenta-cc)]" />
+              <div className="w-8 h-1 rounded-full bg-[var(--el-green-d9)]" />
             </div>
             <div className="px-4 pb-2 pt-1">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-flame-dd)]">SORT BY</span>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-d9)]">SORT BY</span>
             </div>
             {options.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => { onChange(opt.value); setOpen(false); }}
-                className={`flex items-center w-full text-left px-4 py-3.5 text-sm font-mono uppercase tracking-wider transition-all active:bg-[var(--el-magenta-bb)] ${
+                className={`flex items-center w-full text-left px-4 py-3.5 text-sm font-mono uppercase tracking-wider transition-all active:bg-[var(--el-green-99)] ${
                   sortOrder === opt.value
                     ? "text-[var(--el-green)]"
-                    : "text-[var(--el-magenta-cc)]"
+                    : "text-[var(--el-green-d9)]"
                 }`}
               >
                 {sortOrder === opt.value && (
@@ -1118,7 +1118,7 @@ function PhotoCard({
       {/* Video play indicator */}
       {(photo.mimeType?.startsWith("video/") || /\.(mp4|mov|webm|avi)$/i.test(photo.filename)) && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 border border-[var(--el-flame-dd)]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 border border-[var(--el-green-d9)]">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--el-green)">
               <polygon points="8,5 20,12 8,19" />
             </svg>
@@ -1133,7 +1133,7 @@ function PhotoCard({
             className={`flex h-5 w-5 items-center justify-center border transition-all ${
               selected
                 ? "border-[var(--el-green)] bg-[var(--el-green)]"
-                : "border-[var(--el-flame-dd)] bg-black/60"
+                : "border-[var(--el-green-d9)] bg-black/60"
             }`}
           >
             {selected && (
@@ -1156,7 +1156,7 @@ function PhotoCard({
 
       {/* Bottom overlay — hidden on hover so image is fully visible */}
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent px-2 pb-2 pt-6 group-hover:opacity-0 transition-opacity">
-        <span className="inline-block border border-[var(--el-magenta-cc)] bg-black/80 px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-[var(--el-flame-dd)]">
+        <span className="inline-block border border-[var(--el-green-d9)] bg-black/80 px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-[var(--el-green-d9)]">
           {photo.folder}
         </span>
       </div>
@@ -1185,7 +1185,7 @@ function PhotoCard({
                 ? "bg-[var(--el-green)] text-black"
                 : matchInfo.confidence >= 50
                   ? "bg-[var(--el-green-88)] text-black"
-                  : "border border-[var(--el-magenta-bb)] bg-black/80 text-[var(--el-flame-dd)]"
+                  : "border border-[var(--el-green-99)] bg-black/80 text-[var(--el-green-d9)]"
             }`}
           >
             {matchInfo.confidence}%

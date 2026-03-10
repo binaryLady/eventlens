@@ -131,8 +131,8 @@ export default function Lightbox({
     ? `https://lh3.googleusercontent.com/d/${photo.driveFileId}=w1600`
     : "";
 
-  const videoStreamUrl = photo.driveFileId
-    ? `https://www.googleapis.com/drive/v3/files/${photo.driveFileId}?alt=media&key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY || ""}`
+  const videoEmbedUrl = photo.driveFileId
+    ? `https://drive.google.com/file/d/${photo.driveFileId}/preview`
     : "";
 
   const hasMeta = !!(photo.visibleText || photo.peopleDescriptions || photo.sceneDescription || photo.faceCount > 0);
@@ -167,7 +167,7 @@ export default function Lightbox({
         <button
           ref={closeRef}
           onClick={onClose}
-          className="flex h-10 w-10 items-center justify-center border border-[var(--el-magenta-cc)] bg-black text-[var(--el-flame-dd)] hover:border-[var(--el-green)] hover:text-[var(--el-green)] active:bg-[var(--el-magenta-bb)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] transition-all"
+          className="flex h-10 w-10 items-center justify-center border border-[var(--el-green-d9)] bg-black text-[var(--el-green-d9)] hover:border-[var(--el-green)] hover:text-[var(--el-green)] active:bg-[var(--el-green-99)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] transition-all"
           aria-label="Close lightbox"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -188,7 +188,7 @@ export default function Lightbox({
         {photos.length > 1 && (
           <button
             onClick={goPrev}
-            className="hidden md:flex absolute left-2 top-1/2 z-[52] -translate-y-1/2 h-12 w-12 items-center justify-center border border-[var(--el-magenta-cc)] bg-black text-[var(--el-flame-dd)] hover:border-[var(--el-green)] hover:text-[var(--el-green)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] transition-all md:left-4"
+            className="hidden md:flex absolute left-2 top-1/2 z-[52] -translate-y-1/2 h-12 w-12 items-center justify-center border border-[var(--el-green-d9)] bg-black text-[var(--el-green-d9)] hover:border-[var(--el-green)] hover:text-[var(--el-green)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] transition-all md:left-4"
             aria-label="Previous photo"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -201,7 +201,7 @@ export default function Lightbox({
         {photos.length > 1 && (
           <button
             onClick={goNext}
-            className="hidden md:flex absolute right-2 top-1/2 z-[52] -translate-y-1/2 h-12 w-12 items-center justify-center border border-[var(--el-magenta-cc)] bg-black text-[var(--el-flame-dd)] hover:border-[var(--el-green)] hover:text-[var(--el-green)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] transition-all md:right-4"
+            className="hidden md:flex absolute right-2 top-1/2 z-[52] -translate-y-1/2 h-12 w-12 items-center justify-center border border-[var(--el-green-d9)] bg-black text-[var(--el-green-d9)] hover:border-[var(--el-green)] hover:text-[var(--el-green)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] transition-all md:right-4"
             aria-label="Next photo"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -226,14 +226,24 @@ export default function Lightbox({
             </div>
           )}
           {isVideo ? (
-            <video
-              key={photo.driveFileId}
-              src={videoStreamUrl}
-              controls
-              playsInline
-              className={`max-w-full max-h-full object-contain lightbox-media ${imageLoaded ? 'loaded' : ''}`}
-              onLoadedData={() => setImageLoaded(true)}
-            />
+            <div className="flex flex-col items-center justify-center gap-4 w-full h-full">
+              <a
+                href={`https://drive.google.com/file/d/${photo.driveFileId}/view`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 border border-[var(--el-green)] bg-[var(--el-green-11)] px-6 py-3 text-sm font-mono uppercase tracking-wider text-[var(--el-green)] hover:bg-[var(--el-green-22)] transition-all"
+                onClick={() => setImageLoaded(true)}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+                PLAY VIDEO IN GOOGLE DRIVE
+              </a>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-66)]">
+                {photo.filename}
+              </span>
+              {(() => { setImageLoaded(true); return null; })()}
+            </div>
           ) : fullImageUrl ? (
             <Image
               key={photo.driveFileId}
@@ -280,7 +290,7 @@ export default function Lightbox({
               {hasMeta && (
                 <button
                   onClick={() => setShowMeta(!showMeta)}
-                  className="md:hidden flex h-9 w-9 items-center justify-center border border-[var(--el-magenta-cc)] bg-black text-[var(--el-flame-dd)] active:bg-[var(--el-magenta-bb)] transition-all"
+                  className="md:hidden flex h-9 w-9 items-center justify-center border border-[var(--el-green-d9)] bg-black text-[var(--el-green-d9)] active:bg-[var(--el-green-99)] transition-all"
                   aria-label="Toggle details"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
