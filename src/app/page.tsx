@@ -389,7 +389,7 @@ function PhotoGrid() {
   }, [sortOrder]);
 
   const isVideoFile = useCallback((p: PhotoRecord) =>
-    (p.mimeType?.startsWith("video/") || /\.(mp4|webm|avi)$/i.test(p.filename)) && !/\.mov$/i.test(p.filename), []);
+    (p.mimeType?.startsWith("video/") || /\.(webm|avi)$/i.test(p.filename)) && !/\.(mov|mp4)$/i.test(p.filename), []);
 
   const applyTypeFilter = useCallback((photos: PhotoRecord[]) => {
     if (activeType === "video") return photos.filter(isVideoFile);
@@ -1273,8 +1273,8 @@ function PhotoCard({
         />
       )}
 
-      {/* Video play indicator (exclude .mov — typically Live Photos) */}
-      {((photo.mimeType?.startsWith("video/") || /\.(mp4|webm|avi)$/i.test(photo.filename)) && !/\.mov$/i.test(photo.filename)) && (
+      {/* Video play indicator (exclude .mov/.mp4 — typically Live Photos) */}
+      {((photo.mimeType?.startsWith("video/") || /\.(webm|avi)$/i.test(photo.filename)) && !/\.(mov|mp4)$/i.test(photo.filename)) && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(26,26,26,0.6)] border border-[var(--el-green-d9)]">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--el-green)">
