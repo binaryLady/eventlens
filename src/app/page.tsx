@@ -636,7 +636,7 @@ function PhotoGrid() {
 
           {/* Row 2: sort + select */}
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[#00ff4144]">
+            <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[#00ff4166]">
               {debouncedQuery && searchSource === "server" ? "SEMANTIC SEARCH" : debouncedQuery ? "TEXT SEARCH" : ""}
             </span>
             <div className="flex items-center gap-1.5">
@@ -660,7 +660,7 @@ function PhotoGrid() {
       {isSearchActive && (debouncedQuery || matchResults !== null) && (
         <div className="mx-auto max-w-5xl px-3 md:px-4 pb-2 md:pb-3">
           {!loading && !error && (
-            <p className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4177]">
               {matchResults !== null ? (
                 <>
                   {matchResults.length} MATCH{matchResults.length !== 1 ? "ES" : ""}
@@ -735,7 +735,7 @@ function PhotoGrid() {
         {!loading && !error && allPhotos.length === 0 && (
           <div className="flex flex-col items-center py-20 text-center border border-[#00ff4122] p-8">
             <div className="text-4xl text-[#00ff4133] mb-4">+</div>
-            <p className="text-xs font-mono uppercase tracking-wider text-[#00ff4155]">
+            <p className="text-xs font-mono uppercase tracking-wider text-[#00ff4177]">
               {"NO ASSETS DETECTED // UPLOAD PHOTO TO BEGIN FACIAL SCAN"}
             </p>
           </div>
@@ -748,10 +748,10 @@ function PhotoGrid() {
             {folders.length > 1 && (
               <section className="mb-6 md:mb-8">
                 <div className="flex items-center gap-3 mb-3 md:mb-4">
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4177]">
                     &#x2500;&#x2500; ALBUMS
                   </span>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4133]">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
                     [{folders.length}]
                   </span>
                 </div>
@@ -774,6 +774,7 @@ function PhotoGrid() {
                                   src={previews[i].thumbnailUrl}
                                   alt=""
                                   fill
+                                  unoptimized
                                   sizes="80px"
                                   className="object-cover opacity-50 group-hover:opacity-70 transition-opacity"
                                 />
@@ -791,7 +792,7 @@ function PhotoGrid() {
                           <span className="text-[11px] md:text-xs font-mono font-bold uppercase tracking-wider text-[#00ff41] group-hover:glow-text transition-all">
                             {folder}
                           </span>
-                          <span className="mt-0.5 md:mt-1 text-[9px] font-mono uppercase tracking-widest text-[#00ff4155]">
+                          <span className="mt-0.5 md:mt-1 text-[9px] font-mono uppercase tracking-widest text-[#00ff4177]">
                             {count} PHOTO{count !== 1 ? "S" : ""}
                           </span>
                         </div>
@@ -810,10 +811,10 @@ function PhotoGrid() {
             {heroPhotos.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
-                  <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
+                  <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[#00ff4177]">
                     &#x2500;&#x2500; {sortOrder === "shuffle" ? "FEATURED" : sortOrder === "newest" ? "NEWEST" : sortOrder === "oldest" ? "OLDEST" : sortOrder === "name-asc" ? "NAME A\u2192Z" : "NAME Z\u2192A"}
                   </span>
-                  <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[#00ff4133]">
+                  <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
                     [{allPhotos.length} TOTAL]
                   </span>
                 </div>
@@ -858,7 +859,7 @@ function PhotoGrid() {
             {/* No search results */}
             {filteredPhotos.length === 0 && matchResults === null && (
               <div className="flex flex-col items-center py-20 text-center border border-[#00ff4122] p-8">
-                <p className="text-xs font-mono uppercase tracking-wider text-[#00ff4155]">
+                <p className="text-xs font-mono uppercase tracking-wider text-[#00ff4177]">
                   NO MATCHES FOR &quot;{debouncedQuery.toUpperCase()}&quot; {"//"} TRY ALTERNATE QUERY
                 </p>
               </div>
@@ -868,7 +869,7 @@ function PhotoGrid() {
             {matchResults !== null && matchResults.length === 0 && (
               <div className="flex flex-col items-center py-20 text-center border border-[#00ff4122] p-8">
                 <div className="text-4xl text-[#00ff4133] mb-4 animate-crosshair-spin">&#x2295;</div>
-                <p className="text-xs font-mono uppercase tracking-wider text-[#00ff4155]">
+                <p className="text-xs font-mono uppercase tracking-wider text-[#00ff4177]">
                   {"NO FACIAL MATCH DETECTED // TRY HIGHER RESOLUTION INPUT"}
                 </p>
               </div>
@@ -903,7 +904,7 @@ function PhotoGrid() {
       {/* Footer */}
       {!loading && !error && allPhotos.length > 0 && (
         <footer className="border-t border-[#00ff4115] px-4 py-6 text-center">
-          <div className="flex items-center justify-center gap-4 text-[10px] font-mono uppercase tracking-widest text-[#00ff4133]">
+          <div className="flex items-center justify-center gap-4 text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
             <span>&#x2500;&#x2500;&#x253c;&#x2500;&#x2500;</span>
             <span>
               {allPhotos.length} PHOTOS {"//"} {folders.length} FOLDER{folders.length !== 1 ? "S" : ""}
@@ -1023,7 +1024,7 @@ function SortDropdown({
               <div className="w-8 h-1 rounded-full bg-[#00ff4133]" />
             </div>
             <div className="px-4 pb-2 pt-1">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4144]">SORT BY</span>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4166]">SORT BY</span>
             </div>
             {options.map((opt) => (
               <button
@@ -1097,6 +1098,7 @@ function PhotoCard({
           src={photo.thumbnailUrl}
           alt={photo.filename}
           fill
+          unoptimized
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           className={`object-cover transition-opacity ${
             selected ? "opacity-70" : "opacity-90 group-hover:opacity-100"

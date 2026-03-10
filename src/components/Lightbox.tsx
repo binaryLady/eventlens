@@ -147,7 +147,7 @@ export default function Lightbox({
       <div className="relative z-[52] flex items-center justify-between px-3 pt-safe-top md:px-4" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
         {/* Counter */}
         {photos.length > 1 && (
-          <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4177]">
             {currentIndex + 1} / {photos.length}
           </span>
         )}
@@ -209,7 +209,7 @@ export default function Lightbox({
                   <div className="absolute inset-0 border border-[#00ff41] animate-crosshair-spin" />
                   <div className="absolute inset-2 bg-[#00ff41] animate-pulse" />
                 </div>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4177]">
                   LOADING
                 </span>
               </div>
@@ -326,7 +326,7 @@ export default function Lightbox({
           <div className={`overflow-hidden transition-all duration-200 ${showMeta ? "max-h-60 opacity-100 mt-3" : "md:max-h-60 md:opacity-100 md:mt-3 max-h-0 opacity-0"}`}>
             {photo.visibleText && (
               <div className="mb-2">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4144]">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4166]">
                   {"// TEXT DETECTED"}
                 </span>
                 <p className="mt-0.5 border-l-2 border-[#00ff4133] pl-3 font-mono text-xs text-[#00ff4199] line-clamp-2">
@@ -336,7 +336,7 @@ export default function Lightbox({
             )}
             {photo.peopleDescriptions && (
               <div className="mb-2">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4144]">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4166]">
                   {"// SUBJECTS"}
                 </span>
                 <p className="mt-0.5 text-xs font-mono text-[#00ff4199] line-clamp-2">
@@ -346,7 +346,7 @@ export default function Lightbox({
             )}
             {photo.sceneDescription && (
               <div>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4144]">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4166]">
                   {"// SCENE"}
                 </span>
                 <p className="mt-0.5 text-xs font-mono text-[#00ff4199] line-clamp-2">
