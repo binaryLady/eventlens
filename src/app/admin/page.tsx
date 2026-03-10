@@ -162,7 +162,7 @@ export default function AdminPage() {
           />
           <button
             onClick={handleLogin}
-            className="w-full border border-[var(--el-green)] text-[var(--el-green)] font-mono text-sm px-4 py-3 hover:bg-[var(--el-green-11)] transition-colors tracking-wider"
+            className="w-full border border-[var(--el-green)] text-[var(--el-green)] font-mono text-sm px-4 py-3 hover:bg-[var(--el-magenta-28)] transition-colors tracking-wider"
           >
             AUTHENTICATE
           </button>
@@ -386,7 +386,7 @@ function ActionButton({
       className={`border p-3 text-left transition-colors ${
         disabled
           ? "border-[var(--el-green-11)] text-[var(--el-green-33)] cursor-not-allowed"
-          : "border-[var(--el-green-33)] text-[var(--el-green)] hover:border-[var(--el-green)] hover:bg-[var(--el-green-08)]"
+          : "border-[var(--el-green-33)] text-[var(--el-green)] hover:border-[var(--el-magenta)] hover:bg-[var(--el-magenta-28)]"
       }`}
     >
       <div className="text-xs tracking-wider flex items-center gap-2">

@@ -94,7 +94,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full border border-[var(--el-green)] bg-[var(--el-green-11)] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[var(--el-green)] hover:bg-[var(--el-green-22)] focus:outline-none focus:ring-1 focus:ring-[var(--el-green)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="w-full border border-[var(--el-green)] bg-[var(--el-green-11)] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[var(--el-green)] hover:bg-[var(--el-magenta-28)] focus:outline-none focus:ring-1 focus:ring-[var(--el-green)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {loading ? "VERIFYING..." : "AUTHENTICATE"}
               </button>

@@ -526,7 +526,7 @@ function PhotoGrid() {
               <span className="sm:hidden">{allPhotos.length > 0 ? `${allPhotos.length}` : ""}</span>
               <button
                 onClick={handleLogout}
-                className="text-[var(--el-green-99)] hover:text-[var(--el-green)] active:text-[var(--el-green)] transition-colors underline"
+                className="text-[var(--el-green-99)] hover:text-[var(--el-magenta)] active:text-[var(--el-green)] transition-colors underline"
                 title="Logout"
               >
                 [LOGOUT]
@@ -576,7 +576,7 @@ function PhotoGrid() {
               {searchInput && (
                 <button
                   onClick={() => setSearchInput("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--el-green-d9)] hover:text-[var(--el-green)] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--el-green-d9)] hover:text-[var(--el-magenta)] transition-colors"
                   aria-label="Clear search"
                 >
                   <svg
@@ -618,7 +618,7 @@ function PhotoGrid() {
                   className={`shrink-0 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                     activeFolder === ""
                       ? "border border-[var(--el-green)] text-[var(--el-green)] bg-[var(--el-green-11)] glow-border"
-                      : "border border-[var(--el-green-99)] text-[var(--el-green-d9)] hover:border-[var(--el-green-99)] hover:text-[var(--el-green)]"
+                      : "border border-[var(--el-green-99)] text-[var(--el-green-d9)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
                   }`}
                 >
                   ALL [{allPhotos.length}]
@@ -632,7 +632,7 @@ function PhotoGrid() {
                     className={`shrink-0 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                       activeFolder === folder
                         ? "border border-[var(--el-green)] text-[var(--el-green)] bg-[var(--el-green-11)] glow-border"
-                        : "border border-[var(--el-green-99)] text-[var(--el-green-d9)] hover:border-[var(--el-green-99)] hover:text-[var(--el-green)]"
+                        : "border border-[var(--el-green-99)] text-[var(--el-green-d9)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
                     }`}
                   >
                     {folder} [{folderCounts[folder] || 0}]
@@ -654,7 +654,7 @@ function PhotoGrid() {
                 className={`px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                   selectMode
                     ? "border border-[var(--el-green)] text-[var(--el-green)] bg-[var(--el-green-11)] glow-border"
-                    : "border border-[var(--el-green-99)] text-[var(--el-green-d9)] hover:border-[var(--el-green-99)] hover:text-[var(--el-green)]"
+                    : "border border-[var(--el-green-99)] text-[var(--el-green-d9)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
                 }`}
               >
                 {selectMode ? "EXIT" : "SELECT"}
@@ -732,7 +732,7 @@ function PhotoGrid() {
                   }
                 });
               }}
-              className="mt-4 border border-[var(--el-green)] px-6 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-green)] hover:bg-[var(--el-green-11)] transition-all"
+              className="mt-4 border border-[var(--el-green)] px-6 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-green)] hover:bg-[var(--el-magenta-28)] transition-all"
             >
               [RETRY CONNECTION]
             </button>
@@ -771,7 +771,7 @@ function PhotoGrid() {
                       <button
                         key={folder}
                         onClick={() => setActiveFolder(folder)}
-                        className="group relative aspect-[4/3] overflow-hidden border border-[var(--el-green-22)] bg-black cursor-pointer transition-all duration-200 hover:border-[var(--el-green)] hover:shadow-[0_0_20px_rgba(0,255,65,0.15)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)]"
+                        className="group relative aspect-[4/3] overflow-hidden border border-[var(--el-green-22)] bg-black cursor-pointer transition-all duration-200 hover:border-[var(--el-magenta)] hover:shadow-[0_0_20px_rgba(255,0,255,0.25)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)]"
                       >
                         {/* 2x2 thumbnail mosaic */}
                         <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-px bg-[var(--el-green-11)]">
@@ -797,7 +797,7 @@ function PhotoGrid() {
 
                         {/* Dark overlay + folder label */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent flex flex-col items-center justify-end pb-3 md:pb-4">
-                          <span className="text-[11px] md:text-xs font-mono font-bold uppercase tracking-wider text-[var(--el-green)] group-hover:glow-text transition-all">
+                          <span className="text-[11px] md:text-xs font-mono font-bold uppercase tracking-wider text-[var(--el-green)] group-hover:glow-text-magenta transition-all">
                             {folder}
                           </span>
                           <span className="mt-0.5 md:mt-1 text-[9px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">
@@ -848,7 +848,7 @@ function PhotoGrid() {
                 <div className="mt-4 md:mt-6 flex justify-center">
                   <button
                     onClick={() => setBrowseAll(true)}
-                    className="inline-flex items-center gap-2 border border-[var(--el-green-d9)] bg-black/60 px-5 py-2.5 text-[11px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green-d9)] transition-all hover:border-[var(--el-green)] hover:text-[var(--el-green)] hover:shadow-[0_0_10px_rgba(0,255,65,0.15)] active:bg-[var(--el-green-99)]"
+                    className="inline-flex items-center gap-2 border border-[var(--el-green-d9)] bg-black/60 px-5 py-2.5 text-[11px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green-d9)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)] active:bg-[var(--el-green-99)]"
                   >
                     BROWSE ALL {allPhotos.length} PHOTOS
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -996,7 +996,7 @@ function SortDropdown({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider border border-[var(--el-green-99)] text-[var(--el-green-d9)] hover:border-[var(--el-green-99)] hover:text-[var(--el-green)] transition-all"
+        className="flex items-center gap-1.5 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider border border-[var(--el-green-99)] text-[var(--el-green-d9)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] transition-all"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 6h18M6 12h12M9 18h6" />
@@ -1014,7 +1014,7 @@ function SortDropdown({
               className={`block w-full text-left px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider transition-all ${
                 sortOrder === opt.value
                   ? "text-[var(--el-green)] bg-[var(--el-green-11)]"
-                  : "text-[var(--el-green-d9)] hover:text-[var(--el-green)] hover:bg-[var(--el-green-08)]"
+                  : "text-[var(--el-green-d9)] hover:text-[var(--el-magenta)] hover:bg-[var(--el-magenta-28)]"
               }`}
             >
               {opt.label}
@@ -1088,12 +1088,12 @@ function PhotoCard({
   return (
     <button
       onClick={onClick}
-      className={`group relative aspect-[4/3] overflow-hidden border bg-black cursor-pointer transition-all duration-200 motion-safe:hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(0,255,65,0.15)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] animate-grid-reveal ${
+      className={`group relative aspect-[4/3] overflow-hidden border bg-black cursor-pointer transition-all duration-200 motion-safe:hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,0,255,0.25)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] animate-grid-reveal ${
         selected
           ? "border-[var(--el-green)] shadow-[0_0_15px_rgba(0,255,65,0.25)] ring-1 ring-[var(--el-green)]"
           : matchInfo && matchInfo.confidence >= 70
             ? "border-[var(--el-green)] shadow-[0_0_12px_rgba(0,255,65,0.2)]"
-            : "border-[var(--el-green-22)] hover:border-[var(--el-green-66)]"
+            : "border-[var(--el-green-22)] hover:border-[var(--el-magenta)]"
       }`}
       style={{ '--delay': `${index * 0.03}s` } as React.CSSProperties}
     >

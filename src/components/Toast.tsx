@@ -53,7 +53,7 @@ export default function Toast({
               setVisible(false);
               setTimeout(onDismiss, 300);
             }}
-            className="p-1 text-[var(--el-green-99)] hover:text-[var(--el-green)] active:text-[var(--el-green)] transition-colors"
+            className="p-1 text-[var(--el-green-99)] hover:text-[var(--el-magenta)] active:text-[var(--el-green)] transition-colors"
             aria-label="Dismiss"
           >
             <svg
