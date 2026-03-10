@@ -197,7 +197,7 @@ export default function Lightbox({
         {/* Image */}
         <div className="relative flex items-center justify-center w-full h-full">
           {!imageLoaded && (
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center z-10">
               <div className="flex flex-col items-center gap-2">
                 <div className="relative w-8 h-8">
                   <div className="absolute inset-0 border border-[#00ff41] animate-crosshair-spin" />
@@ -211,15 +211,19 @@ export default function Lightbox({
           )}
           {fullImageUrl && (
             <Image
+              key={photo.driveFileId}
               src={fullImageUrl}
               alt={photo.filename}
               fill
               unoptimized
               className="object-contain select-none"
               style={{
+                opacity: imageLoaded ? 1 : 0,
                 boxShadow: imageLoaded ? '0 0 30px rgba(0,255,65,0.1)' : 'none',
                 transform: swipeOffset ? `translateX(${swipeOffset * 0.3}px)` : undefined,
-                transition: swipeOffset ? 'none' : 'transform 0.2s ease-out',
+                transition: swipeOffset
+                  ? 'opacity 0.3s ease-in-out'
+                  : 'opacity 0.3s ease-in-out, transform 0.2s ease-out',
               }}
               draggable={false}
               onLoad={() => setImageLoaded(true)}
