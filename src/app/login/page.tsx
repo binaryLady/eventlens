@@ -100,11 +100,6 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <div className="border-t border-[var(--el-green-99)] pt-4">
-              <p className="text-[10px] text-[var(--el-green-99)] uppercase tracking-widest">
-                © @TheTechMargin 2026
-              </p>
-            </div>
           </div>
         </div>
       </div>

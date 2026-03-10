@@ -64,7 +64,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${jetbrainsMono.variable} ${spaceMono.variable} ${pacifico.variable} font-mono antialiased bg-black text-zinc-100 scan-lines flex flex-col min-h-screen`}
+        className={`${jetbrainsMono.variable} ${spaceMono.variable} ${pacifico.variable} font-mono antialiased bg-[var(--el-bg)] text-zinc-100 scan-lines flex flex-col min-h-screen`}
       >
         <div className="flex-1">
           {children}

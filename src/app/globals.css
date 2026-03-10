@@ -52,8 +52,8 @@
   --el-purple: #cc88ff;
 
   /* ── Surfaces ── */
-  --el-bg: #000000;
-  --el-surface: #0a0a0a;
+  --el-bg: #1a1a1a;
+  --el-surface: #222222;
 }
 
 body {
