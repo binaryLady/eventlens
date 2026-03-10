@@ -22,7 +22,7 @@ export default function PhotoUpload({
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const deepScanTimerRef = useRef<NodeJS.Timeout>();
+  const deepScanTimerRef = useRef<NodeJS.Timeout>(undefined);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const clearDeepScanTimer = useCallback(() => {
