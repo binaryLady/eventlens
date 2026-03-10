@@ -837,7 +837,6 @@ function PhotoGrid() {
                         onClick={() => setActiveFolder(folder)}
                         className="group relative aspect-[4/3] overflow-hidden border border-[var(--el-green-22)] bg-[var(--el-bg)] cursor-pointer transition-all duration-200 hover:border-[var(--el-magenta)] hover:shadow-[0_0_20px_rgba(255,0,255,0.25)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)]"
                       >
-                        {/* 2x2 thumbnail mosaic */}
                         <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-px bg-[var(--el-green-11)]">
                           {[0, 1, 2, 3].map((i) => (
                             <div key={i} className="relative overflow-hidden bg-[var(--el-bg)]">
@@ -859,7 +858,6 @@ function PhotoGrid() {
                           ))}
                         </div>
 
-                        {/* Dark overlay + folder label */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent flex flex-col items-center justify-end pb-3 md:pb-4">
                           <span className="text-[11px] md:text-xs font-mono font-bold uppercase tracking-wider text-[var(--el-green)] group-hover:glow-text-magenta transition-all">
                             {folder}
@@ -869,7 +867,6 @@ function PhotoGrid() {
                           </span>
                         </div>
 
-                        {/* Corner brackets */}
                         <div className="absolute top-1 left-1 w-2.5 h-2.5 border-t border-l border-[var(--el-green-44)] opacity-0 group-hover:opacity-100 transition-opacity" />
                         <div className="absolute bottom-1 right-1 w-2.5 h-2.5 border-b border-r border-[var(--el-green-44)] opacity-0 group-hover:opacity-100 transition-opacity" />
                       </button>
@@ -879,7 +876,6 @@ function PhotoGrid() {
               </section>
             )}
 
-            {/* Photo grid — show hero subset on landing */}
             {heroPhotos.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-4">
@@ -909,7 +905,6 @@ function PhotoGrid() {
                     />
                   ))}
                 </div>
-                {/* Browse all prompt */}
                 <div className="mt-4 md:mt-6 flex justify-center">
                   <button
                     onClick={() => setBrowseAll(true)}
@@ -927,10 +922,8 @@ function PhotoGrid() {
           </>
         )}
 
-        {/* Search/filter results */}
         {!loading && !error && isSearchActive && (
           <>
-            {/* No search results */}
             {filteredPhotos.length === 0 && matchResults === null && (
               <div className="flex flex-col items-center py-20 text-center border border-[var(--el-green-99)] p-8">
                 <p className="text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)]">
@@ -939,7 +932,6 @@ function PhotoGrid() {
               </div>
             )}
 
-            {/* No face matches */}
             {matchResults !== null && matchResults.length === 0 && (
               <div className="flex flex-col items-center py-20 text-center border border-[var(--el-green-99)] p-8">
                 <div className="text-4xl text-[var(--el-green-d9)] mb-4 animate-crosshair-spin">&#x2295;</div>
@@ -949,7 +941,6 @@ function PhotoGrid() {
               </div>
             )}
 
-            {/* Results grid */}
             {filteredPhotos.length > 0 && (
               <div className="grid grid-cols-2 gap-1.5 md:gap-2 md:grid-cols-3 lg:grid-cols-4">
                 {filteredPhotos.map((photo, index) => (
@@ -973,7 +964,6 @@ function PhotoGrid() {
               </div>
             )}
 
-            {/* Recommendations — "You might also appear in" */}
             {matchResults !== null && recommendations.length > 0 && (() => {
               const recPhotos = allPhotos.filter((p) => recommendations.includes(p.driveFileId));
               if (recPhotos.length === 0) return null;
@@ -1003,7 +993,6 @@ function PhotoGrid() {
         )}
       </main>
 
-      {/* Footer */}
       {!loading && !error && allPhotos.length > 0 && (
         <footer className="border-t border-[var(--el-green-22)] px-4 py-6 text-center">
           <div className="flex items-center justify-center gap-4 text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-d9)]">
@@ -1017,7 +1006,6 @@ function PhotoGrid() {
         </footer>
       )}
 
-      {/* Lightbox */}
       <Lightbox
         photo={selectedPhoto}
         photos={filteredPhotos}
@@ -1025,7 +1013,6 @@ function PhotoGrid() {
         onNavigate={setSelectedPhoto}
       />
 
-      {/* Toast */}
       {toast && (
         <Toast
           message={toast.message}
@@ -1034,7 +1021,6 @@ function PhotoGrid() {
         />
       )}
 
-      {/* Floating action bar for multi-select */}
       <FloatingActionBar
         selectedCount={selectedIds.size}
         totalCount={filteredPhotos.length}
@@ -1155,7 +1141,6 @@ function FilterSortSheet({
 
   const mobileContent = (
     <>
-      {/* Folders (mobile only) */}
       {folders && folders.length > 0 && onFolderChange && (
         <>
           <div className="px-4 pb-1 pt-1">
@@ -1169,7 +1154,6 @@ function FilterSortSheet({
         </>
       )}
 
-      {/* Type */}
       <div className="px-4 pb-1 pt-1">
         <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">TYPE</span>
       </div>
@@ -1179,7 +1163,6 @@ function FilterSortSheet({
 
       <div className="mx-4 my-1 border-t border-[var(--el-green-22)]" />
 
-      {/* Sort */}
       <div className="px-4 pb-1 pt-1">
         <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">SORT BY</span>
       </div>
@@ -1215,7 +1198,6 @@ function FilterSortSheet({
         )}
       </button>
 
-      {/* Desktop: dropdown popover */}
       {open && (
         <div
           id="filter-popover"
@@ -1225,7 +1207,6 @@ function FilterSortSheet({
         </div>
       )}
 
-      {/* Mobile: bottom sheet */}
       {open && (
         <div className="md:hidden fixed inset-0 z-50">
           <div className="absolute inset-0 bg-[rgba(26,26,26,0.8)] backdrop-blur-sm" onClick={() => setOpen(false)} />
@@ -1304,7 +1285,6 @@ function PhotoCard({
         </>
       )}
 
-      {/* Video play icon overlay */}
       {(/\.(mp4|webm|avi)$/i.test(photo.filename) ||
         (photo.mimeType?.startsWith("video/") && !/\.mov$/i.test(photo.filename))) && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[5]">
@@ -1316,7 +1296,6 @@ function PhotoCard({
         </div>
       )}
 
-      {/* Select mode checkbox overlay */}
       {selectMode && (
         <div className="absolute top-1.5 left-1.5 z-10">
           <div
