@@ -113,8 +113,14 @@ export default function Lightbox({
 
   if (!photo) return null;
 
+  const isVideo = photo.mimeType?.startsWith("video/") || /\.(mp4|mov|webm|avi)$/i.test(photo.filename);
+
   const fullImageUrl = photo.driveFileId
     ? `https://lh3.googleusercontent.com/d/${photo.driveFileId}=w1600`
+    : "";
+
+  const videoUrl = photo.driveFileId
+    ? `https://drive.google.com/uc?export=download&id=${photo.driveFileId}`
     : "";
 
   const hasMeta = !!(photo.visibleText || photo.peopleDescriptions || photo.sceneDescription || photo.faceCount > 0);
@@ -194,7 +200,7 @@ export default function Lightbox({
           </button>
         )}
 
-        {/* Image */}
+        {/* Image or Video */}
         <div className="relative flex items-center justify-center w-full h-full">
           {!imageLoaded && (
             <div className="absolute inset-0 flex items-center justify-center z-10">
@@ -209,7 +215,23 @@ export default function Lightbox({
               </div>
             </div>
           )}
-          {fullImageUrl && (
+          {isVideo ? (
+            <video
+              key={photo.driveFileId}
+              src={videoUrl}
+              controls
+              autoPlay
+              playsInline
+              className="max-w-full max-h-full object-contain select-none"
+              style={{
+                opacity: imageLoaded ? 1 : 0,
+                boxShadow: imageLoaded ? '0 0 30px rgba(0,255,65,0.1)' : 'none',
+                transition: 'opacity 0.3s ease-in-out',
+              }}
+              onLoadedData={() => setImageLoaded(true)}
+              onError={() => setImageLoaded(true)}
+            />
+          ) : fullImageUrl ? (
             <Image
               key={photo.driveFileId}
               src={fullImageUrl}
@@ -229,7 +251,7 @@ export default function Lightbox({
               onLoad={() => setImageLoaded(true)}
               onError={() => setImageLoaded(true)}
             />
-          )}
+          ) : null}
         </div>
       </div>
 

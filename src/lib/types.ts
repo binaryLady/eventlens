@@ -9,6 +9,7 @@ export interface PhotoRecord {
   peopleDescriptions: string;
   sceneDescription: string;
   faceCount: number;
+  mimeType: string;
   processedAt: string;
   thumbnailUrl: string;
   downloadUrl: string;

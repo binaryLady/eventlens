@@ -19,6 +19,7 @@ export function rowToPhoto(row: PhotoRow): PhotoRecord {
     peopleDescriptions: row.people_descriptions || "",
     sceneDescription: row.scene_description || "",
     faceCount: row.face_count || 0,
+    mimeType: row.mime_type || "",
     processedAt: row.processed_at || row.created_at || "",
     thumbnailUrl: row.drive_file_id
       ? `https://lh3.googleusercontent.com/d/${row.drive_file_id}=w400`
@@ -40,6 +41,7 @@ function driveFilesToPhotos(files: DriveFile[], folder: string): PhotoRecord[] {
     peopleDescriptions: "",
     sceneDescription: "",
     faceCount: 0,
+    mimeType: f.mimeType || "",
     processedAt: f.modifiedTime || "",
     thumbnailUrl: `https://lh3.googleusercontent.com/d/${f.id}=w400`,
     downloadUrl: `https://drive.google.com/uc?export=download&id=${f.id}`,
@@ -79,6 +81,7 @@ export async function fetchPhotosWithMetadata(): Promise<PhotoRecord[]> {
       photo.peopleDescriptions = row.people_descriptions || "";
       photo.sceneDescription = row.scene_description || "";
       photo.faceCount = row.face_count || 0;
+      if (row.mime_type) photo.mimeType = row.mime_type;
       if (row.processed_at) photo.processedAt = row.processed_at;
     }
   }
@@ -184,6 +187,7 @@ export async function fetchPhotos(): Promise<PhotoRecord[]> {
         peopleDescriptions: String(cells[4]?.v ?? ""),
         sceneDescription: String(cells[5]?.v ?? ""),
         faceCount: parseInt(String(cells[6]?.v ?? "0"), 10) || 0,
+        mimeType: "",
         processedAt: String(cells[7]?.v ?? ""),
         thumbnailUrl: driveFileId ? `https://lh3.googleusercontent.com/d/${driveFileId}=w400` : "",
         downloadUrl: driveFileId ? `https://drive.google.com/uc?export=download&id=${driveFileId}` : "",

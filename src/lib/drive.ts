@@ -82,7 +82,7 @@ export async function listDriveImages(
 
   do {
     const q = encodeURIComponent(
-      `'${folderId}' in parents and mimeType contains 'image/' and trashed = false`,
+      `'${folderId}' in parents and (mimeType contains 'image/' or mimeType contains 'video/') and trashed = false`,
     );
     const pt = pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : "";
     const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,modifiedTime),nextPageToken&orderBy=modifiedTime%20desc&pageSize=1000&key=${apiKey}${pt}`;
