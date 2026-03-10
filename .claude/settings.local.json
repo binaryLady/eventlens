@@ -15,7 +15,13 @@
       "Bash(done)",
       "Bash(do sed -i '' '1i// @TheTechMargin 2026:*)",
       "Bash(npm install)",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "WebSearch",
+      "WebFetch(domain:ai.google.dev)",
+      "Bash(curl -s \"http://localhost:3000/api/photos\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); p=[x for x in d[''photos''] if ''SONIA'' in x[''filename'']]; print\\(p[0][''driveFileId''] if p else ''none''\\)\")",
+      "Bash(curl -s -b \"auth=true\" \"http://localhost:3000/api/photos\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); p=[x for x in d[''photos''] if ''SONIA'' in x[''filename'']]; print\\(p[0][''driveFileId'']\\)\")"
     ]
   }
 }
