@@ -911,44 +911,8 @@ function PhotoGrid() {
                   </button>
                 </div>
               </section>
-
-            {/* Most Recognized section */}
-            {hotPhotoIds.size > 0 && (() => {
-              const hotPhotos = allPhotos.filter((p) => hotPhotoIds.has(p.driveFileId)).slice(0, 8);
-              if (hotPhotos.length === 0) return null;
-              return (
-                <section className="mt-6 md:mt-10">
-                  <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-4">
-                    <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest" style={{ color: "var(--el-amber)" }}>
-                      &#x2500;&#x2500; MOST RECOGNIZED
-                    </span>
-                    <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-d9)]">
-                      [{hotPhotos.length}]
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5 md:gap-2 md:grid-cols-3 lg:grid-cols-4">
-                    {hotPhotos.map((photo, index) => (
-                      <PhotoCard
-                        key={photo.id}
-                        photo={photo}
-                        onClick={() => {
-                          if (selectMode) {
-                            togglePhotoSelection(photo.id);
-                          } else {
-                            setSelectedPhoto(photo);
-                          }
-                        }}
-                        index={index}
-                        selectMode={selectMode}
-                        selected={selectedIds.has(photo.id)}
-                        isHot
-                      />
-                    ))}
-                  </div>
-                </section>
-              );
-            })()}
             )}
+
           </>
         )}
 
@@ -1114,6 +1078,8 @@ function FilterSortSheet({
       if (btnRef.current?.contains(target)) return;
       const popover = document.getElementById("filter-popover");
       if (popover?.contains(target)) return;
+      const mobileSheet = document.getElementById("filter-mobile-sheet");
+      if (mobileSheet?.contains(target)) return;
       setOpen(false);
     };
     document.addEventListener("mousedown", handler);
@@ -1197,7 +1163,7 @@ function FilterSortSheet({
         <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">TYPE</span>
       </div>
       {typeOptions.map((opt) => (
-        <div key={opt.value}>{menuRow(activeType === opt.value, opt.label, () => onTypeChange(opt.value))}</div>
+        <div key={opt.value}>{menuRow(activeType === opt.value, opt.label, () => { onTypeChange(opt.value); setOpen(false); })}</div>
       ))}
 
       <div className="mx-4 my-1 border-t border-[var(--el-green-22)]" />
@@ -1252,7 +1218,7 @@ function FilterSortSheet({
       {open && (
         <div className="md:hidden fixed inset-0 z-50">
           <div className="absolute inset-0 bg-[rgba(26,26,26,0.8)] backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="absolute bottom-0 left-0 right-0 max-h-[75vh] overflow-y-auto border-t border-[var(--el-green-99)] bg-[var(--el-bg)] animate-slide-up safe-bottom">
+          <div id="filter-mobile-sheet" className="absolute bottom-0 left-0 right-0 max-h-[75vh] overflow-y-auto border-t border-[var(--el-green-99)] bg-[var(--el-bg)] animate-slide-up safe-bottom">
             <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-[var(--el-bg)]">
               <div className="w-8 h-1 rounded-full bg-[var(--el-green-99)]" />
             </div>
@@ -1359,18 +1325,18 @@ function PhotoCard({
         </div>
       )}
 
-      {/* HOT badge — top-left */}
+      {/* Trending badge — top-left */}
       {!selectMode && isHot && !matchInfo && (
         <div className="absolute left-1.5 top-1.5">
           <span
             className="px-1.5 py-0.5 text-[8px] font-mono font-bold uppercase tracking-wider border"
             style={{
-              borderColor: "var(--el-amber-88)",
+              borderColor: "var(--el-green)",
               backgroundColor: "rgba(26,26,26,0.8)",
-              color: "var(--el-amber)",
+              color: "var(--el-green)",
             }}
           >
-            HOT
+            POPULAR
           </span>
         </div>
       )}
