@@ -9,15 +9,12 @@ export default function Footer() {
           rel="noopener noreferrer"
           className="text-center hover:opacity-80 transition-opacity"
         >
-          <div
-            className="text-sm font-pacifico bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 to-purple-500 bg-clip-text text-transparent"
-            style={{
-              backgroundSize: "200% auto",
-              animation: "gradient-shift 3s ease infinite",
-            }}
-          >
-            made with ❤ by theTechMargin
-          </div>
+          <span className="text-sm">
+            <span className="text-gray-400">made with </span>
+            <span className="text-red-500">❤️</span>
+            <span className="text-gray-400"> by </span>
+            <span className="text-[#00ff41] font-semibold">thetechmargin</span>
+          </span>
         </a>
       </div>
     </footer>
