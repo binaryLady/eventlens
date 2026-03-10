@@ -7,7 +7,11 @@
       "Bash(npx vercel env ls)",
       "Bash(npm install @supabase/supabase-js)",
       "Bash(npx tsc --noEmit)",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "Bash(mkdir -p /Users/soniacookbroen/Development/eventlens/.claude/worktrees/exciting-chandrasekhar/.claude)",
+      "Bash(cp /Users/soniacookbroen/Development/eventlens/.claude/launch.json /Users/soniacookbroen/Development/eventlens/.claude/worktrees/exciting-chandrasekhar/.claude/launch.json)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(openssl rand -base64 32)"
     ]
   }
 }
