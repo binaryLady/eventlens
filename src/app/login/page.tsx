@@ -3,14 +3,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Space_Mono } from "next/font/google";
-
-const spaceMono = Space_Mono({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-heading",
-  display: "swap",
-});
 
 export default function LoginPage() {
   const router = useRouter();
@@ -46,85 +38,80 @@ export default function LoginPage() {
   };
 
   return (
-    <html lang="en" className="dark">
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </head>
-      <body
-        className={`${spaceMono.variable} min-h-screen bg-black text-zinc-100 font-mono flex items-center justify-center p-4`}
-        style={{
-          backgroundImage:
-            'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,65,0.02) 2px, rgba(0,255,65,0.02) 4px)',
-        }}
-      >
-        <div className="w-full max-w-sm">
-          {/* Terminal window */}
-          <div className="border border-[#00ff4133] bg-black/80 p-6 backdrop-blur">
-            {/* Terminal header */}
-            <div className="flex items-center gap-2 border-b border-[#00ff4122] pb-3 mb-6">
-              <div className="h-2 w-2 rounded-full bg-[#00ff41]" />
-              <div className="h-2 w-2 rounded-full bg-[#00ff4166]" />
-              <div className="h-2 w-2 rounded-full bg-[#00ff4133]" />
-              <span className="ml-2 text-[10px] uppercase tracking-widest text-[#00ff4166]">
-                eventlens://auth
-              </span>
+    <div
+      className="min-h-screen bg-black text-zinc-100 font-mono flex items-center justify-center p-4"
+      style={{
+        backgroundImage:
+          'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,65,0.02) 2px, rgba(0,255,65,0.02) 4px)',
+      }}
+    >
+      <div className="w-full max-w-sm">
+        {/* Terminal window */}
+        <div className="border border-[#00ff4133] bg-black/80 p-6 backdrop-blur">
+          {/* Terminal header */}
+          <div className="flex items-center gap-2 border-b border-[#00ff4122] pb-3 mb-6">
+            <div className="h-2 w-2 rounded-full bg-[#00ff41]" />
+            <div className="h-2 w-2 rounded-full bg-[#00ff4166]" />
+            <div className="h-2 w-2 rounded-full bg-[#00ff4133]" />
+            <span className="ml-2 text-[10px] uppercase tracking-widest text-[#00ff4166]">
+              eventlens://auth
+            </span>
+          </div>
+
+          {/* Content */}
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-lg font-bold text-[#00ff41] uppercase tracking-wider mb-2">
+                ACCESS REQUIRED
+              </h1>
+              <p className="text-xs text-[#00ff4166] uppercase tracking-wider">
+                Enter your access credential to continue
+              </p>
             </div>
 
-            {/* Content */}
-            <div className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <h1 className="text-lg font-bold text-[#00ff41] uppercase tracking-wider mb-2">
-                  ACCESS REQUIRED
-                </h1>
-                <p className="text-xs text-[#00ff4166] uppercase tracking-wider">
-                  Enter your access credential to continue
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="password"
-                    className="block text-[10px] uppercase tracking-wider text-[#00ff4166] mb-2"
-                  >
-                    PASSWORD
-                  </label>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-black border border-[#00ff4133] px-3 py-2 text-xs text-[#00ff41] placeholder-[#00ff4133] focus:border-[#00ff41] focus:outline-none transition-colors"
-                    disabled={loading}
-                    autoFocus
-                  />
-                </div>
-
-                {error && (
-                  <div className="text-xs text-red-500 uppercase tracking-wider border border-red-500/30 bg-red-500/5 px-3 py-2">
-                    ✗ {error}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full border border-[#00ff41] bg-[#00ff4111] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#00ff41] hover:bg-[#00ff4122] focus:outline-none focus:ring-1 focus:ring-[#00ff41] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                <label
+                  htmlFor="password"
+                  className="block text-[10px] uppercase tracking-wider text-[#00ff4166] mb-2"
                 >
-                  {loading ? "VERIFYING..." : "AUTHENTICATE"}
-                </button>
-              </form>
-
-              <div className="border-t border-[#00ff4122] pt-4">
-                <p className="text-[10px] text-[#00ff4144] uppercase tracking-widest">
-                  © @TheTechMargin 2026
-                </p>
+                  PASSWORD
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-black border border-[#00ff4133] px-3 py-2 text-xs text-[#00ff41] placeholder-[#00ff4133] focus:border-[#00ff41] focus:outline-none transition-colors"
+                  disabled={loading}
+                  autoFocus
+                />
               </div>
+
+              {error && (
+                <div className="text-xs text-red-500 uppercase tracking-wider border border-red-500/30 bg-red-500/5 px-3 py-2">
+                  ✗ {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full border border-[#00ff41] bg-[#00ff4111] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#00ff41] hover:bg-[#00ff4122] focus:outline-none focus:ring-1 focus:ring-[#00ff41] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {loading ? "VERIFYING..." : "AUTHENTICATE"}
+              </button>
+            </form>
+
+            <div className="border-t border-[#00ff4122] pt-4">
+              <p className="text-[10px] text-[#00ff4144] uppercase tracking-widest">
+                © @TheTechMargin 2026
+              </p>
             </div>
           </div>
         </div>
-      </body>
-    </html>
+      </div>
+    </div>
   );
 }
