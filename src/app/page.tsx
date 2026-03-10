@@ -296,7 +296,7 @@ function PhotoGrid() {
       .then((res) => res.json())
       .then((data: { results: PhotoRecord[]; source: string }) => {
         if (cancelled) return;
-        if (data.source === "supabase" && data.results.length > 0) {
+        if (data.results.length > 0) {
           setServerResults(data.results);
         } else {
           setServerResults(null);

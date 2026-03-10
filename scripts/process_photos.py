@@ -434,7 +434,7 @@ def phase_describe(
     log.info("─── PHASE 2: DESCRIBE ───")
     if not _check_embedding_column(store):
         return 0
-    photos = store.get_photos_missing_embedding()
+    photos = store.get_photos_by_status(["pending"])
     if folder_filter:
         photos = [p for p in photos if p["folder"] == folder_filter]
 
