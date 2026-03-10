@@ -152,7 +152,7 @@ export default function PhotoUpload({
               <line x1="2" y1="12" x2="6" y2="12" />
               <line x1="18" y1="12" x2="22" y2="12" />
             </svg>
-            FACIAL SCAN
+            Upload Photo to Search for Matches
           </button>
 
           {/* Camera capture (mobile) */}
