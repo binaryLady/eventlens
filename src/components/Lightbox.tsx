@@ -125,7 +125,7 @@ export default function Lightbox({
     return null;
   }
 
-  const isVideo = photo.mimeType?.startsWith("video/") || /\.(mp4|mov|webm|avi)$/i.test(photo.filename);
+  const isVideo = (photo.mimeType?.startsWith("video/") || /\.(mp4|webm|avi)$/i.test(photo.filename)) && !/\.mov$/i.test(photo.filename);
 
   const fullImageUrl = photo.driveFileId
     ? `https://lh3.googleusercontent.com/d/${photo.driveFileId}=w1600`

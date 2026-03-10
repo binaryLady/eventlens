@@ -167,7 +167,6 @@ function PhotoGrid() {
     searchParams.get("q") || "",
   );
   const [serverResults, setServerResults] = useState<PhotoRecord[] | null>(null);
-  const [searchSource, setSearchSource] = useState<"client" | "server">("client");
   const [activeFolder, setActiveFolderRaw] = useState(() => {
     const fromUrl = searchParams.get("folder");
     if (fromUrl) return fromUrl;
@@ -247,6 +246,7 @@ function PhotoGrid() {
         setLoading(false);
       }
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchData]);
 
   // Polling for new photos
@@ -298,16 +298,13 @@ function PhotoGrid() {
         if (cancelled) return;
         if (data.source === "supabase" && data.results.length > 0) {
           setServerResults(data.results);
-          setSearchSource("server");
         } else {
           setServerResults(null);
-          setSearchSource("client");
         }
       })
       .catch(() => {
         if (!cancelled) {
           setServerResults(null);
-          setSearchSource("client");
         }
       });
 
@@ -331,7 +328,7 @@ function PhotoGrid() {
       setMatchTier(data.tier || "text");
       setActiveFolder("");
     },
-    [],
+    [setActiveFolder],
   );
 
   const handleClearMatch = useCallback(() => {
@@ -392,7 +389,7 @@ function PhotoGrid() {
   }, [sortOrder]);
 
   const isVideoFile = useCallback((p: PhotoRecord) =>
-    p.mimeType?.startsWith("video/") || /\.(mp4|mov|webm|avi)$/i.test(p.filename), []);
+    (p.mimeType?.startsWith("video/") || /\.(mp4|webm|avi)$/i.test(p.filename)) && !/\.mov$/i.test(p.filename), []);
 
   const applyTypeFilter = useCallback((photos: PhotoRecord[]) => {
     if (activeType === "video") return photos.filter(isVideoFile);
@@ -653,9 +650,10 @@ function PhotoGrid() {
             </div>
           )}
 
-          {/* Row 2: type filter + sort + select */}
+          {/* Row 2: filter + sort + select */}
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1">
+            {/* Desktop: type pills inline */}
+            <div className="hidden md:flex items-center gap-1">
               {(["all", "photo", "video"] as const).map((type) => (
                 <button
                   key={type}
@@ -670,8 +668,22 @@ function PhotoGrid() {
                 </button>
               ))}
             </div>
+
+            {/* Mobile: combined filter button */}
+            <div className="md:hidden">
+              <FilterSortSheet
+                sortOrder={sortOrder}
+                onSortChange={setSortOrder}
+                activeType={activeType}
+                onTypeChange={setActiveType}
+              />
+            </div>
+
             <div className="flex items-center gap-1.5">
-              <SortDropdown sortOrder={sortOrder} onChange={setSortOrder} />
+              {/* Desktop only: sort dropdown */}
+              <div className="hidden md:block">
+                <SortDropdown sortOrder={sortOrder} onChange={setSortOrder} />
+              </div>
               <button
                 onClick={toggleSelectMode}
                 className={`px-2.5 py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider transition-all ${
@@ -1139,8 +1151,8 @@ function PhotoCard({
         />
       )}
 
-      {/* Video play indicator */}
-      {(photo.mimeType?.startsWith("video/") || /\.(mp4|mov|webm|avi)$/i.test(photo.filename)) && (
+      {/* Video play indicator (exclude .mov — typically Live Photos) */}
+      {((photo.mimeType?.startsWith("video/") || /\.(mp4|webm|avi)$/i.test(photo.filename)) && !/\.mov$/i.test(photo.filename)) && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(26,26,26,0.6)] border border-[var(--el-green-d9)]">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--el-green)">
