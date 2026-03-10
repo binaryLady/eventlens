@@ -17,7 +17,7 @@ function parseGeminiJson(response: string): unknown {
   );
 }
 
-async function callGemini(parts: GeminiPart[], model = "gemini-2.5-flash"): Promise<string> {
+async function callGemini(parts: GeminiPart[], model = "gemini-3.5-photo"): Promise<string> {
   const { geminiApiKey } = config;
   if (!geminiApiKey) throw new Error("Missing GEMINI_API_KEY");
 

@@ -43,7 +43,7 @@ export default function Toast({
           {action && (
             <button
               onClick={action.onClick}
-              className="border border-[var(--el-green)] px-3 py-1.5 sm:py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green)] active:bg-[var(--el-green-11)] transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)]"
+              className="border border-[var(--el-green-99)] px-3 py-1.5 sm:py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] active:bg-[var(--el-green-11)] transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)]"
             >
               [{action.label}]
             </button>
@@ -53,7 +53,7 @@ export default function Toast({
               setVisible(false);
               setTimeout(onDismiss, 300);
             }}
-            className="p-1 text-[var(--el-green-99)] hover:text-[var(--el-magenta)] active:text-[var(--el-green)] transition-colors"
+            className="p-1 text-[var(--el-flame-99)] hover:text-[var(--el-magenta)] active:text-[var(--el-green)] transition-colors"
             aria-label="Dismiss"
           >
             <svg

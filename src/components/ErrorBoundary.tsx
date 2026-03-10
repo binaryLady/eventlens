@@ -37,7 +37,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 this.setState({ hasError: false });
                 window.location.reload();
               }}
-              className="mt-4 border border-[var(--el-green)] px-6 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-green)] hover:bg-[var(--el-magenta-28)] transition-all"
+              className="mt-4 border border-[var(--el-green-99)] px-6 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] hover:bg-[var(--el-magenta-28)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] transition-all"
             >
               [REBOOT]
             </button>

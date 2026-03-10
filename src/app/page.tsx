@@ -526,7 +526,7 @@ function PhotoGrid() {
               <span className="sm:hidden">{allPhotos.length > 0 ? `${allPhotos.length}` : ""}</span>
               <button
                 onClick={handleLogout}
-                className="text-[var(--el-green-99)] hover:text-[var(--el-magenta)] active:text-[var(--el-green)] transition-colors underline"
+                className="text-[var(--el-flame-99)] hover:text-[var(--el-magenta)] active:text-[var(--el-green)] transition-colors underline"
                 title="Logout"
               >
                 [LOGOUT]
@@ -569,7 +569,7 @@ function PhotoGrid() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="SEARCH PHOTOS, PEOPLE, SCENES..."
-                className="w-full border border-[var(--el-green-d9)] bg-black/60 py-3 pl-10 pr-10 text-base md:text-sm text-[var(--el-green)] font-mono placeholder-[var(--el-green-d9)] outline-none transition-all focus:border-[var(--el-green)] focus:shadow-[0_0_15px_rgba(0,255,65,0.15)]"
+                className="w-full border border-[var(--el-green-d9)] bg-black/60 py-3 pl-10 pr-10 text-base md:text-sm text-[var(--el-green)] font-mono placeholder-[var(--el-magenta)] outline-none transition-all focus:border-[var(--el-green)] focus:shadow-[0_0_15px_rgba(0,255,65,0.15)]"
                 aria-label="Search photos"
                 enterKeyHint="search"
               />
@@ -618,7 +618,7 @@ function PhotoGrid() {
                   className={`shrink-0 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                     activeFolder === ""
                       ? "border border-[var(--el-green)] text-[var(--el-green)] bg-[var(--el-green-11)] glow-border"
-                      : "border border-[var(--el-green-99)] text-[var(--el-green-d9)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
+                      : "border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
                   }`}
                 >
                   ALL [{allPhotos.length}]
@@ -632,7 +632,7 @@ function PhotoGrid() {
                     className={`shrink-0 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                       activeFolder === folder
                         ? "border border-[var(--el-green)] text-[var(--el-green)] bg-[var(--el-green-11)] glow-border"
-                        : "border border-[var(--el-green-99)] text-[var(--el-green-d9)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
+                        : "border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
                     }`}
                   >
                     {folder} [{folderCounts[folder] || 0}]
@@ -654,7 +654,7 @@ function PhotoGrid() {
                 className={`px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                   selectMode
                     ? "border border-[var(--el-green)] text-[var(--el-green)] bg-[var(--el-green-11)] glow-border"
-                    : "border border-[var(--el-green-99)] text-[var(--el-green-d9)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
+                    : "border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
                 }`}
               >
                 {selectMode ? "EXIT" : "SELECT"}
@@ -732,7 +732,7 @@ function PhotoGrid() {
                   }
                 });
               }}
-              className="mt-4 border border-[var(--el-green)] px-6 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-green)] hover:bg-[var(--el-magenta-28)] transition-all"
+              className="mt-4 border border-[var(--el-green-99)] px-6 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] hover:bg-[var(--el-magenta-28)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] transition-all"
             >
               [RETRY CONNECTION]
             </button>
@@ -848,7 +848,7 @@ function PhotoGrid() {
                 <div className="mt-4 md:mt-6 flex justify-center">
                   <button
                     onClick={() => setBrowseAll(true)}
-                    className="inline-flex items-center gap-2 border border-[var(--el-green-d9)] bg-black/60 px-5 py-2.5 text-[11px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green-d9)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)] active:bg-[var(--el-green-99)]"
+                    className="inline-flex items-center gap-2 border border-[var(--el-green-99)] bg-black/60 px-5 py-2.5 text-[11px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)] active:bg-[var(--el-green-99)]"
                   >
                     BROWSE ALL {allPhotos.length} PHOTOS
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -996,7 +996,7 @@ function SortDropdown({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider border border-[var(--el-green-99)] text-[var(--el-green-d9)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] transition-all"
+        className="flex items-center gap-1.5 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] transition-all"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 6h18M6 12h12M9 18h6" />
@@ -1006,7 +1006,7 @@ function SortDropdown({
 
       {/* Desktop: dropdown */}
       {open && (
-        <div className="hidden md:block absolute right-0 top-full mt-1 z-50 border border-[var(--el-green-d9)] bg-black min-w-[120px]">
+        <div className="hidden md:block absolute right-0 top-full mt-1 z-50 border border-[var(--el-green-99)] bg-black min-w-[120px]">
           {options.map((opt) => (
             <button
               key={opt.value}
@@ -1014,7 +1014,7 @@ function SortDropdown({
               className={`block w-full text-left px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider transition-all ${
                 sortOrder === opt.value
                   ? "text-[var(--el-green)] bg-[var(--el-green-11)]"
-                  : "text-[var(--el-green-d9)] hover:text-[var(--el-magenta)] hover:bg-[var(--el-magenta-28)]"
+                  : "text-[var(--el-green-99)] hover:text-[var(--el-magenta)] hover:bg-[var(--el-magenta-28)]"
               }`}
             >
               {opt.label}
@@ -1027,12 +1027,12 @@ function SortDropdown({
       {open && (
         <div className="md:hidden fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="absolute bottom-0 left-0 right-0 border-t border-[var(--el-green-d9)] bg-black animate-slide-up safe-bottom">
+          <div className="absolute bottom-0 left-0 right-0 border-t border-[var(--el-green-99)] bg-black animate-slide-up safe-bottom">
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-8 h-1 rounded-full bg-[var(--el-green-d9)]" />
+              <div className="w-8 h-1 rounded-full bg-[var(--el-green-99)]" />
             </div>
             <div className="px-4 pb-2 pt-1">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-d9)]">SORT BY</span>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">SORT BY</span>
             </div>
             {options.map((opt) => (
               <button
@@ -1041,7 +1041,7 @@ function SortDropdown({
                 className={`flex items-center w-full text-left px-4 py-3.5 text-sm font-mono uppercase tracking-wider transition-all active:bg-[var(--el-green-99)] ${
                   sortOrder === opt.value
                     ? "text-[var(--el-green)]"
-                    : "text-[var(--el-green-d9)]"
+                    : "text-[var(--el-green-99)]"
                 }`}
               >
                 {sortOrder === opt.value && (
@@ -1133,7 +1133,7 @@ function PhotoCard({
             className={`flex h-5 w-5 items-center justify-center border transition-all ${
               selected
                 ? "border-[var(--el-green)] bg-[var(--el-green)]"
-                : "border-[var(--el-green-d9)] bg-black/60"
+                : "border-[var(--el-green-99)] bg-black/60"
             }`}
           >
             {selected && (

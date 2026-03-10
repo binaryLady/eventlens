@@ -26,7 +26,7 @@ export default function FloatingActionBar({
         {/* Left: Cancel */}
         <button
           onClick={onClearSelection}
-          className="shrink-0 border border-[var(--el-green-d9)] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-d9)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] active:bg-[var(--el-green-99)] transition-all"
+          className="shrink-0 border border-[var(--el-green-99)] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] active:bg-[var(--el-green-99)] transition-all"
         >
           CANCEL
         </button>
@@ -41,7 +41,7 @@ export default function FloatingActionBar({
           {selectedCount < totalCount && (
             <button
               onClick={onSelectAll}
-              className="hidden sm:block shrink-0 border border-[var(--el-green-d9)] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-d9)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] active:bg-[var(--el-green-99)] transition-all"
+              className="hidden sm:block shrink-0 border border-[var(--el-green-99)] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] active:bg-[var(--el-green-99)] transition-all"
             >
               SELECT ALL
             </button>
@@ -49,7 +49,7 @@ export default function FloatingActionBar({
           <button
             onClick={onDownloadZip}
             disabled={downloading}
-            className="shrink-0 inline-flex items-center gap-1.5 md:gap-2 border border-[var(--el-green)] bg-[var(--el-green-11)] px-3 md:px-4 py-2 md:py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green)] active:bg-[var(--el-green-22)] transition-all disabled:border-[var(--el-amber)]/20 disabled:text-[var(--el-amber)]/40 disabled:bg-transparent disabled:cursor-not-allowed"
+            className="shrink-0 inline-flex items-center gap-1.5 md:gap-2 border border-[var(--el-green-99)] bg-[var(--el-green-11)] px-3 md:px-4 py-2 md:py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] active:bg-[var(--el-green-22)] transition-all disabled:border-[var(--el-amber)]/20 disabled:text-[var(--el-amber)]/40 disabled:bg-transparent disabled:cursor-not-allowed"
           >
             {downloading ? (
               <>
