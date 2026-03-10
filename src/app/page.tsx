@@ -633,6 +633,17 @@ function PhotoGrid() {
               )}
             </div>
 
+            {/* Filtered-data notice */}
+            {(activeFolder || activeType !== "all") && (
+              <p className="mt-1.5 text-center text-[10px] font-mono uppercase tracking-wider text-[var(--el-amber)]">
+                {activeFolder && activeType !== "all"
+                  ? `Searching within "${activeFolder}" \u00b7 ${activeType}s only`
+                  : activeFolder
+                    ? `Searching within "${activeFolder}"`
+                    : `Searching ${activeType}s only`}
+              </p>
+            )}
+
             {/* Photo upload for face matching */}
             <PhotoUpload
               onMatchResults={handleMatchResults}
@@ -1306,14 +1317,12 @@ function PhotoCard({
         </>
       )}
 
-      {/* Video play indicator */}
+      {/* Live photo indicator */}
       {(photo.mimeType?.startsWith("video/") || /\.(mp4|mov|webm|avi)$/i.test(photo.filename)) && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(26,26,26,0.6)] border border-[var(--el-green-d9)]">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--el-green)">
-              <polygon points="8,5 20,12 8,19" />
-            </svg>
-          </div>
+        <div className="absolute top-1.5 left-1.5 pointer-events-none">
+          <span className="px-1.5 py-0.5 text-[8px] font-mono font-bold uppercase tracking-wider border border-[var(--el-green-d9)] bg-[rgba(26,26,26,0.7)] text-[var(--el-green-d9)]">
+            LIVE
+          </span>
         </div>
       )}
 
