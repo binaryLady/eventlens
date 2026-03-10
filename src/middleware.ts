@@ -18,7 +18,15 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+
+  // CSP: allow Google Drive iframe embeds for video playback
+  response.headers.set(
+    "Content-Security-Policy",
+    "frame-src https://drive.google.com https://*.google.com; frame-ancestors 'self'"
+  );
+
+  return response;
 }
 
 export const config = {

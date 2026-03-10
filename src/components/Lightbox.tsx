@@ -226,24 +226,14 @@ export default function Lightbox({
             </div>
           )}
           {isVideo ? (
-            <div className="flex flex-col items-center justify-center gap-4 w-full h-full">
-              <a
-                href={`https://drive.google.com/file/d/${photo.driveFileId}/view`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-3 border border-[var(--el-green)] bg-[var(--el-green-11)] px-6 py-3 text-sm font-mono uppercase tracking-wider text-[var(--el-green)] hover:bg-[var(--el-green-22)] transition-all"
-                onClick={() => setImageLoaded(true)}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="5 3 19 12 5 21 5 3" />
-                </svg>
-                PLAY VIDEO IN GOOGLE DRIVE
-              </a>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-66)]">
-                {photo.filename}
-              </span>
-              {(() => { setImageLoaded(true); return null; })()}
-            </div>
+            <iframe
+              key={photo.driveFileId}
+              src={videoEmbedUrl}
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+              className={`w-full h-full border-0 lightbox-media ${imageLoaded ? 'loaded' : ''}`}
+              onLoad={() => setImageLoaded(true)}
+            />
           ) : fullImageUrl ? (
             <Image
               key={photo.driveFileId}
