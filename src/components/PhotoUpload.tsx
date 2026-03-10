@@ -115,7 +115,7 @@ export default function PhotoUpload({
         <div className="flex items-center justify-center gap-2">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-2 border border-[var(--el-magenta-cc)] bg-black/60 px-4 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-magenta-dd)] transition-all hover:border-[var(--el-green)] hover:text-[var(--el-green)] hover:shadow-[0_0_10px_rgba(0,255,65,0.15)]"
+            className="inline-flex items-center gap-2 border border-[var(--el-magenta-cc)] bg-black/60 px-4 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-flame-dd)] transition-all hover:border-[var(--el-green)] hover:text-[var(--el-green)] hover:shadow-[0_0_10px_rgba(0,255,65,0.15)]"
           >
             {/* Crosshair/target icon */}
             <svg
@@ -141,7 +141,7 @@ export default function PhotoUpload({
           {/* Camera capture (mobile) */}
           <button
             onClick={() => cameraInputRef.current?.click()}
-            className="inline-flex items-center gap-2 border border-[var(--el-magenta-cc)] bg-black/60 px-4 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-magenta-dd)] transition-all hover:border-[var(--el-green)] hover:text-[var(--el-green)] hover:shadow-[0_0_10px_rgba(0,255,65,0.15)] md:hidden"
+            className="inline-flex items-center gap-2 border border-[var(--el-magenta-cc)] bg-black/60 px-4 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-flame-dd)] transition-all hover:border-[var(--el-green)] hover:text-[var(--el-green)] hover:shadow-[0_0_10px_rgba(0,255,65,0.15)] md:hidden"
           >
             <svg
               width="14"
@@ -197,7 +197,7 @@ export default function PhotoUpload({
           )}
 
           {uploading ? (
-            <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--el-magenta-dd)]">
+            <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--el-flame-dd)]">
               {/* Scanning animation */}
               <div className="relative w-4 h-4">
                 <div className="absolute inset-0 border border-[var(--el-green)] animate-crosshair-spin" />
@@ -208,7 +208,7 @@ export default function PhotoUpload({
           ) : (
             <button
               onClick={handleClear}
-              className="inline-flex items-center gap-1.5 border border-[var(--el-magenta-cc)] bg-black/60 px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--el-magenta-dd)] transition-all hover:border-[var(--el-green)] hover:text-[var(--el-green)]"
+              className="inline-flex items-center gap-1.5 border border-[var(--el-magenta-cc)] bg-black/60 px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--el-flame-dd)] transition-all hover:border-[var(--el-green)] hover:text-[var(--el-green)]"
             >
               <svg
                 width="12"

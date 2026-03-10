@@ -26,7 +26,7 @@ export default function FloatingActionBar({
         {/* Left: Cancel */}
         <button
           onClick={onClearSelection}
-          className="shrink-0 border border-[var(--el-magenta-cc)] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-magenta-dd)] hover:border-[var(--el-green)] hover:text-[var(--el-green)] active:bg-[var(--el-magenta-bb)] transition-all"
+          className="shrink-0 border border-[var(--el-magenta-cc)] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-flame-dd)] hover:border-[var(--el-green)] hover:text-[var(--el-green)] active:bg-[var(--el-magenta-bb)] transition-all"
         >
           CANCEL
         </button>
@@ -41,7 +41,7 @@ export default function FloatingActionBar({
           {selectedCount < totalCount && (
             <button
               onClick={onSelectAll}
-              className="hidden sm:block shrink-0 border border-[var(--el-magenta-cc)] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-magenta-dd)] hover:border-[var(--el-green)] hover:text-[var(--el-green)] active:bg-[var(--el-magenta-bb)] transition-all"
+              className="hidden sm:block shrink-0 border border-[var(--el-magenta-cc)] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-flame-dd)] hover:border-[var(--el-green)] hover:text-[var(--el-green)] active:bg-[var(--el-magenta-bb)] transition-all"
             >
               SELECT ALL
             </button>
