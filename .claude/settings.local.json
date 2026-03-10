@@ -48,7 +48,12 @@
       "Bash(grep -n \"#00ff41\" /Users/soniacookbroen/Development/eventlens/src/app/admin/page.tsx /Users/soniacookbroen/Development/eventlens/src/app/page.tsx /Users/soniacookbroen/Development/eventlens/src/components/*.tsx)",
       "Bash(find src -name \"*.tsx\" -exec sed -i '' 's/var\\(--el-magenta-dd\\)/var\\(--el-flame-dd\\)/g' {} +)",
       "Bash(xargs ls -1)",
-      "Bash(node -e \"console.log\\(require\\(''./package.json''\\).dependencies.next\\)\")"
+      "Bash(node -e \"console.log\\(require\\(''./package.json''\\).dependencies.next\\)\")",
+      "Bash(node -e \":*)",
+      "Bash(source .env.local)",
+      "Bash(curl -s \"http://localhost:3000/api/photos\" -H \"Cookie: auth=true\")",
+      "Bash(curl -s -X POST \"http://localhost:3000/api/auth/login\" -H \"Content-Type: application/json\" -d \"{\"\"password\"\": \"\"$APP_PASSWORD\"\"}\" -c -)",
+      "Bash(curl -s -X POST \"http://localhost:3000/api/auth/login\" -H \"Content-Type: application/json\" -d '{\"\"password\"\":\"\"hardMode26\"\"}' -v)"
     ]
   }
 }
