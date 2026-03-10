@@ -1097,6 +1097,128 @@ function SortDropdown({
   );
 }
 
+function FilterSortSheet({
+  sortOrder,
+  onSortChange,
+  activeType,
+  onTypeChange,
+}: {
+  sortOrder: "shuffle" | "newest" | "oldest" | "name-asc" | "name-desc";
+  onSortChange: (v: "shuffle" | "newest" | "oldest" | "name-asc" | "name-desc") => void;
+  activeType: "all" | "photo" | "video";
+  onTypeChange: (v: "all" | "photo" | "video") => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const hasActiveFilter = activeType !== "all" || sortOrder !== "shuffle";
+
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
+  const sortOptions: { value: typeof sortOrder; label: string }[] = [
+    { value: "shuffle", label: "SHUFFLE" },
+    { value: "newest", label: "NEWEST" },
+    { value: "oldest", label: "OLDEST" },
+    { value: "name-asc", label: "NAME A\u2192Z" },
+    { value: "name-desc", label: "NAME Z\u2192A" },
+  ];
+
+  const typeOptions: { value: typeof activeType; label: string }[] = [
+    { value: "all", label: "ALL TYPES" },
+    { value: "photo", label: "PHOTOS ONLY" },
+    { value: "video", label: "VIDEOS ONLY" },
+  ];
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-mono uppercase tracking-wider transition-all ${
+          hasActiveFilter
+            ? "border border-[var(--el-magenta)] text-[var(--el-magenta)] bg-[var(--el-magenta-28)]"
+            : "border border-[var(--el-green-99)] text-[var(--el-green-99)]"
+        }`}
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 6h18M6 12h12M9 18h6" />
+        </svg>
+        FILTER
+        {hasActiveFilter && (
+          <span className="h-1.5 w-1.5 rounded-full bg-[var(--el-magenta)]" />
+        )}
+      </button>
+
+      {open && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-[rgba(26,26,26,0.8)] backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <div className="absolute bottom-0 left-0 right-0 border-t border-[var(--el-green-99)] bg-[var(--el-bg)] animate-slide-up safe-bottom">
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-8 h-1 rounded-full bg-[var(--el-green-99)]" />
+            </div>
+
+            {/* Type section */}
+            <div className="px-4 pb-1 pt-1">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">TYPE</span>
+            </div>
+            {typeOptions.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => { onTypeChange(opt.value); }}
+                className={`flex items-center w-full text-left px-4 py-3 text-sm font-mono uppercase tracking-wider transition-all active:bg-[var(--el-green-99)] ${
+                  activeType === opt.value
+                    ? "text-[var(--el-magenta)]"
+                    : "text-[var(--el-green-99)]"
+                }`}
+              >
+                {activeType === opt.value && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="mr-3 shrink-0">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+                {activeType !== opt.value && <span className="w-[14px] mr-3 shrink-0" />}
+                {opt.label}
+              </button>
+            ))}
+
+            {/* Divider */}
+            <div className="mx-4 my-1 border-t border-[var(--el-green-22)]" />
+
+            {/* Sort section */}
+            <div className="px-4 pb-1 pt-1">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">SORT BY</span>
+            </div>
+            {sortOptions.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => { onSortChange(opt.value); setOpen(false); }}
+                className={`flex items-center w-full text-left px-4 py-3 text-sm font-mono uppercase tracking-wider transition-all active:bg-[var(--el-green-99)] ${
+                  sortOrder === opt.value
+                    ? "text-[var(--el-magenta)]"
+                    : "text-[var(--el-green-99)]"
+                }`}
+              >
+                {sortOrder === opt.value && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="mr-3 shrink-0">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+                {sortOrder !== opt.value && <span className="w-[14px] mr-3 shrink-0" />}
+                {opt.label}
+              </button>
+            ))}
+            <div className="h-2" />
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 const TIER_LABELS: Record<MatchTier, string> = {
   text: "TXT",
   visual: "VIS",
