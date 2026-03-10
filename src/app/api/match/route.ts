@@ -83,7 +83,7 @@ async function tryVectorMatch(
     const bestFace = embedData.faces.reduce((a, b) => (a.det_score > b.det_score ? a : b));
 
     const { matchFacesByEmbedding } = await import("@/lib/supabase");
-    const faceMatches = await matchFacesByEmbedding(bestFace.embedding, 0.5, 30);
+    const faceMatches = await matchFacesByEmbedding(bestFace.embedding, 0.6, 30);
     if (faceMatches.length === 0) return { matches: [], description: "", tier: "vector" };
 
     const allPhotos = await fetchPhotosWithMetadata();
