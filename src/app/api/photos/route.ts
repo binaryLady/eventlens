@@ -3,6 +3,7 @@ import { fetchPhotos, getFolders, fetchDriveFolders } from "@/lib/photos";
 
 export const revalidate = 30;
 
+// @TheTechMargin 2026
 export async function GET() {
   try {
     const [photos, driveFolders] = await Promise.all([
@@ -26,8 +27,7 @@ export async function GET() {
         : "";
 
     return NextResponse.json({ photos, folders, lastUpdated });
-  } catch (error) {
-    console.error("Error fetching photos:", error);
+  } catch {
     return NextResponse.json(
       { error: "Failed to fetch photos" },
       { status: 500 }

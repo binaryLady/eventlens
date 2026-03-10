@@ -1,4 +1,3 @@
-// EventLens — @TheTechMargin 2026
 import { config } from "./config";
 
 interface GeminiPart {
@@ -52,16 +51,7 @@ async function callGemini(parts: GeminiPart[]): Promise<string> {
   return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
 
-/**
- * Phase 1: Analyze the uploaded selfie and produce a structured description
- * optimized for matching against event photo people descriptions.
- *
- * Key improvements:
- *   - Output structured attributes that align with how apps-script indexes photos
- *   - Focus on PERSISTENT features (face shape, hair, skin tone, glasses)
- *     over transient ones (expression, pose)
- *   - Produce both specific terms and broader category terms for flexible matching
- */
+// @TheTechMargin 2026
 export async function describePersonForMatching(
   imageBase64: string,
   mimeType: string,
@@ -101,17 +91,7 @@ If no person is clearly visible, respond with exactly: NO_PERSON_DETECTED`;
   ]);
 }
 
-/**
- * Phase 2: Visual face matching — compare the reference selfie against
- * a batch of event photo thumbnails.
- *
- * Key improvements over v1:
- *   - Structured output format with explicit face-feature comparison
- *   - Focus on facial geometry (face shape, eye spacing, nose, jawline)
- *   - De-emphasize clothing since it changes between photos
- *   - Require reasoning before confidence score
- *   - Tighter confidence calibration guidance
- */
+// @TheTechMargin 2026
 export async function verifyFaceMatches(
   uploadedImageBase64: string,
   uploadedMimeType: string,
@@ -194,70 +174,7 @@ Only include photos where confidence >= 35. If no matches, return [].
           reason: m.reason || "Visual match",
         }));
     }
-  } catch {
-    console.error("Failed to parse Gemini face match response:", response);
-  }
+  } catch {}
 
   return [];
-}
-
-// ── Photo indexing (replaces Apps Script analyzeImage_) ───────────────────
-
-export interface PhotoAnalysis {
-  visible_text: string;
-  people_descriptions: string;
-  scene_description: string;
-  face_count: number;
-}
-
-/**
- * Analyze an event photo with Gemini — produces the same structured output
- * that the Google Apps Script used to write to the Sheet.
- *
- * This is the in-app replacement for scripts/apps-script.gs analyzeImage_().
- */
-export async function analyzeEventPhoto(
-  imageBase64: string,
-  mimeType: string,
-): Promise<PhotoAnalysis> {
-  const prompt = `Analyze this event photo. Return ONLY valid JSON with these fields:
-{
-  "visible_text": "ALL text visible in the image - banners, signs, screens, t-shirts, lanyards, stickers, name tags. Include everything, even partial text. If no text, return empty string.",
-  "people_descriptions": "For EACH person visible, provide a structured description using this format separated by semicolons: [gender], [skin tone], [hair color] [hair length] [hair style], [facial hair or clean-shaven], [glasses/no glasses], [age range], [build], [clothing color and type], [accessories], [any distinctive features]. Be SPECIFIC with colors (say navy blazer not dark jacket). Example: male, medium skin, short black hair, beard, glasses, 30s, medium build, blue polo shirt, lanyard with badge; female, light skin, long blonde hair, no glasses, 20s, slim, red flannel shirt, no accessories",
-  "scene_description": "Brief description of what is happening - presentation, networking, coding, panel, etc. Include notable objects like laptops, microphones, whiteboards.",
-  "face_count": number_of_faces_visible
-}
-Be thorough with visible_text and people_descriptions - both are used for search and face matching. Return ONLY the JSON, no markdown formatting.`;
-
-  const response = await callGemini([
-    {
-      inline_data: {
-        mime_type: mimeType,
-        data: imageBase64,
-      },
-    },
-    { text: prompt },
-  ]);
-
-  // Clean up Gemini response (same as apps-script.gs cleanup)
-  const text = response
-    .replace(/```json\n?/g, "")
-    .replace(/```\n?/g, "")
-    .trim()
-    .replace(/[\u201C\u201D]/g, '"')
-    .replace(/[\u2018\u2019]/g, "'");
-
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error("No JSON object found in Gemini response");
-  }
-
-  const parsed = JSON.parse(jsonMatch[0]);
-
-  return {
-    visible_text: String(parsed.visible_text || ""),
-    people_descriptions: String(parsed.people_descriptions || ""),
-    scene_description: String(parsed.scene_description || ""),
-    face_count: parseInt(String(parsed.face_count || "0"), 10) || 0,
-  };
 }

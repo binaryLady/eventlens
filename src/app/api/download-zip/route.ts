@@ -9,14 +9,7 @@ interface FileEntry {
   filename?: string;
 }
 
-/**
- * POST /api/download-zip
- * Accepts an array of Google Drive file IDs, fetches full-res images,
- * packages them into a ZIP, and returns the binary blob.
- *
- * Body: { files: Array<{ fileId: string; filename?: string }> }
- * Returns: application/zip binary
- */
+// @TheTechMargin 2026
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -112,8 +105,7 @@ export async function POST(request: NextRequest) {
         "Content-Length": String(zipArrayBuffer.byteLength),
       },
     });
-  } catch (error) {
-    console.error("ZIP download error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Failed to create ZIP" },
       { status: 500 },

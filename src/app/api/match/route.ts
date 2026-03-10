@@ -10,14 +10,10 @@ export const maxDuration = 60;
  * POST /api/match
  * Accepts an uploaded photo and finds matching people across all event photos.
  *
- * Strategy (revised):
- *   1. Describe the person via Gemini (shared step)
- *   2. Run BOTH text and visual matching in parallel (not gated)
- *   3. Merge results — boost confidence when both tiers agree
- *
  * Body: { image: string (base64), mimeType: string }
  * Returns: { matches: MatchResult[], description: string, tier: "text" | "visual" | "both" }
  */
+// @TheTechMargin 2026
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -80,7 +76,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ matches: merged, description, tier });
   } catch (error) {
-    console.error("Match error:", error);
     return NextResponse.json(
       {
         error:
@@ -93,13 +88,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// ── Tier 1 helpers ────────────────────────────────────────────────────────
-
-/**
- * Parse a description into individual attribute tokens.
- * Splits on commas/semicolons/newlines, then further splits multi-word
- * terms into individual words for flexible matching.
- */
 function parseAttributeTerms(description: string): string[] {
   const phrases = description
     .split(/[,;\n]+/)
@@ -124,22 +112,12 @@ function parseAttributeTerms(description: string): string[] {
   return [...fullPhrases, ...Array.from(words)];
 }
 
-/** Common words that don't help distinguish people */
 const STOP_WORDS = new Set([
   "the", "and", "with", "has", "are", "was", "his", "her", "its",
   "wearing", "appears", "looking", "visible", "seen", "about",
   "approximately", "around", "very", "slightly", "somewhat",
 ]);
 
-/**
- * Score every photo against the attribute terms from the selfie description.
- *
- * Improvements over v1:
- *   - Word-boundary matching to prevent "blue" matching "blueberry"
- *   - Separate scoring for full-phrase matches (high value) vs word matches (lower)
- *   - Bonus for face count proximity (1-2 faces = likely a portrait)
- *   - Higher threshold (40) to reduce false positives
- */
 function scoreByText(
   photos: PhotoRecord[],
   terms: string[],
@@ -193,10 +171,6 @@ function scoreByText(
   return results;
 }
 
-/**
- * Check if `needle` appears in `haystack` respecting word boundaries.
- * Prevents "blue" matching inside "blueberry" or "glasses" inside "sunglasses".
- */
 function matchesWithBoundary(haystack: string, needle: string): boolean {
   // For multi-word phrases, check if all words appear (order-independent)
   if (needle.includes(" ")) {
@@ -215,7 +189,6 @@ function matchesWithBoundary(haystack: string, needle: string): boolean {
   }
 }
 
-/** Deduplicate matched terms (a word may duplicate its phrase) */
 function dedup(arr: string[]): string[] {
   const seen = new Set<string>();
   return arr.filter((item) => {
@@ -225,15 +198,9 @@ function dedup(arr: string[]): string[] {
   });
 }
 
-// ── Tier 2 helpers ────────────────────────────────────────────────────────
-
 const VISUAL_BATCH_SIZE = 5;
 const MAX_VISUAL_CANDIDATES = 50; // Increased from 30 — cast wider net
 
-/**
- * Run visual face matching against photos with detected faces.
- * Processes in batches, exits early if 5+ high-confidence matches found.
- */
 async function runVisualMatching(
   uploadedImageBase64: string,
   uploadedMimeType: string,
@@ -296,9 +263,6 @@ async function runVisualMatching(
   return allMatches;
 }
 
-/**
- * Fetch a Drive image at w800 for face matching (up from w300).
- */
 async function fetchDriveThumbnail(
   fileId: string,
   apiKey: string,
@@ -343,18 +307,7 @@ async function fetchDriveImageFull(
   }
 }
 
-// ── Merge / dedup ─────────────────────────────────────────────────────────
 
-/**
- * Merge Tier 1 and Tier 2 results with confidence boosting.
- *
- * When both tiers find the same photo:
- *   - Take the higher confidence as the base
- *   - Add a 15-point boost (capped at 99) for cross-validation
- *   - Combine reasons
- *
- * This rewards photos that pass both text and visual checks.
- */
 function mergeResults(
   textMatches: MatchResult[],
   visualMatches: MatchResult[],

@@ -1,11 +1,13 @@
 import { PhotoRecord } from "./types";
 import { config } from "./config";
-import { createAnonClient, PhotoRow } from "./supabase";
 
 export function extractDriveFileId(driveUrl: string): string {
+  // https://drive.google.com/file/d/{ID}/view
+  // https://drive.google.com/file/d/{ID}/view?usp=sharing
   const fileMatch = driveUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
   if (fileMatch) return fileMatch[1];
 
+  // https://drive.google.com/open?id={ID}
   const openMatch = driveUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   if (openMatch) return openMatch[1];
 
@@ -13,45 +15,127 @@ export function extractDriveFileId(driveUrl: string): string {
 }
 
 /**
- * Fetch completed photo records from Supabase.
+ * Fetch photo metadata from a public Google Sheet.
+ * Uses the Google Visualization API (gviz/tq) which works when the sheet
+ * is shared as "Anyone with the link" — no API key needed.
  */
+// @TheTechMargin 2026
 export async function fetchPhotos(): Promise<PhotoRecord[]> {
-  try {
-    const supabase = createAnonClient();
+  const { sheetId } = config;
 
-    const { data, error } = await supabase
-      .from("photos")
-      .select("*")
-      .eq("status", "completed")
-      .order("processed_at", { ascending: false });
-
-    if (error) {
-      console.error("Supabase fetch error:", error);
-      return [];
-    }
-
-    return (data || []).map((row: PhotoRow) => ({
-      id: row.id,
-      filename: row.filename,
-      driveUrl: row.drive_url,
-      driveFileId: row.drive_file_id,
-      folder: row.folder,
-      visibleText: row.visible_text,
-      peopleDescriptions: row.people_descriptions,
-      sceneDescription: row.scene_description,
-      faceCount: row.face_count,
-      processedAt: row.processed_at,
-      thumbnailUrl: row.drive_file_id
-        ? `https://lh3.googleusercontent.com/d/${row.drive_file_id}=w400`
-        : "",
-      downloadUrl: row.drive_file_id
-        ? `https://drive.google.com/uc?export=download&id=${row.drive_file_id}`
-        : "",
-    }));
-  } catch (error) {
-    console.error("Supabase fetch failed:", error);
+  if (!sheetId) {
     return [];
   }
+
+  // Google Visualization API — works with "Anyone with the link" sharing
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+
+  const res = await fetch(url, {
+    next: { revalidate: 30 },
+    headers: {
+      // Avoid Google returning an HTML sign-in page
+      "X-DataSource-Auth": "true",
+    },
+  });
+
+  if (!res.ok) {
+    return [];
+  }
+
+  const text = await res.text();
+
+  // Google returns two possible formats depending on context:
+  // 1. JSONP: google.visualization.Query.setResponse({...})
+  // 2. Anti-XSSI prefix: )]}'  followed by raw JSON on next line
+  let jsonStr: string | null = null;
+
+  // Try JSONP format first
+  const jsonpMatch = text.match(
+    /google\.visualization\.Query\.setResponse\(({[\s\S]*})\)/,
+  );
+  if (jsonpMatch) {
+    jsonStr = jsonpMatch[1];
+  }
+
+  // Try anti-XSSI prefix format: )]}'  or )]}' followed by JSON
+  if (!jsonStr) {
+    const xssiMatch = text.match(/^\)\]\}'\s*\n?([\s\S]+)/);
+    if (xssiMatch) {
+      jsonStr = xssiMatch[1].trim();
+    }
+  }
+
+  // Fallback: try to find any JSON object in the response
+  if (!jsonStr) {
+    const braceStart = text.indexOf("{");
+    if (braceStart !== -1) {
+      jsonStr = text.slice(braceStart);
+    }
+  }
+
+  if (!jsonStr) {
+    return [];
+  }
+
+  let data: {
+    table?: {
+      rows?: Array<{
+        c: Array<{ v?: string | number | null } | null>;
+      }>;
+    };
+  };
+
+  try {
+    data = JSON.parse(jsonStr);
+  } catch {
+    return [];
+  }
+
+  const rows = data.table?.rows || [];
+
+  const photos: PhotoRecord[] = rows
+    .map((row, index) => {
+      const cells = row.c || [];
+      const filename = String(cells[0]?.v ?? "");
+      const driveUrl = String(cells[1]?.v ?? "");
+      const folder = String(cells[2]?.v ?? "");
+      const visibleText = String(cells[3]?.v ?? "");
+      const peopleDescriptions = String(cells[4]?.v ?? "");
+      const sceneDescription = String(cells[5]?.v ?? "");
+      const faceCount = parseInt(String(cells[6]?.v ?? "0"), 10) || 0;
+      const processedAt = String(cells[7]?.v ?? "");
+
+      if (!filename) return null;
+
+      const driveFileId = extractDriveFileId(driveUrl);
+
+      return {
+        id: String(index + 2),
+        filename,
+        driveUrl,
+        driveFileId,
+        folder,
+        visibleText,
+        peopleDescriptions,
+        sceneDescription,
+        faceCount,
+        processedAt,
+        thumbnailUrl: driveFileId
+          ? `https://lh3.googleusercontent.com/d/${driveFileId}=w400`
+          : "",
+        downloadUrl: driveFileId
+          ? `https://drive.google.com/uc?export=download&id=${driveFileId}`
+          : "",
+      };
+    })
+    .filter((p): p is PhotoRecord => p !== null);
+
+  photos.sort(
+    (a, b) =>
+      new Date(b.processedAt).getTime() - new Date(a.processedAt).getTime(),
+  );
+
+  return photos;
 }
 
 /** Client-side text search — runs in the browser, no server round-trip */
@@ -130,6 +214,8 @@ export function getFolders(photos: PhotoRecord[]): string[] {
 
 /**
  * Fetch all subfolder names from the Google Drive parent folder.
+ * Uses Drive API v3 — requires the folder to be publicly shared and a valid API key.
+ * Falls back to photo-derived folders if the Drive folder ID or API key is missing.
  */
 export async function fetchDriveFolders(): Promise<string[]> {
   const { driveFolderId, googleApiKey } = config;
@@ -146,16 +232,12 @@ export async function fetchDriveFolders(): Promise<string[]> {
 
     const res = await fetch(url, { next: { revalidate: 300 } });
     if (!res.ok) {
-      console.error(
-        `Drive folders fetch error: ${res.status} ${res.statusText}`,
-      );
-      return [];
+
     }
 
     const data: { files?: Array<{ name: string }> } = await res.json();
     return (data.files || []).map((f) => f.name).sort();
-  } catch (error) {
-    console.error("Failed to fetch Drive folders:", error);
+  } catch {
     return [];
   }
 }

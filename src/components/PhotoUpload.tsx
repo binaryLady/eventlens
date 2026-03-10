@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 
 interface PhotoUploadProps {
-  onMatchResultsAction: (results: {
+  onMatchResults: (results: {
     matches: Array<{
       photo: {
         id: string;
@@ -24,13 +24,13 @@ interface PhotoUploadProps {
     }>;
     description: string;
   }) => void;
-  onClearAction: () => void;
+  onClear: () => void;
   isActive: boolean;
 }
 
 export default function PhotoUpload({
-  onMatchResultsAction,
-  onClearAction,
+  onMatchResults,
+  onClear,
   isActive,
 }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false);
@@ -99,7 +99,7 @@ export default function PhotoUpload({
           return;
         }
 
-        onMatchResultsAction(data);
+        onMatchResults(data);
       } catch {
         clearDeepScanTimer();
         setError("NETWORK ERROR — RETRY");
@@ -122,7 +122,7 @@ export default function PhotoUpload({
     setPreview(null);
     setError(null);
     setUploading(false);
-    onClearAction();
+    onClear();
   };
 
   return (
@@ -152,7 +152,7 @@ export default function PhotoUpload({
               <line x1="2" y1="12" x2="6" y2="12" />
               <line x1="18" y1="12" x2="22" y2="12" />
             </svg>
-            FACIAL SCAN
+            Upload Photo to Search for Matches
           </button>
 
           {/* Camera capture (mobile) */}
