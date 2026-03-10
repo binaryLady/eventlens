@@ -19,6 +19,32 @@ export async function GET(request: NextRequest) {
       supabase.from("photos").select("*", { count: "exact", head: true }),
     ]);
 
+    // Count photos with description embeddings
+    const { count: withEmbeddings } = await supabase
+      .from("photos")
+      .select("*", { count: "exact", head: true })
+      .not("description_embedding", "is", null);
+
+    // Count face embeddings (distinct files)
+    const { data: faceData } = await supabase
+      .from("face_embeddings")
+      .select("drive_file_id")
+      .limit(10000);
+    const faceEmbeddings = new Set(faceData?.map((r) => r.drive_file_id)).size;
+
+    // Folder breakdown
+    const { data: folderData } = await supabase
+      .from("photos")
+      .select("folder");
+    const folderCounts: Record<string, number> = {};
+    for (const row of folderData || []) {
+      const f = row.folder || "";
+      folderCounts[f] = (folderCounts[f] || 0) + 1;
+    }
+    const folders = Object.entries(folderCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+
     const { data: lastProcessed } = await supabase
       .from("photos")
       .select("processed_at")
@@ -39,6 +65,9 @@ export async function GET(request: NextRequest) {
       pending: pending.count || 0,
       processing: processing.count || 0,
       errors: errors.count || 0,
+      withEmbeddings: withEmbeddings || 0,
+      faceEmbeddings,
+      folders,
       lastProcessed: lastProcessed?.[0]?.processed_at || null,
       recentErrors: recentErrors?.map((e) => ({ filename: e.filename, error: e.error_message })) || [],
     });
