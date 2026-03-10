@@ -182,6 +182,7 @@ function PhotoGrid() {
   const [matchResults, setMatchResults] = useState<MatchResult[] | null>(null);
   const [matchDescription, setMatchDescription] = useState("");
   const [, setMatchTier] = useState<MatchTier>("text");
+  const [activeType, setActiveType] = useState<"all" | "photo" | "video">("all");
   const [shuffledPhotos, setShuffledPhotos] = useState<PhotoRecord[]>([]);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -336,6 +337,7 @@ function PhotoGrid() {
   const handleClearMatch = useCallback(() => {
     setMatchResults(null);
     setMatchDescription("");
+    setActiveType("all");
   }, []);
 
   // ─── Multi-select handlers (no filteredPhotos dependency) ───
@@ -389,30 +391,37 @@ function PhotoGrid() {
     return sorted;
   }, [sortOrder]);
 
+  const isVideoFile = useCallback((p: PhotoRecord) =>
+    p.mimeType?.startsWith("video/") || /\.(mp4|mov|webm|avi)$/i.test(p.filename), []);
+
+  const applyTypeFilter = useCallback((photos: PhotoRecord[]) => {
+    if (activeType === "video") return photos.filter(isVideoFile);
+    if (activeType === "photo") return photos.filter((p) => !isVideoFile(p));
+    return photos;
+  }, [activeType, isVideoFile]);
+
   const filteredPhotos = useMemo(() => {
+    let result: PhotoRecord[];
     if (matchResults !== null) {
       const matchPhotos = matchResults.map((m) => m.photo);
-      if (debouncedQuery) {
-        return searchPhotos(debouncedQuery, matchPhotos);
-      }
-      return matchPhotos;
-    }
-    if (debouncedQuery) {
-      // Prefer server-side semantic results if available
+      result = debouncedQuery ? searchPhotos(debouncedQuery, matchPhotos) : matchPhotos;
+    } else if (debouncedQuery) {
       if (serverResults && serverResults.length > 0) {
-        return serverResults;
+        result = serverResults;
+      } else {
+        const base = activeFolder
+          ? allPhotos.filter((p) => p.folder === activeFolder)
+          : allPhotos;
+        result = applySorting(searchPhotos(debouncedQuery, base));
       }
-      const base = activeFolder
-        ? allPhotos.filter((p) => p.folder === activeFolder)
-        : allPhotos;
-      return applySorting(searchPhotos(debouncedQuery, base));
-    }
-    if (activeFolder) {
+    } else if (activeFolder) {
       const base = sortOrder === "shuffle" ? shuffledPhotos : allPhotos;
-      return applySorting(base.filter((p) => p.folder === activeFolder));
+      result = applySorting(base.filter((p) => p.folder === activeFolder));
+    } else {
+      result = sortOrder === "shuffle" ? shuffledPhotos : applySorting(allPhotos);
     }
-    return sortOrder === "shuffle" ? shuffledPhotos : applySorting(allPhotos);
-  }, [allPhotos, shuffledPhotos, activeFolder, debouncedQuery, matchResults, serverResults, applySorting, sortOrder]);
+    return applyTypeFilter(result);
+  }, [allPhotos, shuffledPhotos, activeFolder, debouncedQuery, matchResults, serverResults, applySorting, sortOrder, applyTypeFilter]);
 
   const folderPreviews = useMemo(() => {
     const previews: Record<string, PhotoRecord[]> = {};
@@ -549,15 +558,15 @@ function PhotoGrid() {
                 <h1 className="font-heading text-xl font-bold tracking-wider text-[var(--el-green)] uppercase glow-text sm:text-3xl md:text-5xl lg:text-6xl animate-flicker">
                   {config.eventName}
                 </h1>
-                {isRecentlyUpdated(lastUpdated) && (
+         
+              </div>
+              <p className="mt-1 md:mt-2 text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-[var(--el-green-d9)] font-mono">
+                     {isRecentlyUpdated(lastUpdated) && (
                   <span className="inline-flex items-center gap-1 md:gap-1.5 border border-[var(--el-green-99)] px-1.5 md:px-2 py-0.5 text-[8px] md:text-[10px] font-mono uppercase tracking-wider text-[var(--el-green)]">
                     <span className="h-1 w-1 md:h-1.5 md:w-1.5 bg-[var(--el-green)] animate-pulse" />
                     Last updated: {timeAgo(lastUpdated)}
                   </span>
                 )}
-              </div>
-              <p className="mt-1 md:mt-2 text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-[var(--el-green-d9)] font-mono">
-                {config.eventTagline}
               </p>
             </div>
 
@@ -644,11 +653,23 @@ function PhotoGrid() {
             </div>
           )}
 
-          {/* Row 2: sort + select */}
+          {/* Row 2: type filter + sort + select */}
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-d9)]">
-              {matchResults !== null && debouncedQuery ? "FACE + TEXT" : debouncedQuery && searchSource === "server" ? "SEMANTIC SEARCH" : debouncedQuery ? "TEXT SEARCH" : ""}
-            </span>
+            <div className="flex items-center gap-1">
+              {(["all", "photo", "video"] as const).map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setActiveType(type)}
+                  className={`px-2 py-0.5 text-[9px] font-mono uppercase tracking-wider transition-all ${
+                    activeType === type
+                      ? "border border-[var(--el-magenta)] text-[var(--el-magenta)] bg-[var(--el-magenta-28)]"
+                      : "border border-[var(--el-green-44)] text-[var(--el-green-77)] hover:border-[var(--el-green-99)] hover:text-[var(--el-green-99)]"
+                  }`}
+                >
+                  {type === "all" ? "ALL" : type === "photo" ? "PHOTO" : "VIDEO"}
+                </button>
+              ))}
+            </div>
             <div className="flex items-center gap-1.5">
               <SortDropdown sortOrder={sortOrder} onChange={setSortOrder} />
               <button
@@ -824,7 +845,7 @@ function PhotoGrid() {
             {/* Photo grid — show hero subset on landing */}
             {heroPhotos.length > 0 && (
               <section>
-                <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
+                <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-4">
                   <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">
                     &#x2500;&#x2500; {sortOrder === "shuffle" ? "FEATURED" : sortOrder === "newest" ? "NEWEST" : sortOrder === "oldest" ? "OLDEST" : sortOrder === "name-asc" ? "NAME A\u2192Z" : "NAME Z\u2192A"}
                   </span>
