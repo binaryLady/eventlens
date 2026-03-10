@@ -366,7 +366,7 @@ function PhotoGrid() {
     }
     return false;
   });
-  const isSearchActive = debouncedQuery !== "" || activeFolder !== "" || matchResults !== null || browseAll;
+  const isSearchActive = debouncedQuery !== "" || activeFolder !== "" || matchResults !== null || browseAll || activeType !== "all";
 
   const applySorting = useCallback((photos: PhotoRecord[]): PhotoRecord[] => {
     if (sortOrder === "shuffle") return photos;
