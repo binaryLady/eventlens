@@ -249,10 +249,10 @@ class GeminiClient:
             "face_count": int(parsed.get("face_count", 0)) if isinstance(parsed.get("face_count"), (int, float)) else 0,
         }
 
-    def embed_texts_batch(self, texts: list[str], model: str = "text-embedding-004") -> list[list[float]]:
+    def embed_texts_batch(self, texts: list[str], model: str = "gemini-embedding-001") -> list[list[float]]:
         url = GEMINI_BATCH_EMBED.format(model=model) + f"?key={self.api_key}"
         reqs = [
-            {"model": f"models/{model}", "content": {"parts": [{"text": t}]}}
+            {"model": f"models/{model}", "content": {"parts": [{"text": t}]}, "outputDimensionality": 768}
             for t in texts
         ]
         # Gemini batch embed supports up to 100 per request

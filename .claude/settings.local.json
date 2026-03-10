@@ -33,7 +33,15 @@
       "Bash(scripts/.venv/bin/python scripts/process_photos.py --only-describe --batch-size 3 --folder HARD_MODE_DAY_3 --verbose)",
       "Bash(scripts/.venv/bin/python -c \":*)",
       "Bash(scripts/.venv/bin/pip install psycopg2-binary)",
-      "Bash(scripts/.venv/bin/python scripts/process_photos.py --only-describe --batch-size 2 --folder \"Hard_Mode_26_Day_3_\" --verbose)"
+      "Bash(scripts/.venv/bin/python scripts/process_photos.py --only-describe --batch-size 2 --folder \"Hard_Mode_26_Day_3_\" --verbose)",
+      "Bash(scripts/.venv/bin/python scripts/process_photos.py --only-embeddings --verbose)",
+      "Bash(source /Users/soniacookbroen/Development/eventlens/.env.local)",
+      "Bash(curl -s \"https://generativelanguage.googleapis.com/v1beta/models?key=$GEMINI_API_KEY\")",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); [print\\(m[''name'']\\) for m in data.get\\(''models'',[]\\) if ''embed'' in m[''name''].lower\\(\\)]\")",
+      "Bash(curl -s \"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001?key=$GEMINI_API_KEY\")",
+      "Bash(python3 -c \"import json,sys; m=json.load\\(sys.stdin\\); print\\(json.dumps\\(m, indent=2\\)\\)\")",
+      "Bash(curl -s \"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=$GEMINI_API_KEY\" -H \"Content-Type: application/json\" -d '{\"\"model\"\":\"\"models/gemini-embedding-001\"\",\"\"content\"\":{\"\"parts\"\":[{\"\"text\"\":\"\"test\"\"}]}}')",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); e=d.get\\(''embedding'',{}\\); print\\(f''Dims: {len\\(e.get\\(\"\"values\"\",[]\\)\\)}''\\)\")"
     ]
   }
 }

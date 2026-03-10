@@ -48,12 +48,20 @@ export default function Lightbox({
     }
   }, [hasNext, currentIndex, photos, onNavigate]);
 
+  // Track whether lightbox just opened (vs navigating between photos)
+  const prevPhotoRef = useRef<PhotoRecord | null>(null);
+
   useEffect(() => {
     if (!photo) return;
 
     setImageLoaded(false);
     setSwipeOffset(0);
-    setShowMeta(false);
+
+    // Only collapse metadata when lightbox first opens, not on arrow navigation
+    if (prevPhotoRef.current === null) {
+      setShowMeta(false);
+    }
+    prevPhotoRef.current = photo;
 
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -111,7 +119,11 @@ export default function Lightbox({
     setSwipeOffset(0);
   };
 
-  if (!photo) return null;
+  if (!photo) {
+    // Reset ref so next open treats as fresh
+    prevPhotoRef.current = null;
+    return null;
+  }
 
   const isVideo = photo.mimeType?.startsWith("video/") || /\.(mp4|mov|webm|avi)$/i.test(photo.filename);
 
