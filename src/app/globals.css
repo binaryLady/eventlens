@@ -60,6 +60,7 @@ body {
   color: #e0e0e0;
   background: var(--el-bg);
   font-family: var(--font-mono), "JetBrains Mono", "Fira Code", monospace;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='28' viewBox='0 0 24 28'%3E%3Cpath d='M2 1L2 23L7 18L12 26L16 24L11 16L18 16Z' fill='%23ff00ff' stroke='%23000' stroke-width='1.5' stroke-linejoin='round'/%3E%3Cpath d='M4 5L4 19L7.5 15.5' fill='none' stroke='%23ff77ff' stroke-width='0.8' opacity='0.6'/%3E%3Cline x1='6' y1='3' x2='6' y2='4' stroke='%23ff00ff' stroke-width='0.5' opacity='0.4'/%3E%3Cline x1='1' y1='8' x2='2' y2='8' stroke='%23ff00ff' stroke-width='0.5' opacity='0.3'/%3E%3C/svg%3E") 2 1, auto;
 }
 
 /* ═══════════════════════════════════════════

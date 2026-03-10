@@ -673,7 +673,11 @@ function PhotoGrid() {
             <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">
               {matchResults !== null ? (
                 <>
-                  {matchResults.length} MATCH{matchResults.length !== 1 ? "ES" : ""}
+                  {debouncedQuery ? (
+                    <>{filteredPhotos.length} OF {matchResults.length} MATCH{matchResults.length !== 1 ? "ES" : ""} FOR &quot;{debouncedQuery.toUpperCase()}&quot;</>
+                  ) : (
+                    <>{matchResults.length} MATCH{matchResults.length !== 1 ? "ES" : ""}</>
+                  )}
                   {matchResults.length > 0 && (() => {
                     const tiers = new Set(matchResults.map((m) => m.tier));
                     const parts: string[] = [];

@@ -132,7 +132,7 @@ export default function Lightbox({
     : "";
 
   const videoStreamUrl = photo.driveFileId
-    ? `https://drive.google.com/uc?export=download&id=${photo.driveFileId}`
+    ? `/api/video?id=${photo.driveFileId}`
     : "";
 
   const hasMeta = !!(photo.visibleText || photo.peopleDescriptions || photo.sceneDescription || photo.faceCount > 0);

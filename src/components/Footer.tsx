@@ -13,7 +13,7 @@ export default function Footer() {
             <span className="text-gray-400">made with </span>
             <span className="text-red-500">❤️</span>
             <span className="text-gray-400"> by </span>
-            <span className="text-[var(--el-green)] font-semibold">thetechmargin</span>
+            <span className="text-white text-base" style={{ fontFamily: "var(--font-pacifico)" }}>thetechmargin</span>
           </span>
         </a>
       </div>
