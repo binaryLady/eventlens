@@ -10,8 +10,6 @@ export function createServerClient(): SupabaseClient {
   return createClient(url, key, {
     auth: { persistSession: false },
     global: {
-      // Opt out of Next.js fetch cache — Supabase responses can exceed
-      // the 2 MB limit and should not be cached by the data cache.
       fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
     },
   });
@@ -53,10 +51,6 @@ export async function matchFacesByEmbedding(
   return (data as FaceMatch[]) || [];
 }
 
-/**
- * Append appearance attributes to a photo's people_descriptions.
- * Deduplicates against existing terms. No PII — only physical attributes.
- */
 export async function enrichPhotoDescriptions(
   driveFileId: string,
   newTerms: string,
@@ -73,7 +67,6 @@ export async function enrichPhotoDescriptions(
     const existing = (data?.people_descriptions as string) || "";
     const existingLower = existing.toLowerCase();
 
-    // Only append terms not already present
     const additions = newTerms
       .split(/[,;]+/)
       .map((t) => t.trim())
@@ -89,9 +82,7 @@ export async function enrichPhotoDescriptions(
       .from("photos")
       .update({ people_descriptions: merged })
       .eq("drive_file_id", driveFileId);
-  } catch {
-    // Non-critical — don't break match flow
-  }
+  } catch {}
 }
 
 export interface SemanticMatch {
@@ -122,9 +113,6 @@ export async function searchPhotosSemantic(
   return (data as SemanticMatch[]) || [];
 }
 
-/**
- * Save a match session for analytics. Fire-and-forget — never blocks the response.
- */
 export async function saveMatchSession(params: {
   tier: string;
   matchCount: number;
@@ -141,15 +129,9 @@ export async function saveMatchSession(params: {
       query_embedding: params.queryEmbedding,
       matched_photo_ids: params.matchedPhotoIds,
     });
-  } catch {
-    // Non-critical — don't break match flow
-  }
+  } catch {}
 }
 
-/**
- * Fetch photo rows by drive_file_ids. Used by vector match to avoid
- * fetching the entire photo catalog.
- */
 export async function getPhotosByDriveFileIds(
   driveFileIds: string[],
 ): Promise<PhotoRow[]> {

@@ -54,7 +54,8 @@
       "Bash(curl -s \"http://localhost:3000/api/photos\" -H \"Cookie: auth=true\")",
       "Bash(curl -s -X POST \"http://localhost:3000/api/auth/login\" -H \"Content-Type: application/json\" -d \"{\"\"password\"\": \"\"$APP_PASSWORD\"\"}\" -c -)",
       "Bash(curl -s -X POST \"http://localhost:3000/api/auth/login\" -H \"Content-Type: application/json\" -d '{\"\"password\"\":\"\"hardMode26\"\"}' -v)",
-      "Bash(xargs ls:*)"
+      "Bash(xargs ls:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://face-api-production-6b2e.up.railway.app/embed)"
     ]
   }
 }

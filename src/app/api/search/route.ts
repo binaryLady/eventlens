@@ -1,13 +1,4 @@
 // @TheTechMargin 2026
-/**
- * TEXT SEARCH API
- * 
- * Supports two search modes:
- * 1. TEXT ONLY: Full-text + trigram + substring search on descriptions, filenames, etc.
- * 2. TEXT + IMAGE (SEMANTIC): Embeds query as vector and searches description embeddings + text
- * 
- * Query: /api/search?q={text}&folder={optional}
- */
 import { NextRequest, NextResponse } from "next/server";
 import { rowToPhoto } from "@/lib/photos";
 import { PhotoRow, searchPhotosSemantic } from "@/lib/supabase";
@@ -56,7 +47,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Run semantic vector search and text/trigram search in parallel
     const [semanticResults, textResults] = await Promise.all([
       embedQuery(query).then((embedding) =>
         embedding ? searchPhotosSemantic(embedding, 0.35, 30) : []
@@ -72,23 +62,20 @@ export async function GET(request: NextRequest) {
       })(),
     ]);
 
-    // Merge: semantic matches get a boost, deduplicate by id
     const byId = new Map<string, { photo: ReturnType<typeof rowToPhoto>; score: number }>();
 
-    // Add text/trigram results
     for (const row of textResults) {
       const photo = rowToPhoto(row);
       if (folder && photo.folder !== folder) continue;
       byId.set(photo.id, { photo, score: (row as PhotoRow & { rank?: number }).rank ?? 1 });
     }
 
-    // Merge semantic results (higher priority for natural language queries)
     for (const match of semanticResults) {
       if (folder && match.folder !== folder) continue;
       const existing = byId.get(match.id);
-      const semanticScore = match.similarity * 20; // Scale to comparable range
+      const semanticScore = match.similarity * 20;
       if (existing) {
-        existing.score += semanticScore; // Boost combined matches
+        existing.score += semanticScore;
       } else {
         byId.set(match.id, {
           photo: rowToPhoto({

@@ -48,7 +48,6 @@ export default function Lightbox({
     }
   }, [hasNext, currentIndex, photos, onNavigate]);
 
-  // Track whether lightbox just opened (vs navigating between photos)
   const prevPhotoRef = useRef<PhotoRecord | null>(null);
 
   useEffect(() => {
@@ -57,7 +56,6 @@ export default function Lightbox({
     setImageLoaded(false);
     setSwipeOffset(0);
 
-    // Only collapse metadata when lightbox first opens, not on arrow navigation
     if (prevPhotoRef.current === null) {
       setShowMeta(false);
     }
@@ -93,7 +91,6 @@ export default function Lightbox({
     if (touchStartX === null || touchStartY === null) return;
     const dx = e.touches[0].clientX - touchStartX;
     const dy = e.touches[0].clientY - touchStartY;
-    // Only track horizontal swipes (not vertical scroll)
     if (Math.abs(dx) > Math.abs(dy)) {
       setSwipeOffset(dx);
     }
@@ -104,12 +101,10 @@ export default function Lightbox({
     const dx = e.changedTouches[0].clientX - touchStartX;
     const dy = e.changedTouches[0].clientY - (touchStartY ?? 0);
 
-    // Horizontal swipe for prev/next
     if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
       if (dx > 0) goPrev();
       else goNext();
     }
-    // Downward swipe to close (mobile gesture)
     else if (dy > 100 && Math.abs(dy) > Math.abs(dx)) {
       onClose();
     }
@@ -120,12 +115,10 @@ export default function Lightbox({
   };
 
   if (!photo) {
-    // Reset ref so next open treats as fresh
     prevPhotoRef.current = null;
     return null;
   }
 
-  // Treat .MOV as Live Photos (render as static image); only actual video files get the player
   const isVideo =
     /\.(mp4|webm|avi)$/i.test(photo.filename) ||
     (photo.mimeType?.startsWith("video/") && !/\.mov$/i.test(photo.filename));
@@ -155,7 +148,6 @@ export default function Lightbox({
         <div className="w-full h-full scan-line-bg" />
       </div>
 
-      {/* Top bar — safe area aware */}
       <div className="relative z-[52] flex items-center justify-between px-3 pt-safe-area-max md:px-4">
         {photos.length > 1 && (
           <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-77)]">
@@ -183,7 +175,6 @@ export default function Lightbox({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Prev button — hidden on mobile (use swipe) */}
         {photos.length > 1 && (
           <button
             onClick={goPrev}
@@ -196,7 +187,6 @@ export default function Lightbox({
           </button>
         )}
 
-        {/* Next button — hidden on mobile (use swipe) */}
         {photos.length > 1 && (
           <button
             onClick={goNext}
@@ -251,7 +241,6 @@ export default function Lightbox({
         </div>
       </div>
 
-      {/* Bottom bar — filename + actions, safe area aware */}
       <div className="relative z-[52] border-t border-[var(--el-green-22)] bg-[var(--el-bg)] pb-safe-area-max">
         <div className="flex justify-center pt-1.5 pb-0.5 md:hidden">
           <div className="w-8 h-0.5 rounded-full bg-[var(--el-green-33)]" />
@@ -274,7 +263,6 @@ export default function Lightbox({
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              {/* Info toggle on mobile */}
               {hasMeta && (
                 <button
                   onClick={() => setShowMeta(!showMeta)}
@@ -303,7 +291,6 @@ export default function Lightbox({
             </div>
           </div>
 
-          {/* Mobile folder tag (below filename) */}
           <div className="flex items-center gap-2 mt-1.5 sm:hidden">
             <span className="border border-[var(--el-green-33)] px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-[var(--el-green-99)]">
               {photo.folder}
@@ -315,7 +302,6 @@ export default function Lightbox({
             )}
           </div>
 
-          {/* Expandable metadata — desktop always, mobile toggle */}
           <div className={`overflow-hidden transition-all duration-200 ${showMeta ? "max-h-60 opacity-100 mt-3" : "md:max-h-60 md:opacity-100 md:mt-3 max-h-0 opacity-0"}`}>
             {photo.visibleText && (
               <div className="mb-2">

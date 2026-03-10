@@ -54,7 +54,6 @@ export async function POST(request: NextRequest) {
             const ext = contentType.includes("png") ? "png" : "jpg";
             const data = await res.arrayBuffer();
 
-            // Strip path components to prevent Zip Slip, then apply extension
             const basename = (entry.filename || "").split(/[\\/]/).pop() || "";
             let name = basename
               ? basename.replace(/\.[^.]+$/, `.${ext}`)

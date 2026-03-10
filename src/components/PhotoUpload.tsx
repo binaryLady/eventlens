@@ -47,7 +47,6 @@ export default function PhotoUpload({
     setUploading(true);
     setStatusText("SCANNING...");
 
-    // If response takes > 4s, visual fallback kicked in
     clearDeepScanTimer();
     deepScanTimerRef.current = setTimeout(() => {
       setStatusText("DEEP SCANNING...");

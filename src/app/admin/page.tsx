@@ -179,7 +179,6 @@ export default function AdminPage() {
           PHOTO PIPELINE CONTROL
         </h1>
 
-        {/* Status Dashboard */}
         {status && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             <StatusCard label="TOTAL PHOTOS" value={status.total} />
@@ -193,7 +192,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Progress Bar */}
         {status && status.total > 0 && (
           <div className="mb-6">
             <div className="w-full h-2 bg-[var(--el-green-11)] border border-[var(--el-green-33)]">
@@ -205,7 +203,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Folder Breakdown */}
         {status && status.folders.length > 0 && (
           <div className="mb-6">
             <h2 className="text-xs tracking-wider mb-2 text-[var(--el-green-99)]">FOLDERS</h2>
@@ -222,7 +219,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Pipeline Actions */}
         <div className="mb-8">
           <h2 className="text-sm tracking-wider mb-3 text-[var(--el-green-99)]">PIPELINE</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -271,7 +267,6 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Utility Actions */}
         <div className="mb-8">
           <h2 className="text-sm tracking-wider mb-3 text-[var(--el-green-99)]">UTILITIES</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -297,7 +292,6 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Recent Errors */}
         {status && status.recentErrors.length > 0 && (
           <div className="mb-8">
             <h2 className="text-sm tracking-wider mb-3 text-[var(--el-red)]">
@@ -314,7 +308,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Activity Log */}
         <div>
           <h2 className="text-sm tracking-wider mb-3 text-[var(--el-green-99)]">
             ACTIVITY LOG

@@ -79,9 +79,7 @@ function TerminalLoader() {
   return (
     <div className="min-h-screen bg-[var(--el-bg)] grid-bg flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
-        {/* Terminal window */}
         <div className="border border-[var(--el-green-d9)] bg-[rgba(26,26,26,0.8)] p-6">
-          {/* Terminal header bar */}
           <div className="flex items-center gap-2 border-b border-[var(--el-green-99)] pb-3 mb-4">
             <div className="h-2 w-2 rounded-full bg-[var(--el-green)]" />
             <div className="h-2 w-2 rounded-full bg-[var(--el-green-d9)]" />
@@ -91,7 +89,6 @@ function TerminalLoader() {
             </span>
           </div>
 
-          {/* Boot text */}
           <div className="font-mono text-sm space-y-1">
             {lines.map((line, i) => (
               <div
@@ -110,13 +107,11 @@ function TerminalLoader() {
             )}
           </div>
 
-          {/* Scan line effect */}
           <div className="mt-6 h-1 w-full overflow-hidden bg-[var(--el-green-11)]">
             <div className="h-full w-1/3 bg-gradient-to-r from-transparent via-[var(--el-green)] to-transparent animate-[skeleton-scan_1.5s_linear_infinite]" />
           </div>
         </div>
 
-        {/* Crosshair decoration */}
         <div className="mt-4 flex items-center justify-center gap-2 text-[10px] text-[var(--el-green-99)] uppercase tracking-widest">
           <span>&#x2500;&#x2500;&#x253c;&#x2500;&#x2500;</span>
           <span>LOADING</span>
@@ -136,13 +131,11 @@ function GridSkeleton() {
           className="aspect-[4/3] border border-[var(--el-green-15)] skeleton-terminal"
           style={{ '--delay': `${i * 0.15}s` } as React.CSSProperties}
         >
-          {/* Corner brackets */}
           <div className="relative h-full w-full p-2">
             <div className="absolute top-1 left-1 w-3 h-3 border-t border-l border-[var(--el-green-33)]" />
             <div className="absolute top-1 right-1 w-3 h-3 border-t border-r border-[var(--el-green-33)]" />
             <div className="absolute bottom-1 left-1 w-3 h-3 border-b border-l border-[var(--el-green-33)]" />
             <div className="absolute bottom-1 right-1 w-3 h-3 border-b border-r border-[var(--el-green-33)]" />
-            {/* Center crosshair */}
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-[var(--el-green-22)] text-lg">+</span>
             </div>
@@ -546,10 +539,8 @@ function PhotoGrid() {
 
   return (
     <div className="min-h-screen bg-[var(--el-bg)] grid-bg">
-      {/* Header */}
       <header className="px-3 pt-2 pb-2 md:px-4 md:pt-12 md:pb-8">
         <div className="mx-auto max-w-5xl">
-          {/* Top bar with coordinates */}
           <div className="flex items-center justify-between mb-2 md:mb-4 text-[9px] md:text-[10px] text-[var(--el-green-d9)] uppercase tracking-widest font-mono">
             <span className="hidden sm:inline">SYS://PHOTO_RECON</span>
             <span className="sm:hidden">EVENTLENS</span>
@@ -571,9 +562,7 @@ function PhotoGrid() {
             </div>
           </div>
 
-          {/* Title block */}
           <div className="border border-[var(--el-green-99)] px-3 py-2.5 md:p-8 relative">
-            {/* Corner brackets */}
             <div className="absolute top-0 left-0 w-3 h-3 md:w-4 md:h-4 border-t-2 border-l-2 border-[var(--el-green)] -translate-x-px -translate-y-px" />
             <div className="absolute top-0 right-0 w-3 h-3 md:w-4 md:h-4 border-t-2 border-r-2 border-[var(--el-green)] translate-x-px -translate-y-px" />
             <div className="absolute bottom-0 left-0 w-3 h-3 md:w-4 md:h-4 border-b-2 border-l-2 border-[var(--el-green)] -translate-x-px translate-y-px" />
@@ -596,7 +585,6 @@ function PhotoGrid() {
               </p>
             </div>
 
-            {/* Search */}
             <div className="relative mt-2.5 md:mt-6 max-w-xl mx-auto">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--el-green-d9)] text-sm font-mono">
                 {">_"}
@@ -633,7 +621,6 @@ function PhotoGrid() {
               )}
             </div>
 
-            {/* Filtered-data notice */}
             {(activeFolder || activeType !== "all") && (
               <p className="mt-1.5 text-center text-[10px] font-mono uppercase tracking-wider text-[var(--el-amber)]">
                 {activeFolder && activeType !== "all"
@@ -644,7 +631,6 @@ function PhotoGrid() {
               </p>
             )}
 
-            {/* Photo upload for face matching */}
             <PhotoUpload
               onMatchResults={handleMatchResults}
               onClear={handleClearMatch}
@@ -655,10 +641,8 @@ function PhotoGrid() {
       </header>
 
 
-      {/* Filter bar — always visible when we have photos */}
       {!loading && !error && allPhotos.length > 0 && (
         <div className="mx-auto max-w-5xl px-3 md:px-4 pb-2 md:pb-4 space-y-1.5 md:space-y-2">
-          {/* Desktop: folder tabs row */}
           {folders.length > 0 && (
             <div className="hidden md:block scrollbar-hide overflow-x-auto -mx-4 px-4">
               <div className="flex items-center gap-1.5">
@@ -691,7 +675,6 @@ function PhotoGrid() {
             </div>
           )}
 
-          {/* Filter/sort + select row */}
           <div className="flex items-center justify-between gap-2">
             <FilterSortSheet
               sortOrder={sortOrder}
@@ -704,7 +687,6 @@ function PhotoGrid() {
               onFolderChange={setActiveFolder}
               totalCount={allPhotos.length}
             />
-            {/* Active filter label */}
             {(() => {
               const parts: string[] = [];
               if (activeFolder) parts.push(activeFolder.replace(/_/g, " "));
@@ -749,7 +731,6 @@ function PhotoGrid() {
         </div>
       )}
 
-      {/* Results info */}
       {isSearchActive && (debouncedQuery || matchResults !== null) && (
         <div className="mx-auto max-w-5xl px-3 md:px-4 pb-2 md:pb-3">
           {!loading && !error && (
@@ -795,12 +776,9 @@ function PhotoGrid() {
         </div>
       )}
 
-      {/* Main content */}
       <main className="mx-auto max-w-5xl px-3 pb-16 md:px-4 md:pb-12">
-        {/* Loading state — terminal boot animation for grid */}
         {loading && <GridSkeleton />}
 
-        {/* Error state */}
         {error && (
           <div className="flex flex-col items-center py-20 text-center border border-[#ff000033] bg-[#ff000008] p-8">
             <p className="text-xs font-mono uppercase tracking-wider text-red-500">
@@ -828,7 +806,6 @@ function PhotoGrid() {
           </div>
         )}
 
-        {/* Empty: no photos yet */}
         {!loading && !error && allPhotos.length === 0 && (
           <div className="flex flex-col items-center py-20 text-center border border-[var(--el-green-99)] p-8">
             <div className="text-4xl text-[var(--el-green-d9)] mb-4">+</div>
@@ -838,10 +815,8 @@ function PhotoGrid() {
           </div>
         )}
 
-        {/* Browse landing (no search/filter active) */}
         {!loading && !error && allPhotos.length > 0 && !isSearchActive && (
           <>
-            {/* Folder cards — visual grid for quick browse */}
             {folders.length > 1 && (
               <section className="mb-4 md:mb-8">
                 <div className="flex items-center gap-2 mb-2 md:gap-3 md:mb-4">

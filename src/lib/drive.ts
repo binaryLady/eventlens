@@ -30,7 +30,7 @@ export async function fetchDriveImage(
         return { base64: Buffer.from(buf).toString("base64"), mimeType: ct };
       }
     }
-  } catch { /* fall through to Drive API */ }
+  } catch {}
 
   try {
     const res = await fetch(

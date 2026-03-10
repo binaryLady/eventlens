@@ -19,20 +19,17 @@ export async function GET(request: NextRequest) {
       supabase.from("photos").select("*", { count: "exact", head: true }),
     ]);
 
-    // Count photos with description embeddings
     const { count: withEmbeddings } = await supabase
       .from("photos")
       .select("*", { count: "exact", head: true })
       .not("description_embedding", "is", null);
 
-    // Count face embeddings (distinct files)
     const { data: faceData } = await supabase
       .from("face_embeddings")
       .select("drive_file_id")
       .limit(10000);
     const faceEmbeddings = new Set(faceData?.map((r) => r.drive_file_id)).size;
 
-    // Folder breakdown
     const { data: folderData } = await supabase
       .from("photos")
       .select("folder");

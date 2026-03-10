@@ -1,12 +1,4 @@
 // @TheTechMargin 2026
-/**
- * IMAGE MATCHING API (FACE SEARCH)
- *
- * Finds photos with similar faces using InsightFace embeddings via
- * face-api service (cosine similarity against Supabase pgvector).
- *
- * Query: POST /api/match with { image: "base64...", mimeType: "image/jpeg|png|webp|gif" }
- */
 import { NextRequest, NextResponse } from "next/server";
 import { rowToPhoto } from "@/lib/photos";
 import { PhotoRecord, MatchResult } from "@/lib/types";
@@ -64,8 +56,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// ── Vector search ──────────────────────────────────────────────────────
-
 async function vectorMatch(imageBase64: string) {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (FACE_API_SECRET) headers["Authorization"] = `Bearer ${FACE_API_SECRET}`;
@@ -107,7 +97,6 @@ async function vectorMatch(imageBase64: string) {
   const faceMatches = await matchFacesByEmbedding(bestFace.embedding, VECTOR_THRESHOLD, 30);
 
   if (faceMatches.length === 0) {
-    // Smart retry: check if a similar face was matched before
     const similar = await findSimilarSessions(bestFace.embedding, 0.7, 1);
     if (similar.length > 0 && similar[0].match_count > 0) {
       return vectorResponse([], bestFace.embedding, {
@@ -117,7 +106,6 @@ async function vectorMatch(imageBase64: string) {
     return vectorResponse([], bestFace.embedding);
   }
 
-  // Deduplicate: keep best similarity per photo
   const bestByPhoto = new Map<string, { similarity: number; face_index: number }>();
   for (const fm of faceMatches) {
     const existing = bestByPhoto.get(fm.drive_file_id);
@@ -126,7 +114,6 @@ async function vectorMatch(imageBase64: string) {
     }
   }
 
-  // Fetch only the matched photo rows from Supabase (not the entire catalog)
   const photoRows = await getPhotosByDriveFileIds(Array.from(bestByPhoto.keys()));
   const photoByFileId = new Map<string, PhotoRecord>();
   for (const row of photoRows) photoByFileId.set(row.drive_file_id, rowToPhoto(row));
@@ -144,7 +131,6 @@ async function vectorMatch(imageBase64: string) {
   });
   matches.sort((a, b) => b.confidence - a.confidence);
 
-  // Co-occurrence recommendations
   const matchedIds = matches.map((m) => m.photo.driveFileId);
   const recommendations = await getCooccurrenceRecommendations(matchedIds, matchedIds, 8);
 
