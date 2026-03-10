@@ -125,8 +125,17 @@ export default function Lightbox({
     return null;
   }
 
+  // Treat .MOV as Live Photos (render as static image); only actual video files get the player
+  const isVideo =
+    /\.(mp4|webm|avi)$/i.test(photo.filename) ||
+    (photo.mimeType?.startsWith("video/") && !/\.mov$/i.test(photo.filename));
+
   const fullImageUrl = photo.driveFileId
     ? `https://lh3.googleusercontent.com/d/${photo.driveFileId}=w1600`
+    : "";
+
+  const videoUrl = photo.driveFileId
+    ? `/api/video?id=${photo.driveFileId}`
     : "";
 
   const hasMeta = !!(photo.visibleText || photo.peopleDescriptions || photo.sceneDescription || photo.faceCount > 0);
@@ -214,7 +223,18 @@ export default function Lightbox({
               </div>
             </div>
           )}
-          {fullImageUrl ? (
+          {isVideo && videoUrl ? (
+            <video
+              key={photo.driveFileId}
+              src={videoUrl}
+              controls
+              autoPlay
+              playsInline
+              className={`max-w-full max-h-full object-contain select-none lightbox-media ${imageLoaded ? 'loaded' : ''}`}
+              onLoadedData={() => setImageLoaded(true)}
+              onError={() => setImageLoaded(true)}
+            />
+          ) : fullImageUrl ? (
             <Image
               key={photo.driveFileId}
               src={fullImageUrl}
