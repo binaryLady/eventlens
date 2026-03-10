@@ -17,14 +17,14 @@ interface GeminiResponse {
   error?: { message: string };
 }
 
-async function callGemini(parts: GeminiPart[]): Promise<string> {
+async function callGemini(parts: GeminiPart[], model = "gemini-2.0-flash"): Promise<string> {
   const { geminiApiKey } = config;
   if (!geminiApiKey) {
     throw new Error("Missing GEMINI_API_KEY");
   }
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${geminiApiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },

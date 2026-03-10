@@ -1,17 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchPhotos } from "@/lib/photos";
+import { fetchPhotosWithMetadata } from "@/lib/photos";
 import { describePersonForMatching, verifyFaceMatches } from "@/lib/gemini";
 import { PhotoRecord, MatchResult } from "@/lib/types";
 import { config } from "@/lib/config";
 
 export const maxDuration = 60;
 
+const FACE_API_URL = process.env.FACE_API_URL || "";
+const FACE_API_SECRET = process.env.FACE_API_SECRET || "";
+
 /**
  * POST /api/match
  * Accepts an uploaded photo and finds matching people across all event photos.
  *
+ * Strategy:
+ *   1. If FACE_API_URL is set → extract embedding via InsightFace service
+ *      → vector similarity search in Supabase (sub-second)
+ *   2. Fallback → Gemini description + visual matching (slower)
+ *
  * Body: { image: string (base64), mimeType: string }
- * Returns: { matches: MatchResult[], description: string, tier: "text" | "visual" | "both" }
+ * Returns: { matches: MatchResult[], description: string, tier: string }
  */
 // @TheTechMargin 2026
 export async function POST(request: NextRequest) {
@@ -26,55 +34,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const description = await describePersonForMatching(image, mimeType);
-
-    if (description.includes("NO_PERSON_DETECTED")) {
-      return NextResponse.json({
-        matches: [],
-        description: "",
-        tier: "text",
-        error:
-          "No person detected in the uploaded photo. Please upload a clear photo of a person.",
-      });
+    // Try vector search path first (fast)
+    if (FACE_API_URL) {
+      const vectorResult = await tryVectorMatch(image, mimeType);
+      if (vectorResult) {
+        return NextResponse.json(vectorResult);
+      }
     }
 
-    const allPhotos = await fetchPhotos();
-
-    if (allPhotos.length === 0) {
-      return NextResponse.json({
-        matches: [],
-        description,
-        tier: "text",
-        error: "No event photos available yet.",
-      });
-    }
-
-    // ── Run BOTH tiers in parallel ──────────────────────────────────────
-    const attributeTerms = parseAttributeTerms(description);
-    const textMatches = scoreByText(allPhotos, attributeTerms);
-
-    let visualMatches: MatchResult[] = [];
-    let tier: "text" | "visual" | "both" = "text";
-
-    if (config.googleApiKey) {
-      // Always run visual matching — don't let text results gate it
-      visualMatches = await runVisualMatching(
-        image,
-        mimeType,
-        allPhotos,
-        config.googleApiKey,
-      );
-    }
-
-    if (textMatches.length > 0 && visualMatches.length > 0) {
-      tier = "both";
-    } else if (visualMatches.length > 0) {
-      tier = "visual";
-    }
-
-    const merged = mergeResults(textMatches, visualMatches);
-
-    return NextResponse.json({ matches: merged, description, tier });
+    // Fallback: Gemini-based matching
+    return geminiMatch(image, mimeType);
   } catch (error) {
     return NextResponse.json(
       {
@@ -88,19 +57,158 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// ── Vector search path (InsightFace + pgvector) ────────────────────────
+
+async function tryVectorMatch(
+  imageBase64: string,
+  _mimeType: string,
+): Promise<{ matches: MatchResult[]; description: string; tier: string } | null> {
+  try {
+    // Get face embedding from Python service
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (FACE_API_SECRET) {
+      headers["Authorization"] = `Bearer ${FACE_API_SECRET}`;
+    }
+
+    const embedRes = await fetch(`${FACE_API_URL}/embed`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ image: imageBase64 }),
+    });
+
+    if (!embedRes.ok) return null;
+
+    const embedData: {
+      faces: Array<{ embedding: number[]; det_score: number }>;
+      count: number;
+    } = await embedRes.json();
+
+    if (embedData.count === 0) {
+      return {
+        matches: [],
+        description: "",
+        tier: "vector",
+      };
+    }
+
+    // Use the highest-confidence face embedding
+    const bestFace = embedData.faces.reduce((a, b) =>
+      a.det_score > b.det_score ? a : b,
+    );
+
+    // Vector similarity search in Supabase
+    const { matchFacesByEmbedding } = await import("@/lib/supabase");
+    const faceMatches = await matchFacesByEmbedding(bestFace.embedding, 0.5, 30);
+
+    if (faceMatches.length === 0) {
+      return { matches: [], description: "", tier: "vector" };
+    }
+
+    // Load photo data to build full MatchResults
+    const allPhotos = await fetchPhotosWithMetadata();
+    const photoByFileId = new Map<string, PhotoRecord>();
+    for (const p of allPhotos) {
+      photoByFileId.set(p.driveFileId, p);
+    }
+
+    // Deduplicate by photo (a photo can have multiple face matches)
+    const bestByPhoto = new Map<string, { similarity: number; face_index: number }>();
+    for (const fm of faceMatches) {
+      const existing = bestByPhoto.get(fm.drive_file_id);
+      if (!existing || fm.similarity > existing.similarity) {
+        bestByPhoto.set(fm.drive_file_id, {
+          similarity: fm.similarity,
+          face_index: fm.face_index,
+        });
+      }
+    }
+
+    const matches: MatchResult[] = [];
+    bestByPhoto.forEach((match, fileId) => {
+      const photo = photoByFileId.get(fileId);
+      if (!photo) return;
+
+      matches.push({
+        photo,
+        confidence: Math.round(match.similarity * 100),
+        reason: `Face match (vector similarity ${(match.similarity * 100).toFixed(0)}%)`,
+      });
+    });
+
+    matches.sort((a, b) => b.confidence - a.confidence);
+
+    return { matches, description: "", tier: "vector" };
+  } catch (error) {
+    console.error("Vector match failed, falling back to Gemini:", error);
+    return null;
+  }
+}
+
+// ── Gemini-based matching (fallback) ───────────────────────────────────
+
+async function geminiMatch(imageBase64: string, mimeType: string) {
+  const description = await describePersonForMatching(imageBase64, mimeType);
+
+  if (description.includes("NO_PERSON_DETECTED")) {
+    return NextResponse.json({
+      matches: [],
+      description: "",
+      tier: "text",
+      error:
+        "No person detected in the uploaded photo. Please upload a clear photo of a person.",
+    });
+  }
+
+  const allPhotos = await fetchPhotosWithMetadata();
+
+  if (allPhotos.length === 0) {
+    return NextResponse.json({
+      matches: [],
+      description,
+      tier: "text",
+      error: "No event photos available yet.",
+    });
+  }
+
+  const attributeTerms = parseAttributeTerms(description);
+  const textMatches = scoreByText(allPhotos, attributeTerms);
+
+  let visualMatches: MatchResult[] = [];
+  let tier: "text" | "visual" | "both" = "text";
+
+  if (config.googleApiKey) {
+    visualMatches = await runVisualMatching(
+      imageBase64,
+      mimeType,
+      allPhotos,
+      config.googleApiKey,
+    );
+  }
+
+  if (textMatches.length > 0 && visualMatches.length > 0) {
+    tier = "both";
+  } else if (visualMatches.length > 0) {
+    tier = "visual";
+  }
+
+  const merged = mergeResults(textMatches, visualMatches);
+
+  return NextResponse.json({ matches: merged, description, tier });
+}
+
+// ── Text matching helpers ──────────────────────────────────────────────
+
 function parseAttributeTerms(description: string): string[] {
   const phrases = description
     .split(/[,;\n]+/)
     .map((t) => t.trim().toLowerCase())
     .filter((t) => t.length > 1);
 
-  // Return both full phrases and individual meaningful words
   const words = new Set<string>();
   const fullPhrases: string[] = [];
 
   for (const phrase of phrases) {
     fullPhrases.push(phrase);
-    // Extract individual words (skip tiny filler words)
     const tokens = phrase.split(/\s+/).filter((w) => w.length > 2);
     for (const token of tokens) {
       if (!STOP_WORDS.has(token)) {
@@ -124,8 +232,6 @@ function scoreByText(
 ): MatchResult[] {
   if (terms.length === 0) return [];
 
-  // Separate full phrases from individual words
-  // First N terms are phrases, rest are individual words
   const results: MatchResult[] = [];
 
   for (const photo of photos) {
@@ -136,9 +242,7 @@ function scoreByText(
     const matched: string[] = [];
 
     for (const term of terms) {
-      // Use word-boundary-aware matching
       if (matchesWithBoundary(haystack, term)) {
-        // Full phrases are worth more than single words
         const isPhrase = term.includes(" ");
         const termScore = isPhrase ? 15 : 5;
         score += termScore;
@@ -148,11 +252,9 @@ function scoreByText(
 
     if (matched.length === 0) continue;
 
-    // Normalize score to 0-100 range
-    const maxPossible = terms.length * 10; // rough average
+    const maxPossible = terms.length * 10;
     let normalizedScore = Math.min((score / maxPossible) * 100, 95);
 
-    // Small boost for photos with 1-3 faces (more likely a portrait match)
     if (photo.faceCount >= 1 && photo.faceCount <= 3) {
       normalizedScore *= 1.1;
     }
@@ -172,19 +274,16 @@ function scoreByText(
 }
 
 function matchesWithBoundary(haystack: string, needle: string): boolean {
-  // For multi-word phrases, check if all words appear (order-independent)
   if (needle.includes(" ")) {
     const words = needle.split(/\s+/).filter((w) => w.length > 2);
     return words.every((word) => matchesWithBoundary(haystack, word));
   }
 
-  // Single word: use word boundary regex
   try {
     const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const regex = new RegExp(`(?:^|[\\s,;.!?()\\-/])${escaped}(?=[\\s,;.!?()\\-/]|$)`, "i");
     return regex.test(haystack);
   } catch {
-    // Fallback to includes if regex fails
     return haystack.includes(needle);
   }
 }
@@ -198,8 +297,10 @@ function dedup(arr: string[]): string[] {
   });
 }
 
+// ── Visual matching (Gemini) ───────────────────────────────────────────
+
 const VISUAL_BATCH_SIZE = 5;
-const MAX_VISUAL_CANDIDATES = 50; // Increased from 30 — cast wider net
+const MAX_VISUAL_CANDIDATES = 20;
 
 async function runVisualMatching(
   uploadedImageBase64: string,
@@ -207,12 +308,10 @@ async function runVisualMatching(
   allPhotos: PhotoRecord[],
   apiKey: string,
 ): Promise<MatchResult[]> {
-  // Candidates: photos with faces, sorted by face count ascending
-  // (photos with fewer faces = easier to match against)
-  const candidates = allPhotos
-    .filter((p) => p.faceCount > 0 && p.driveFileId)
-    .sort((a, b) => a.faceCount - b.faceCount)
-    .slice(0, MAX_VISUAL_CANDIDATES);
+  const withFaces = allPhotos.filter((p) => p.faceCount > 0 && p.driveFileId);
+  const candidates = withFaces.length > 0
+    ? withFaces.sort((a, b) => a.faceCount - b.faceCount).slice(0, MAX_VISUAL_CANDIDATES)
+    : allPhotos.filter((p) => p.driveFileId).slice(0, MAX_VISUAL_CANDIDATES);
 
   if (candidates.length === 0) return [];
 
@@ -221,7 +320,6 @@ async function runVisualMatching(
   for (let i = 0; i < candidates.length; i += VISUAL_BATCH_SIZE) {
     const batch = candidates.slice(i, i + VISUAL_BATCH_SIZE);
 
-    // Fetch thumbnails at w800 (larger = better face matching accuracy)
     const images = await Promise.all(
       batch.map(async (photo) => {
         const result = await fetchDriveThumbnail(photo.driveFileId, apiKey);
@@ -254,7 +352,6 @@ async function runVisualMatching(
       }
     }
 
-    // Early exit: 5+ matches with confidence >= 60
     const highConfidence = allMatches.filter((m) => m.confidence >= 60);
     if (highConfidence.length >= 5) break;
   }
@@ -268,7 +365,7 @@ async function fetchDriveThumbnail(
   apiKey: string,
 ): Promise<{ base64: string; mimeType: string } | null> {
   try {
-    const url = `https://lh3.googleusercontent.com/d/${fileId}=w800`;
+    const url = `https://lh3.googleusercontent.com/d/${fileId}=w400`;
     const res = await fetch(url);
     if (!res.ok) {
       return fetchDriveImageFull(fileId, apiKey);
@@ -307,23 +404,19 @@ async function fetchDriveImageFull(
   }
 }
 
-
 function mergeResults(
   textMatches: MatchResult[],
   visualMatches: MatchResult[],
 ): MatchResult[] {
   const byId = new Map<string, MatchResult>();
-  const textIds = new Set<string>();
 
   for (const m of textMatches) {
     byId.set(m.photo.id, m);
-    textIds.add(m.photo.id);
   }
 
   for (const m of visualMatches) {
     const existing = byId.get(m.photo.id);
     if (existing) {
-      // Both tiers found this photo — boost confidence
       const baseConfidence = Math.max(m.confidence, existing.confidence);
       const boostedConfidence = Math.min(baseConfidence + 15, 99);
       byId.set(m.photo.id, {

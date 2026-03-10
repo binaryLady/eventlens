@@ -39,6 +39,44 @@ export function createAnonClient(): SupabaseClient {
   });
 }
 
+/** Face match result from vector similarity search */
+export interface FaceMatch {
+  drive_file_id: string;
+  filename: string;
+  folder: string;
+  face_index: number;
+  similarity: number;
+  bbox_x1: number;
+  bbox_y1: number;
+  bbox_x2: number;
+  bbox_y2: number;
+}
+
+/**
+ * Search face_embeddings by vector similarity using the match_faces RPC.
+ * query_embedding must be a 512-dim InsightFace (buffalo_l) embedding.
+ */
+export async function matchFacesByEmbedding(
+  queryEmbedding: number[],
+  threshold = 0.6,
+  limit = 20,
+): Promise<FaceMatch[]> {
+  const supabase = createServerClient();
+
+  const { data, error } = await supabase.rpc("match_faces", {
+    query_embedding: queryEmbedding,
+    match_threshold: threshold,
+    match_count: limit,
+  });
+
+  if (error) {
+    console.error("Vector match error:", error.message);
+    return [];
+  }
+
+  return (data as FaceMatch[]) || [];
+}
+
 /** Row shape in the `photos` table */
 export interface PhotoRow {
   id: string;

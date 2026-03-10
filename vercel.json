@@ -9,6 +9,12 @@
   "functions": {
     "src/app/api/admin/**/*.ts": {
       "maxDuration": 60
+    },
+    "src/app/api/photos/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/match/route.ts": {
+      "maxDuration": 60
     }
   }
 }
