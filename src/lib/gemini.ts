@@ -178,3 +178,57 @@ Only include photos where confidence >= 35. If no matches, return [].
 
   return [];
 }
+
+// @TheTechMargin 2026
+export async function analyzeEventPhoto(
+  imageBase64: string,
+  mimeType: string,
+): Promise<{
+  visible_text: string;
+  people_descriptions: string;
+  scene_description: string;
+  face_count: number;
+}> {
+  const prompt = `Analyze this event photo and provide structured information in JSON format.
+
+Return ONLY valid JSON with this exact structure:
+{
+  "visible_text": "any text visible in the photo (signs, banners, clothing text, etc.) - if none, use empty string",
+  "people_descriptions": "brief descriptions of people visible, separated by semicolons - focus on appearance, clothing, activities",
+  "scene_description": "description of the setting, event type, atmosphere, and notable objects",
+  "face_count": number of distinct faces visible in the photo
+}
+
+Be specific and factual. For visible_text, only include actual readable text. For people_descriptions, describe each person briefly. For scene_description, describe the environment and context.`;
+
+  const response = await callGemini([
+    { text: prompt },
+    {
+      inline_data: {
+        mime_type: mimeType,
+        data: imageBase64,
+      },
+    },
+  ]);
+
+  try {
+    const jsonStr = response.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const parsed = JSON.parse(jsonStr);
+
+    // Validate and provide defaults
+    return {
+      visible_text: parsed.visible_text || "",
+      people_descriptions: parsed.people_descriptions || "",
+      scene_description: parsed.scene_description || "",
+      face_count: typeof parsed.face_count === "number" ? parsed.face_count : 0,
+    };
+  } catch (error) {
+    console.error("Failed to parse Gemini response for analyzeEventPhoto:", error);
+    return {
+      visible_text: "",
+      people_descriptions: "",
+      scene_description: "",
+      face_count: 0,
+    };
+  }
+}
