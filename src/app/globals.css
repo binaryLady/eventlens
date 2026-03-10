@@ -3,20 +3,53 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #00ff41;
-  --color-accent: #00ff41;
-  --color-bg: #000000;
-  --color-surface: #0a0a0a;
-  --color-border: #00ff4133;
-  --color-border-bright: #00ff4166;
-  --color-text: #00ff41;
-  --color-text-dim: #00ff4199;
-  --color-text-muted: #00ff4155;
+  /* ── Base hues ── */
+  --el-green: #00ff41;
+  --el-magenta: #ff00ff;
+  --el-flame: #ff9d00;
+  --el-red: #ff4444;
+
+  /* ── Green palette (primary) ── */
+  --el-green-08: #00ff4108;
+  --el-green-11: #00ff4111;
+  --el-green-15: #00ff4115;
+  --el-green-22: #00ff4122;
+  --el-green-33: var(--el-green-33);
+  --el-green-44: var(--el-green-44);
+  --el-green-55: #00ff4155;
+  --el-green-66: var(--el-green-66);
+  --el-green-77: #00ff4177;
+  --el-green-88: #00ff4188;
+  --el-green-99: #00ff4199;
+
+  /* ── Magenta palette (accent) ── */
+  --el-magenta-28: #ff00ff28;
+  --el-magenta-bb: #ff00ff;
+  --el-magenta-cc: #ff00ffcc;
+  --el-flame-dd: #e1ff00;
+
+  /* ── Error palette ── */
+  --el-red-08: #ff444408;
+  --el-red-11: #ff444411;
+  --el-red-33: #ff444433;
+  --el-red-88: #ff444488;
+
+  /* ── Status colors ── */
+  --el-amber: #ffaa00;
+  --el-amber-88: #ffaa0088;
+  --el-cyan: #00ccff;
+  --el-cyan-88: #00ccff88;
+  --el-blue: #00aaff;
+  --el-purple: #cc88ff;
+
+  /* ── Surfaces ── */
+  --el-bg: #000000;
+  --el-surface: #0a0a0a;
 }
 
 body {
   color: #e0e0e0;
-  background: #000000;
+  background: var(--el-bg);
   font-family: var(--font-mono), "JetBrains Mono", "Fira Code", monospace;
 }
 
@@ -165,11 +198,11 @@ body {
 .skeleton-terminal {
   background: linear-gradient(
     90deg,
-    #0a0a0a 0%,
+    var(--el-surface) 0%,
     #001a00 25%,
     #003300 50%,
     #001a00 75%,
-    #0a0a0a 100%
+    var(--el-surface) 100%
   );
   background-size: 200% 100%;
   animation: skeleton-scan 2s linear infinite;
@@ -186,7 +219,7 @@ body {
 .crosshair-corner::after {
   content: "";
   position: absolute;
-  border-color: var(--color-primary);
+  border-color: var(--el-green);
   opacity: 0.3;
 }
 .crosshair-corner::before {
@@ -238,19 +271,19 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #000000;
+  background: var(--el-bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #00ff4133;
+  background: var(--el-green-33);
   border-radius: 0;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #00ff4166;
+  background: var(--el-green-66);
 }
 
 /* Input/focus overrides for green theme */
 input::placeholder {
-  color: #00ff4144;
+  color: var(--el-green-44);
 }
 
 input:focus {
@@ -260,7 +293,7 @@ input:focus {
 /* Selection color */
 ::selection {
   background: rgba(0, 255, 65, 0.25);
-  color: #00ff41;
+  color: var(--el-green);
 }
 
 /* ═══════════════════════════════════════════

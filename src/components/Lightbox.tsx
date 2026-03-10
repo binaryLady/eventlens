@@ -131,8 +131,8 @@ export default function Lightbox({
     ? `https://lh3.googleusercontent.com/d/${photo.driveFileId}=w1600`
     : "";
 
-  const videoEmbedUrl = photo.driveFileId
-    ? `https://drive.google.com/file/d/${photo.driveFileId}/preview`
+  const videoStreamUrl = photo.driveFileId
+    ? `https://www.googleapis.com/drive/v3/files/${photo.driveFileId}?alt=media&key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY || ""}`
     : "";
 
   const hasMeta = !!(photo.visibleText || photo.peopleDescriptions || photo.sceneDescription || photo.faceCount > 0);
@@ -157,7 +157,7 @@ export default function Lightbox({
       <div className="relative z-[52] flex items-center justify-between px-3 pt-safe-area-max md:px-4">
         {/* Counter */}
         {photos.length > 1 && (
-          <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4177]">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-77)]">
             {currentIndex + 1} / {photos.length}
           </span>
         )}
@@ -167,7 +167,7 @@ export default function Lightbox({
         <button
           ref={closeRef}
           onClick={onClose}
-          className="flex h-10 w-10 items-center justify-center border border-[#ff00ff33] bg-black text-[#ff00ff99] hover:border-[#00ff41] hover:text-[#00ff41] active:bg-[#ff00ff11] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] transition-all"
+          className="flex h-10 w-10 items-center justify-center border border-[var(--el-magenta-cc)] bg-black text-[var(--el-magenta-dd)] hover:border-[var(--el-green)] hover:text-[var(--el-green)] active:bg-[var(--el-magenta-bb)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] transition-all"
           aria-label="Close lightbox"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -188,7 +188,7 @@ export default function Lightbox({
         {photos.length > 1 && (
           <button
             onClick={goPrev}
-            className="hidden md:flex absolute left-2 top-1/2 z-[52] -translate-y-1/2 h-12 w-12 items-center justify-center border border-[#ff00ff33] bg-black text-[#ff00ff99] hover:border-[#00ff41] hover:text-[#00ff41] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] transition-all md:left-4"
+            className="hidden md:flex absolute left-2 top-1/2 z-[52] -translate-y-1/2 h-12 w-12 items-center justify-center border border-[var(--el-magenta-cc)] bg-black text-[var(--el-magenta-dd)] hover:border-[var(--el-green)] hover:text-[var(--el-green)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] transition-all md:left-4"
             aria-label="Previous photo"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -201,7 +201,7 @@ export default function Lightbox({
         {photos.length > 1 && (
           <button
             onClick={goNext}
-            className="hidden md:flex absolute right-2 top-1/2 z-[52] -translate-y-1/2 h-12 w-12 items-center justify-center border border-[#ff00ff33] bg-black text-[#ff00ff99] hover:border-[#00ff41] hover:text-[#00ff41] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] transition-all md:right-4"
+            className="hidden md:flex absolute right-2 top-1/2 z-[52] -translate-y-1/2 h-12 w-12 items-center justify-center border border-[var(--el-magenta-cc)] bg-black text-[var(--el-magenta-dd)] hover:border-[var(--el-green)] hover:text-[var(--el-green)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] transition-all md:right-4"
             aria-label="Next photo"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -216,23 +216,23 @@ export default function Lightbox({
             <div className="absolute inset-0 flex items-center justify-center z-10">
               <div className="flex flex-col items-center gap-2">
                 <div className="relative w-8 h-8">
-                  <div className="absolute inset-0 border border-[#00ff41] animate-crosshair-spin" />
-                  <div className="absolute inset-2 bg-[#00ff41] animate-pulse" />
+                  <div className="absolute inset-0 border border-[var(--el-green)] animate-crosshair-spin" />
+                  <div className="absolute inset-2 bg-[var(--el-green)] animate-pulse" />
                 </div>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4177]">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-77)]">
                   LOADING
                 </span>
               </div>
             </div>
           )}
           {isVideo ? (
-            <iframe
+            <video
               key={photo.driveFileId}
-              src={videoEmbedUrl}
-              allow="autoplay; encrypted-media"
-              allowFullScreen
-              className={`w-full h-full border-0 lightbox-media ${imageLoaded ? 'loaded' : ''}`}
-              onLoad={() => setImageLoaded(true)}
+              src={videoStreamUrl}
+              controls
+              playsInline
+              className={`max-w-full max-h-full object-contain lightbox-media ${imageLoaded ? 'loaded' : ''}`}
+              onLoadedData={() => setImageLoaded(true)}
             />
           ) : fullImageUrl ? (
             <Image
@@ -252,24 +252,24 @@ export default function Lightbox({
       </div>
 
       {/* Bottom bar — filename + actions, safe area aware */}
-      <div className="relative z-[52] border-t border-[#00ff4122] bg-black pb-safe-area-max">
+      <div className="relative z-[52] border-t border-[var(--el-green-22)] bg-black pb-safe-area-max">
         {/* Swipe hint on mobile */}
         <div className="flex justify-center pt-1.5 pb-0.5 md:hidden">
-          <div className="w-8 h-0.5 rounded-full bg-[#00ff4133]" />
+          <div className="w-8 h-0.5 rounded-full bg-[var(--el-green-33)]" />
         </div>
 
         <div className="px-3 py-2 md:px-6 md:py-3">
           {/* Main info row */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <h3 className="font-mono text-xs font-bold text-[#00ff41] uppercase tracking-wider truncate">
+              <h3 className="font-mono text-xs font-bold text-[var(--el-green)] uppercase tracking-wider truncate">
                 {photo.filename}
               </h3>
-              <span className="hidden sm:inline-block shrink-0 border border-[#00ff4133] px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-[#00ff4199]">
+              <span className="hidden sm:inline-block shrink-0 border border-[var(--el-green-33)] px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-[var(--el-green-99)]">
                 {photo.folder}
               </span>
               {photo.faceCount > 0 && (
-                <span className="hidden sm:inline-block shrink-0 border border-[#00ff4122] px-1.5 py-0.5 text-[9px] font-mono text-[#00ff4166]">
+                <span className="hidden sm:inline-block shrink-0 border border-[var(--el-green-22)] px-1.5 py-0.5 text-[9px] font-mono text-[var(--el-green-66)]">
                   {photo.faceCount} {photo.faceCount === 1 ? "FACE" : "FACES"}
                 </span>
               )}
@@ -280,7 +280,7 @@ export default function Lightbox({
               {hasMeta && (
                 <button
                   onClick={() => setShowMeta(!showMeta)}
-                  className="md:hidden flex h-9 w-9 items-center justify-center border border-[#ff00ff33] bg-black text-[#ff00ff99] active:bg-[#ff00ff11] transition-all"
+                  className="md:hidden flex h-9 w-9 items-center justify-center border border-[var(--el-magenta-cc)] bg-black text-[var(--el-magenta-dd)] active:bg-[var(--el-magenta-bb)] transition-all"
                   aria-label="Toggle details"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -294,7 +294,7 @@ export default function Lightbox({
               {/* Download */}
               <a
                 href={photo.downloadUrl}
-                className="inline-flex h-9 items-center gap-2 border border-[#00ff41] bg-[#00ff4111] px-3 text-xs font-mono uppercase tracking-wider text-[#00ff41] active:bg-[#00ff4122] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] transition-all"
+                className="inline-flex h-9 items-center gap-2 border border-[var(--el-green)] bg-[var(--el-green-11)] px-3 text-xs font-mono uppercase tracking-wider text-[var(--el-green)] active:bg-[var(--el-green-22)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] transition-all"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -308,11 +308,11 @@ export default function Lightbox({
 
           {/* Mobile folder tag (below filename) */}
           <div className="flex items-center gap-2 mt-1.5 sm:hidden">
-            <span className="border border-[#00ff4133] px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-[#00ff4199]">
+            <span className="border border-[var(--el-green-33)] px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-[var(--el-green-99)]">
               {photo.folder}
             </span>
             {photo.faceCount > 0 && (
-              <span className="border border-[#00ff4122] px-1.5 py-0.5 text-[9px] font-mono text-[#00ff4166]">
+              <span className="border border-[var(--el-green-22)] px-1.5 py-0.5 text-[9px] font-mono text-[var(--el-green-66)]">
                 {photo.faceCount} {photo.faceCount === 1 ? "FACE" : "FACES"}
               </span>
             )}
@@ -322,30 +322,30 @@ export default function Lightbox({
           <div className={`overflow-hidden transition-all duration-200 ${showMeta ? "max-h-60 opacity-100 mt-3" : "md:max-h-60 md:opacity-100 md:mt-3 max-h-0 opacity-0"}`}>
             {photo.visibleText && (
               <div className="mb-2">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4166]">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-66)]">
                   {"// TEXT DETECTED"}
                 </span>
-                <p className="mt-0.5 border-l-2 border-[#00ff4133] pl-3 font-mono text-xs text-[#00ff4199] line-clamp-2">
+                <p className="mt-0.5 border-l-2 border-[var(--el-green-33)] pl-3 font-mono text-xs text-[var(--el-green-99)] line-clamp-2">
                   {photo.visibleText}
                 </p>
               </div>
             )}
             {photo.peopleDescriptions && (
               <div className="mb-2">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4166]">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-66)]">
                   {"// SUBJECTS"}
                 </span>
-                <p className="mt-0.5 text-xs font-mono text-[#00ff4199] line-clamp-2">
+                <p className="mt-0.5 text-xs font-mono text-[var(--el-green-99)] line-clamp-2">
                   {photo.peopleDescriptions}
                 </p>
               </div>
             )}
             {photo.sceneDescription && (
               <div>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4166]">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-66)]">
                   {"// SCENE"}
                 </span>
-                <p className="mt-0.5 text-xs font-mono text-[#00ff4199] line-clamp-2">
+                <p className="mt-0.5 text-xs font-mono text-[var(--el-green-99)] line-clamp-2">
                   {photo.sceneDescription}
                 </p>
               </div>

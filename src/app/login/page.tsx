@@ -43,13 +43,13 @@ export default function LoginPage() {
     >
       <div className="w-full max-w-sm">
         {/* Terminal window */}
-        <div className="border border-[#00ff4133] bg-black/80 p-6 backdrop-blur">
+        <div className="border border-[var(--el-magenta-cc)] bg-black/80 p-6 backdrop-blur">
           {/* Terminal header */}
-          <div className="flex items-center gap-2 border-b border-[#00ff4122] pb-3 mb-6">
-            <div className="h-2 w-2 rounded-full bg-[#00ff41]" />
-            <div className="h-2 w-2 rounded-full bg-[#00ff4166]" />
-            <div className="h-2 w-2 rounded-full bg-[#00ff4133]" />
-            <span className="ml-2 text-[10px] uppercase tracking-widest text-[#00ff4166]">
+          <div className="flex items-center gap-2 border-b border-[var(--el-magenta-bb)] pb-3 mb-6">
+            <div className="h-2 w-2 rounded-full bg-[var(--el-green)]" />
+            <div className="h-2 w-2 rounded-full bg-[var(--el-magenta-dd)]" />
+            <div className="h-2 w-2 rounded-full bg-[var(--el-magenta-cc)]" />
+            <span className="ml-2 text-[10px] uppercase tracking-widest text-[var(--el-magenta-dd)]">
               eventlens://auth
             </span>
           </div>
@@ -57,10 +57,10 @@ export default function LoginPage() {
           {/* Content */}
           <div className="space-y-6">
             <div>
-              <h1 className="text-lg font-bold text-[#00ff41] uppercase tracking-wider mb-2">
+              <h1 className="text-lg font-bold text-[var(--el-green)] uppercase tracking-wider mb-2">
                 ACCESS REQUIRED
               </h1>
-              <p className="text-xs text-[#00ff4166] uppercase tracking-wider">
+              <p className="text-xs text-[var(--el-magenta-dd)] uppercase tracking-wider">
                 Enter your access credential to continue
               </p>
             </div>
@@ -69,7 +69,7 @@ export default function LoginPage() {
               <div>
                 <label
                   htmlFor="password"
-                  className="block text-[10px] uppercase tracking-wider text-[#00ff4166] mb-2"
+                  className="block text-[10px] uppercase tracking-wider text-[var(--el-magenta-dd)] mb-2"
                 >
                   PASSWORD
                 </label>
@@ -79,7 +79,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-black border border-[#00ff4133] px-3 py-2 text-xs text-[#00ff41] placeholder-[#00ff4133] focus:border-[#00ff41] focus:outline-none transition-colors"
+                  className="w-full bg-black border border-[var(--el-magenta-cc)] px-3 py-2 text-xs text-[var(--el-green)] placeholder-[var(--el-magenta-cc)] focus:border-[var(--el-green)] focus:outline-none transition-colors"
                   disabled={loading}
                   autoFocus
                 />
@@ -94,14 +94,14 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full border border-[#00ff41] bg-[#00ff4111] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#00ff41] hover:bg-[#00ff4122] focus:outline-none focus:ring-1 focus:ring-[#00ff41] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="w-full border border-[var(--el-green)] bg-[var(--el-green-11)] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[var(--el-green)] hover:bg-[var(--el-green-22)] focus:outline-none focus:ring-1 focus:ring-[var(--el-green)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {loading ? "VERIFYING..." : "AUTHENTICATE"}
               </button>
             </form>
 
-            <div className="border-t border-[#00ff4122] pt-4">
-              <p className="text-[10px] text-[#00ff4144] uppercase tracking-widest">
+            <div className="border-t border-[var(--el-magenta-bb)] pt-4">
+              <p className="text-[10px] text-[var(--el-magenta-bb)] uppercase tracking-widest">
                 © @TheTechMargin 2026
               </p>
             </div>

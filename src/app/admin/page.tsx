@@ -148,8 +148,8 @@ export default function AdminPage() {
   if (!authenticated) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="border border-[#00ff4133] bg-black/80 p-8 max-w-md w-full">
-          <h1 className="text-[#00ff41] font-mono text-lg mb-6 tracking-wider">
+        <div className="border border-[var(--el-green-33)] bg-black/80 p-8 max-w-md w-full">
+          <h1 className="text-[var(--el-green)] font-mono text-lg mb-6 tracking-wider">
             ADMIN ACCESS
           </h1>
           <input
@@ -158,11 +158,11 @@ export default function AdminPage() {
             onChange={(e) => setSecret(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleLogin()}
             placeholder="ADMIN_API_SECRET"
-            className="w-full bg-black border border-[#00ff4133] text-[#00ff41] font-mono text-sm px-4 py-3 mb-4 focus:border-[#00ff41] focus:outline-none placeholder:text-[#00ff4144]"
+            className="w-full bg-black border border-[var(--el-green-33)] text-[var(--el-green)] font-mono text-sm px-4 py-3 mb-4 focus:border-[var(--el-green)] focus:outline-none placeholder:text-[var(--el-green-44)]"
           />
           <button
             onClick={handleLogin}
-            className="w-full border border-[#00ff41] text-[#00ff41] font-mono text-sm px-4 py-3 hover:bg-[#00ff4111] transition-colors tracking-wider"
+            className="w-full border border-[var(--el-green)] text-[var(--el-green)] font-mono text-sm px-4 py-3 hover:bg-[var(--el-green-11)] transition-colors tracking-wider"
           >
             AUTHENTICATE
           </button>
@@ -174,9 +174,9 @@ export default function AdminPage() {
   const pct = status && status.total > 0 ? Math.round((status.completed / status.total) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-black text-[#00ff41] font-mono p-4 md:p-8">
+    <div className="min-h-screen bg-black text-[var(--el-green)] font-mono p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-xl tracking-wider mb-8 border-b border-[#00ff4133] pb-4">
+        <h1 className="text-xl tracking-wider mb-8 border-b border-[var(--el-green-33)] pb-4">
           PHOTO PIPELINE CONTROL
         </h1>
 
@@ -184,22 +184,22 @@ export default function AdminPage() {
         {status && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             <StatusCard label="TOTAL PHOTOS" value={status.total} />
-            <StatusCard label="COMPLETED" value={status.completed} color="#00ff41" />
-            <StatusCard label="PENDING" value={status.pending} color="#ffaa00" />
-            <StatusCard label="ERRORS" value={status.errors} color={status.errors > 0 ? "#ff4444" : undefined} />
-            <StatusCard label="TEXT EMBEDDINGS" value={status.withEmbeddings} color="#00ccff" />
-            <StatusCard label="FACE EMBEDDINGS" value={status.faceEmbeddings} color="#cc88ff" />
-            <StatusCard label="PROCESSING" value={status.processing} color="#00aaff" />
-            <StatusCard label="PROGRESS" value={pct} suffix="%" color="#00ff41" />
+            <StatusCard label="COMPLETED" value={status.completed} color="var(--el-green)" />
+            <StatusCard label="PENDING" value={status.pending} color="var(--el-amber)" />
+            <StatusCard label="ERRORS" value={status.errors} color={status.errors > 0 ? "var(--el-red)" : undefined} />
+            <StatusCard label="TEXT EMBEDDINGS" value={status.withEmbeddings} color="var(--el-cyan)" />
+            <StatusCard label="FACE EMBEDDINGS" value={status.faceEmbeddings} color="var(--el-purple)" />
+            <StatusCard label="PROCESSING" value={status.processing} color="var(--el-blue)" />
+            <StatusCard label="PROGRESS" value={pct} suffix="%" color="var(--el-green)" />
           </div>
         )}
 
         {/* Progress Bar */}
         {status && status.total > 0 && (
           <div className="mb-6">
-            <div className="w-full h-2 bg-[#00ff4111] border border-[#00ff4133]">
+            <div className="w-full h-2 bg-[var(--el-green-11)] border border-[var(--el-green-33)]">
               <div
-                className="h-full bg-[#00ff41] transition-all duration-500"
+                className="h-full bg-[var(--el-green)] transition-all duration-500"
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -209,12 +209,12 @@ export default function AdminPage() {
         {/* Folder Breakdown */}
         {status && status.folders.length > 0 && (
           <div className="mb-6">
-            <h2 className="text-xs tracking-wider mb-2 text-[#00ff4199]">FOLDERS</h2>
+            <h2 className="text-xs tracking-wider mb-2 text-[var(--el-green-99)]">FOLDERS</h2>
             <div className="flex flex-wrap gap-2">
               {status.folders.map((f) => (
                 <span
                   key={f.name}
-                  className="border border-[#00ff4133] px-2 py-1 text-[10px] tracking-wider text-[#00ff4199]"
+                  className="border border-[var(--el-green-33)] px-2 py-1 text-[10px] tracking-wider text-[var(--el-green-99)]"
                 >
                   {f.name || "ROOT"} [{f.count}]
                 </span>
@@ -225,7 +225,7 @@ export default function AdminPage() {
 
         {/* Pipeline Actions */}
         <div className="mb-8">
-          <h2 className="text-sm tracking-wider mb-3 text-[#00ff4199]">PIPELINE</h2>
+          <h2 className="text-sm tracking-wider mb-3 text-[var(--el-green-99)]">PIPELINE</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <ActionButton
               label="SCAN DRIVE"
@@ -274,7 +274,7 @@ export default function AdminPage() {
 
         {/* Utility Actions */}
         <div className="mb-8">
-          <h2 className="text-sm tracking-wider mb-3 text-[#00ff4199]">UTILITIES</h2>
+          <h2 className="text-sm tracking-wider mb-3 text-[var(--el-green-99)]">UTILITIES</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <ActionButton
               label="REFRESH STATUS"
@@ -301,14 +301,14 @@ export default function AdminPage() {
         {/* Recent Errors */}
         {status && status.recentErrors.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-sm tracking-wider mb-3 text-[#ff4444]">
+            <h2 className="text-sm tracking-wider mb-3 text-[var(--el-red)]">
               RECENT ERRORS
             </h2>
-            <div className="border border-[#ff444433] bg-[#ff444408] max-h-40 overflow-y-auto">
+            <div className="border border-[var(--el-red-33)] bg-[var(--el-red-08)] max-h-40 overflow-y-auto">
               {status.recentErrors.map((e, i) => (
-                <div key={i} className="px-3 py-2 text-xs border-b border-[#ff444411] last:border-0">
-                  <span className="text-[#ff4444]">{e.filename}</span>
-                  <span className="text-[#ff444488] ml-2">{e.error}</span>
+                <div key={i} className="px-3 py-2 text-xs border-b border-[var(--el-red-11)] last:border-0">
+                  <span className="text-[var(--el-red)]">{e.filename}</span>
+                  <span className="text-[var(--el-red-88)] ml-2">{e.error}</span>
                 </div>
               ))}
             </div>
@@ -317,24 +317,24 @@ export default function AdminPage() {
 
         {/* Activity Log */}
         <div>
-          <h2 className="text-sm tracking-wider mb-3 text-[#00ff4199]">
+          <h2 className="text-sm tracking-wider mb-3 text-[var(--el-green-99)]">
             ACTIVITY LOG
           </h2>
-          <div className="border border-[#00ff4133] bg-[#00ff4108] h-48 overflow-y-auto p-3">
+          <div className="border border-[var(--el-green-33)] bg-[var(--el-green-08)] h-48 overflow-y-auto p-3">
             {activityLog.length === 0 ? (
-              <p className="text-xs text-[#00ff4144]">
+              <p className="text-xs text-[var(--el-green-44)]">
                 No activity yet. Use Pipeline buttons above to process photos.
               </p>
             ) : (
               activityLog.map((entry, i) => (
-                <div key={i} className="text-xs text-[#00ff4199] mb-1">{entry}</div>
+                <div key={i} className="text-xs text-[var(--el-green-99)] mb-1">{entry}</div>
               ))
             )}
           </div>
         </div>
 
         {status?.lastProcessed && (
-          <div className="mt-4 text-xs text-[#00ff4144]">
+          <div className="mt-4 text-xs text-[var(--el-green-44)]">
             Last indexed: {new Date(status.lastProcessed).toLocaleString()}
           </div>
         )}
@@ -357,11 +357,11 @@ function StatusCard({
   suffix?: string;
 }) {
   return (
-    <div className="border border-[#00ff4133] p-3 text-center">
-      <div className="text-2xl font-bold mb-1" style={{ color: color || "#00ff4199" }}>
+    <div className="border border-[var(--el-green-33)] p-3 text-center">
+      <div className="text-2xl font-bold mb-1" style={{ color: color || "var(--el-green-99)" }}>
         {value.toLocaleString()}{suffix || ""}
       </div>
-      <div className="text-[10px] tracking-wider text-[#00ff4166]">{label}</div>
+      <div className="text-[10px] tracking-wider text-[var(--el-green-66)]">{label}</div>
     </div>
   );
 }
@@ -385,15 +385,15 @@ function ActionButton({
       disabled={disabled}
       className={`border p-3 text-left transition-colors ${
         disabled
-          ? "border-[#00ff4111] text-[#00ff4133] cursor-not-allowed"
-          : "border-[#00ff4133] text-[#00ff41] hover:border-[#00ff41] hover:bg-[#00ff4108]"
+          ? "border-[var(--el-green-11)] text-[var(--el-green-33)] cursor-not-allowed"
+          : "border-[var(--el-green-33)] text-[var(--el-green)] hover:border-[var(--el-green)] hover:bg-[var(--el-green-08)]"
       }`}
     >
       <div className="text-xs tracking-wider flex items-center gap-2">
-        {loading && <span className="inline-block w-2 h-2 bg-[#00ff41] animate-pulse" />}
+        {loading && <span className="inline-block w-2 h-2 bg-[var(--el-green)] animate-pulse" />}
         {label}
       </div>
-      <div className="text-[10px] text-[#00ff4144] mt-1">{description}</div>
+      <div className="text-[10px] text-[var(--el-green-44)] mt-1">{description}</div>
     </button>
   );
 }

@@ -35,15 +35,15 @@ export default function Toast({
           : "translate-y-4 opacity-0"
       }`}
     >
-      <div className="flex items-center justify-between gap-2 sm:gap-3 border border-[#00ff4144] bg-black px-3 py-2.5 sm:px-4 sm:py-3 shadow-[0_0_20px_rgba(0,255,65,0.1)]">
-        <span className="text-[10px] font-mono uppercase tracking-wider text-[#00ff41] min-w-0 truncate">
+      <div className="flex items-center justify-between gap-2 sm:gap-3 border border-[var(--el-green-44)] bg-black px-3 py-2.5 sm:px-4 sm:py-3 shadow-[0_0_20px_rgba(0,255,65,0.1)]">
+        <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--el-green)] min-w-0 truncate">
           &#9679; {message.toUpperCase()}
         </span>
         <div className="flex items-center gap-2 shrink-0">
           {action && (
             <button
               onClick={action.onClick}
-              className="border border-[#00ff41] px-3 py-1.5 sm:py-1 text-[10px] font-mono uppercase tracking-wider text-[#00ff41] active:bg-[#00ff4111] transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41]"
+              className="border border-[var(--el-green)] px-3 py-1.5 sm:py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green)] active:bg-[var(--el-green-11)] transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)]"
             >
               [{action.label}]
             </button>
@@ -53,7 +53,7 @@ export default function Toast({
               setVisible(false);
               setTimeout(onDismiss, 300);
             }}
-            className="p-1 text-[#ff00ff44] hover:text-[#00ff41] active:text-[#00ff41] transition-colors"
+            className="p-1 text-[var(--el-magenta-bb)] hover:text-[var(--el-green)] active:text-[var(--el-green)] transition-colors"
             aria-label="Dismiss"
           >
             <svg

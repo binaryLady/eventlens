@@ -115,7 +115,7 @@ export default function PhotoUpload({
         <div className="flex items-center justify-center gap-2">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-2 border border-[#00ff4133] bg-black/60 px-4 py-2 text-xs font-mono uppercase tracking-wider text-[#00ff4199] transition-all hover:border-[#00ff41] hover:text-[#00ff41] hover:shadow-[0_0_10px_rgba(0,255,65,0.15)]"
+            className="inline-flex items-center gap-2 border border-[var(--el-magenta-cc)] bg-black/60 px-4 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-magenta-dd)] transition-all hover:border-[var(--el-green)] hover:text-[var(--el-green)] hover:shadow-[0_0_10px_rgba(0,255,65,0.15)]"
           >
             {/* Crosshair/target icon */}
             <svg
@@ -141,7 +141,7 @@ export default function PhotoUpload({
           {/* Camera capture (mobile) */}
           <button
             onClick={() => cameraInputRef.current?.click()}
-            className="inline-flex items-center gap-2 border border-[#00ff4133] bg-black/60 px-4 py-2 text-xs font-mono uppercase tracking-wider text-[#00ff4199] transition-all hover:border-[#00ff41] hover:text-[#00ff41] hover:shadow-[0_0_10px_rgba(0,255,65,0.15)] md:hidden"
+            className="inline-flex items-center gap-2 border border-[var(--el-magenta-cc)] bg-black/60 px-4 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-magenta-dd)] transition-all hover:border-[var(--el-green)] hover:text-[var(--el-green)] hover:shadow-[0_0_10px_rgba(0,255,65,0.15)] md:hidden"
           >
             <svg
               width="14"
@@ -185,7 +185,7 @@ export default function PhotoUpload({
         <div className="flex items-center justify-center gap-3">
           {/* Photo preview thumbnail */}
           {preview && (
-            <div className="relative h-10 w-10 shrink-0 overflow-hidden border border-[#00ff41] animate-pulse-green">
+            <div className="relative h-10 w-10 shrink-0 overflow-hidden border border-[var(--el-green)] animate-pulse-green">
               <Image
                 src={preview}
                 alt="Your photo"
@@ -197,18 +197,18 @@ export default function PhotoUpload({
           )}
 
           {uploading ? (
-            <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#00ff4199]">
+            <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--el-magenta-dd)]">
               {/* Scanning animation */}
               <div className="relative w-4 h-4">
-                <div className="absolute inset-0 border border-[#00ff41] animate-crosshair-spin" />
-                <div className="absolute inset-1 bg-[#00ff41] animate-pulse" />
+                <div className="absolute inset-0 border border-[var(--el-green)] animate-crosshair-spin" />
+                <div className="absolute inset-1 bg-[var(--el-green)] animate-pulse" />
               </div>
               {statusText}
             </div>
           ) : (
             <button
               onClick={handleClear}
-              className="inline-flex items-center gap-1.5 border border-[#00ff4133] bg-black/60 px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-[#00ff4166] transition-all hover:border-[#00ff41] hover:text-[#00ff41]"
+              className="inline-flex items-center gap-1.5 border border-[var(--el-magenta-cc)] bg-black/60 px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--el-magenta-dd)] transition-all hover:border-[var(--el-green)] hover:text-[var(--el-green)]"
             >
               <svg
                 width="12"

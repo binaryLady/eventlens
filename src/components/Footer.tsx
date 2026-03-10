@@ -1,7 +1,7 @@
 // @TheTechMargin 2026
 export default function Footer() {
   return (
-    <footer className="w-full py-6 border-t border-[#00ff4122] bg-black/50">
+    <footer className="w-full py-6 border-t border-[var(--el-green-22)] bg-black/50">
       <div className="mx-auto max-w-5xl px-4 flex items-center justify-center">
         <a
           href="https://www.thetechmargin.com"
@@ -13,7 +13,7 @@ export default function Footer() {
             <span className="text-gray-400">made with </span>
             <span className="text-red-500">❤️</span>
             <span className="text-gray-400"> by </span>
-            <span className="text-[#00ff41] font-semibold">thetechmargin</span>
+            <span className="text-[var(--el-green)] font-semibold">thetechmargin</span>
           </span>
         </a>
       </div>

@@ -29,7 +29,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             <h2 className="font-mono text-sm font-bold uppercase tracking-wider text-red-500">
               &#9888; SYSTEM ERROR
             </h2>
-            <p className="mt-2 text-xs font-mono uppercase tracking-wider text-[#00ff4155]">
+            <p className="mt-2 text-xs font-mono uppercase tracking-wider text-[var(--el-green-55)]">
               FAILED TO LOAD PHOTO INTERFACE — RETRY RECOMMENDED
             </p>
             <button
@@ -37,7 +37,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 this.setState({ hasError: false });
                 window.location.reload();
               }}
-              className="mt-4 border border-[#00ff41] px-6 py-2 text-xs font-mono uppercase tracking-wider text-[#00ff41] hover:bg-[#00ff4111] transition-all"
+              className="mt-4 border border-[var(--el-green)] px-6 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-green)] hover:bg-[var(--el-green-11)] transition-all"
             >
               [REBOOT]
             </button>
