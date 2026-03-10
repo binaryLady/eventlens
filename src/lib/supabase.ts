@@ -164,6 +164,93 @@ export async function getPhotosByDriveFileIds(
   return (data as PhotoRow[]) || [];
 }
 
+export interface MatchActivityRow {
+  id: string;
+  created_at: string;
+  tier: string;
+  match_count: number;
+  top_confidence: number | null;
+}
+
+export interface HotPhotoRow {
+  photo_id: string;
+  match_hit_count: number;
+}
+
+export interface SimilarSessionRow {
+  id: string;
+  created_at: string;
+  tier: string;
+  match_count: number;
+  top_confidence: number | null;
+  matched_photo_ids: string[];
+  similarity: number;
+}
+
+export async function getMatchStats(): Promise<{
+  recentActivity: MatchActivityRow[];
+  hotPhotoIds: HotPhotoRow[];
+  operativesCount: number;
+  totalSessions: number;
+}> {
+  try {
+    const supabase = createServerClient();
+    const [activityRes, hotRes, opsRes, totalRes] = await Promise.all([
+      supabase.rpc("get_recent_match_activity", { hours_back: 24, max_results: 20 }),
+      supabase.rpc("get_hot_photo_ids", { top_n: 10, hours_back: 168 }),
+      supabase.rpc("get_unique_operatives_count"),
+      supabase.from("match_sessions").select("id", { count: "exact", head: true }),
+    ]);
+    return {
+      recentActivity: (activityRes.data as MatchActivityRow[]) || [],
+      hotPhotoIds: (hotRes.data as HotPhotoRow[]) || [],
+      operativesCount: typeof opsRes.data === "number" ? opsRes.data : 0,
+      totalSessions: totalRes.count ?? 0,
+    };
+  } catch {
+    return { recentActivity: [], hotPhotoIds: [], operativesCount: 0, totalSessions: 0 };
+  }
+}
+
+export async function findSimilarSessions(
+  embedding: number[],
+  threshold = 0.7,
+  maxResults = 5,
+): Promise<SimilarSessionRow[]> {
+  try {
+    const supabase = createServerClient();
+    const { data, error } = await supabase.rpc("find_similar_sessions", {
+      probe_embedding: embedding,
+      threshold,
+      max_results: maxResults,
+    });
+    if (error) return [];
+    return (data as SimilarSessionRow[]) || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getCooccurrenceRecommendations(
+  userPhotoIds: string[],
+  excludePhotoIds: string[] = [],
+  maxResults = 8,
+): Promise<string[]> {
+  if (userPhotoIds.length === 0) return [];
+  try {
+    const supabase = createServerClient();
+    const { data, error } = await supabase.rpc("get_cooccurrence_recommendations", {
+      user_photo_ids: userPhotoIds,
+      exclude_photo_ids: excludePhotoIds,
+      max_results: maxResults,
+    });
+    if (error) return [];
+    return ((data as HotPhotoRow[]) || []).map((r) => r.photo_id);
+  } catch {
+    return [];
+  }
+}
+
 export interface PhotoRow {
   id: string;
   drive_file_id: string;

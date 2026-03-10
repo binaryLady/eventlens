@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rowToPhoto } from "@/lib/photos";
 import { PhotoRecord, MatchResult } from "@/lib/types";
-import { saveMatchSession, getPhotosByDriveFileIds } from "@/lib/supabase";
+import { saveMatchSession, getPhotosByDriveFileIds, findSimilarSessions, getCooccurrenceRecommendations } from "@/lib/supabase";
 
 export const maxDuration = 60;
 
@@ -24,7 +24,7 @@ const MAX_BASE64_SIZE = 10 * 1024 * 1024;
 function vectorResponse(
   matches: MatchResult[],
   embedding: number[] | null,
-  error?: string,
+  extra?: { error?: string; recommendations?: string[] },
 ) {
   saveMatchSession({
     tier: "vector",
@@ -33,7 +33,13 @@ function vectorResponse(
     queryEmbedding: embedding,
     matchedPhotoIds: matches.map((m) => m.photo.driveFileId),
   });
-  return NextResponse.json({ matches, description: "", tier: "vector", ...(error ? { error } : {}) });
+  return NextResponse.json({
+    matches,
+    description: "",
+    tier: "vector",
+    ...(extra?.error ? { error: extra.error } : {}),
+    ...(extra?.recommendations ? { recommendations: extra.recommendations } : {}),
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -92,7 +98,7 @@ async function vectorMatch(imageBase64: string) {
   } = await embedRes.json();
 
   if (embedData.count === 0) {
-    return vectorResponse([], null, "No face detected in the uploaded photo. Please upload a clear photo of a person.");
+    return vectorResponse([], null, { error: "No face detected in the uploaded photo. Please upload a clear photo of a person." });
   }
 
   const bestFace = embedData.faces.reduce((a, b) => (a.det_score > b.det_score ? a : b));
@@ -101,6 +107,13 @@ async function vectorMatch(imageBase64: string) {
   const faceMatches = await matchFacesByEmbedding(bestFace.embedding, VECTOR_THRESHOLD, 30);
 
   if (faceMatches.length === 0) {
+    // Smart retry: check if a similar face was matched before
+    const similar = await findSimilarSessions(bestFace.embedding, 0.7, 1);
+    if (similar.length > 0 && similar[0].match_count > 0) {
+      return vectorResponse([], bestFace.embedding, {
+        error: "We've seen a similar face before but couldn't match this time. Try a clearer, well-lit photo.",
+      });
+    }
     return vectorResponse([], bestFace.embedding);
   }
 
@@ -131,5 +144,11 @@ async function vectorMatch(imageBase64: string) {
   });
   matches.sort((a, b) => b.confidence - a.confidence);
 
-  return vectorResponse(matches, bestFace.embedding);
+  // Co-occurrence recommendations
+  const matchedIds = matches.map((m) => m.photo.driveFileId);
+  const recommendations = await getCooccurrenceRecommendations(matchedIds, matchedIds, 8);
+
+  return vectorResponse(matches, bestFace.embedding, {
+    recommendations: recommendations.length > 0 ? recommendations : undefined,
+  });
 }

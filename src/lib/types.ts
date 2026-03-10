@@ -34,4 +34,25 @@ export interface MatchResponse {
   matches: MatchResult[];
   description: string;
   tier: "text" | "visual" | "both";
+  recommendations?: string[];
+}
+
+export interface MatchActivity {
+  id: string;
+  created_at: string;
+  tier: string;
+  match_count: number;
+  top_confidence: number | null;
+}
+
+export interface HotPhoto {
+  photo_id: string;
+  match_hit_count: number;
+}
+
+export interface StatsResponse {
+  recentActivity: MatchActivity[];
+  hotPhotoIds: HotPhoto[];
+  operativesCount: number;
+  totalSessions: number;
 }

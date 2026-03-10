@@ -11,7 +11,7 @@ import {
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { PhotoRecord, PhotosResponse, MatchResult, MatchTier } from "@/lib/types";
+import { PhotoRecord, PhotosResponse, MatchResult, MatchTier, StatsResponse, MatchActivity, HotPhoto } from "@/lib/types";
 import { searchPhotos } from "@/lib/photos";
 import { config } from "@/lib/config";
 import Lightbox from "@/components/Lightbox";
@@ -19,6 +19,7 @@ import Toast from "@/components/Toast";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import PhotoUpload from "@/components/PhotoUpload";
 import FloatingActionBar from "@/components/FloatingActionBar";
+import ActivityTicker from "@/components/ActivityTicker";
 
 function timeAgo(dateStr: string): string {
   if (!dateStr) return "";
@@ -195,6 +196,10 @@ function PhotoGrid() {
     }
     return "shuffle";
   });
+  const [recentActivity, setRecentActivity] = useState<MatchActivity[]>([]);
+  const [hotPhotoIds, setHotPhotoIds] = useState<Set<string>>(new Set());
+  const [operativesCount, setOperativesCount] = useState(0);
+  const [recommendations, setRecommendations] = useState<string[]>([]);
   const pendingPhotosRef = useRef<PhotoRecord[] | null>(null);
   const debounceRef = useRef<NodeJS.Timeout>(undefined);
 
@@ -270,6 +275,23 @@ function PhotoGrid() {
     return () => clearInterval(interval);
   }, [allPhotos.length, fetchData]);
 
+  // Stats polling (activity ticker, hot photos, operatives count)
+  useEffect(() => {
+    const fetchStats = () => {
+      fetch("/api/stats")
+        .then((res) => res.json())
+        .then((data: StatsResponse) => {
+          setRecentActivity(data.recentActivity || []);
+          setHotPhotoIds(new Set((data.hotPhotoIds || []).map((h: HotPhoto) => h.photo_id)));
+          setOperativesCount(data.operativesCount || 0);
+        })
+        .catch(() => {});
+    };
+    fetchStats();
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Debounced search
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -322,10 +344,11 @@ function PhotoGrid() {
   }, [debouncedQuery, activeFolder, selectedPhoto, router]);
 
   const handleMatchResults = useCallback(
-    (data: { matches: MatchResult[]; description: string; tier?: MatchTier }) => {
+    (data: { matches: MatchResult[]; description: string; tier?: MatchTier; recommendations?: string[] }) => {
       setMatchResults(data.matches);
       setMatchDescription(data.description);
       setMatchTier(data.tier || "text");
+      setRecommendations(data.recommendations || []);
       setActiveFolder("");
     },
     [setActiveFolder],
@@ -335,6 +358,7 @@ function PhotoGrid() {
     setMatchResults(null);
     setMatchDescription("");
     setActiveType("all");
+    setRecommendations([]);
   }, []);
 
   // ─── Multi-select handlers (no filteredPhotos dependency) ───
@@ -531,6 +555,11 @@ function PhotoGrid() {
             <span className="sm:hidden">EVENTLENS</span>
             <div className="flex items-center gap-2 md:gap-4">
               <span className="hidden sm:inline">{allPhotos.length > 0 ? `${allPhotos.length} ASSETS INDEXED` : "STANDBY"}</span>
+              {operativesCount > 0 && (
+                <span className="hidden md:inline" style={{ color: "var(--el-cyan)" }}>
+                  {operativesCount} OPERATIVE{operativesCount !== 1 ? "S" : ""} DETECTED
+                </span>
+              )}
               <span className="sm:hidden">{allPhotos.length > 0 ? `${allPhotos.length}` : ""}</span>
               <button
                 onClick={handleLogout}
@@ -613,6 +642,13 @@ function PhotoGrid() {
           </div>
         </div>
       </header>
+
+      {/* Activity ticker */}
+      {!loading && !error && allPhotos.length > 0 && (
+        <div className="mx-auto max-w-5xl">
+          <ActivityTicker activity={recentActivity} />
+        </div>
+      )}
 
       {/* Filter bar — always visible when we have photos */}
       {!loading && !error && allPhotos.length > 0 && (
@@ -858,6 +894,7 @@ function PhotoGrid() {
                       index={index}
                       selectMode={selectMode}
                       selected={selectedIds.has(photo.id)}
+                      isHot={hotPhotoIds.has(photo.driveFileId)}
                     />
                   ))}
                 </div>
@@ -874,6 +911,43 @@ function PhotoGrid() {
                   </button>
                 </div>
               </section>
+
+            {/* Most Recognized section */}
+            {hotPhotoIds.size > 0 && (() => {
+              const hotPhotos = allPhotos.filter((p) => hotPhotoIds.has(p.driveFileId)).slice(0, 8);
+              if (hotPhotos.length === 0) return null;
+              return (
+                <section className="mt-6 md:mt-10">
+                  <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-4">
+                    <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest" style={{ color: "var(--el-amber)" }}>
+                      &#x2500;&#x2500; MOST RECOGNIZED
+                    </span>
+                    <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-d9)]">
+                      [{hotPhotos.length}]
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5 md:gap-2 md:grid-cols-3 lg:grid-cols-4">
+                    {hotPhotos.map((photo, index) => (
+                      <PhotoCard
+                        key={photo.id}
+                        photo={photo}
+                        onClick={() => {
+                          if (selectMode) {
+                            togglePhotoSelection(photo.id);
+                          } else {
+                            setSelectedPhoto(photo);
+                          }
+                        }}
+                        index={index}
+                        selectMode={selectMode}
+                        selected={selectedIds.has(photo.id)}
+                        isHot
+                      />
+                    ))}
+                  </div>
+                </section>
+              );
+            })()}
             )}
           </>
         )}
@@ -918,10 +992,38 @@ function PhotoGrid() {
                     index={index}
                     selectMode={selectMode}
                     selected={selectedIds.has(photo.id)}
+                    isHot={hotPhotoIds.has(photo.driveFileId)}
                   />
                 ))}
               </div>
             )}
+
+            {/* Recommendations — "You might also appear in" */}
+            {matchResults !== null && recommendations.length > 0 && (() => {
+              const recPhotos = allPhotos.filter((p) => recommendations.includes(p.driveFileId));
+              if (recPhotos.length === 0) return null;
+              return (
+                <section className="mt-6 md:mt-8">
+                  <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-4">
+                    <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest" style={{ color: "var(--el-cyan)" }}>
+                      &#x2500;&#x2500; YOU MIGHT ALSO APPEAR IN
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5 md:gap-2 md:grid-cols-3 lg:grid-cols-4">
+                    {recPhotos.map((photo, index) => (
+                      <PhotoCard
+                        key={photo.id}
+                        photo={photo}
+                        onClick={() => setSelectedPhoto(photo)}
+                        index={index}
+                        selectMode={false}
+                        selected={false}
+                      />
+                    ))}
+                  </div>
+                </section>
+              );
+            })()}
           </>
         )}
       </main>
@@ -1176,6 +1278,7 @@ function PhotoCard({
   index,
   selectMode,
   selected,
+  isHot,
 }: {
   photo: PhotoRecord;
   onClick: () => void;
@@ -1183,6 +1286,7 @@ function PhotoCard({
   index: number;
   selectMode: boolean;
   selected: boolean;
+  isHot?: boolean;
 }) {
   const [imgError, setImgError] = useState(false);
 
@@ -1252,6 +1356,22 @@ function PhotoCard({
               </svg>
             )}
           </div>
+        </div>
+      )}
+
+      {/* HOT badge — top-left */}
+      {!selectMode && isHot && !matchInfo && (
+        <div className="absolute left-1.5 top-1.5">
+          <span
+            className="px-1.5 py-0.5 text-[8px] font-mono font-bold uppercase tracking-wider border"
+            style={{
+              borderColor: "var(--el-amber-88)",
+              backgroundColor: "rgba(26,26,26,0.8)",
+              color: "var(--el-amber)",
+            }}
+          >
+            HOT
+          </span>
         </div>
       )}
 
