@@ -46,7 +46,8 @@
       "Bash(for file in src/app/page.tsx src/app/login/page.tsx src/components/Lightbox.tsx src/components/FloatingActionBar.tsx src/components/PhotoUpload.tsx src/components/Toast.tsx)",
       "Bash(do sed -i '' -e 's/#ff00ff11/#ff00ff22/g' -e 's/#ff00ff15/#ff00ff28/g' -e 's/#ff00ff22/#ff00ff44/g' -e 's/#ff00ff33/#ff00ff55/g' -e 's/#ff00ff44/#ff00ff77/g' -e 's/#ff00ff55/#ff00ff88/g' -e 's/#ff00ff66/#ff00ff99/g' -e 's/#ff00ff77/#ff00ffbb/g' -e 's/#ff00ff88/#ff00ffcc/g' -e 's/#ff00ff99/#ff00ffdd/g' \"$file\")",
       "Bash(grep -n \"#00ff41\" /Users/soniacookbroen/Development/eventlens/src/app/admin/page.tsx /Users/soniacookbroen/Development/eventlens/src/app/page.tsx /Users/soniacookbroen/Development/eventlens/src/components/*.tsx)",
-      "Bash(find src -name \"*.tsx\" -exec sed -i '' 's/var\\(--el-magenta-dd\\)/var\\(--el-flame-dd\\)/g' {} +)"
+      "Bash(find src -name \"*.tsx\" -exec sed -i '' 's/var\\(--el-magenta-dd\\)/var\\(--el-flame-dd\\)/g' {} +)",
+      "Bash(xargs ls -1)"
     ]
   }
 }

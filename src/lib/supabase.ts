@@ -139,6 +139,24 @@ export async function saveMatchSession(params: {
   }
 }
 
+/**
+ * Fetch photo rows by drive_file_ids. Used by vector match to avoid
+ * fetching the entire photo catalog.
+ */
+export async function getPhotosByDriveFileIds(
+  driveFileIds: string[],
+): Promise<PhotoRow[]> {
+  if (driveFileIds.length === 0) return [];
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("photos")
+    .select("*")
+    .in("drive_file_id", driveFileIds)
+    .eq("status", "completed");
+  if (error) return [];
+  return (data as PhotoRow[]) || [];
+}
+
 export interface PhotoRow {
   id: string;
   drive_file_id: string;
