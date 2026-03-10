@@ -34,17 +34,6 @@ export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
   ];
   const mimeQuery = mimeTypes.map((t) => `mimeType='${t}'`).join(" or ");
 
-  // Cache folder names to avoid redundant API calls
-  const folderNameCache = new Map<string, string>();
-
-  async function cachedGetFolderName(folderId: string): Promise<string> {
-    const cached = folderNameCache.get(folderId);
-    if (cached !== undefined) return cached;
-    const name = await getFolderName(folderId, googleApiKey);
-    folderNameCache.set(folderId, name);
-    return name;
-  }
-
   /** Fetch all image files from a single folder (paginated) */
   async function fetchImagesInFolder(
     folderId: string,
@@ -163,24 +152,6 @@ export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
   } catch (error) {
     console.error("Failed to fetch photos from Drive folder:", error);
     return [];
-  }
-}
-
-/**
- * Helper to get folder name from folder ID
- */
-async function getFolderName(
-  folderId: string,
-  apiKey: string,
-): Promise<string> {
-  try {
-    const url = `https://www.googleapis.com/drive/v3/files/${folderId}?fields=name&key=${apiKey}`;
-    const res = await fetch(url);
-    if (!res.ok) return "Unknown";
-    const data: { name?: string } = await res.json();
-    return data.name || "Unknown";
-  } catch {
-    return "Unknown";
   }
 }
 
