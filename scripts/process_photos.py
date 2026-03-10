@@ -85,36 +85,8 @@ def _is_rate_limited(exc: BaseException) -> bool:
 
 
 class DriveClient:
-    def __init__(self, config: Config, oauth_creds_path: str | None = None):
+    def __init__(self, config: Config):
         self.api_key = config.google_api_key
-        self._oauth_service = None
-        if oauth_creds_path:
-            self._init_oauth(oauth_creds_path)
-
-    def is_oauth_configured(self) -> bool:
-        """Check if OAuth2 credentials are configured."""
-        return self._oauth_service is not None
-
-    def _init_oauth(self, creds_path: str):
-        from google.oauth2.credentials import Credentials
-        from google_auth_oauthlib.flow import InstalledAppFlow
-        from googleapiclient.discovery import build
-
-        token_path = Path(creds_path).parent / "token.json"
-        creds = None
-        if token_path.exists():
-            creds = Credentials.from_authorized_user_file(str(token_path))
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                from google.auth.transport.requests import Request
-                creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    creds_path, scopes=["https://www.googleapis.com/auth/drive"]
-                )
-                creds = flow.run_local_server(port=0)
-            token_path.write_text(creds.to_json())
-        self._oauth_service = build("drive", "v3", credentials=creds)
 
     def list_subfolders(self, parent_id: str) -> list[dict]:
         folders = []
@@ -161,25 +133,6 @@ class DriveClient:
             if not page_token:
                 break
         return files
-
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=2, min=2, max=16),
-           retry=retry_if_exception(_is_rate_limited))
-    def rename_file(self, file_id: str, new_name: str) -> None:
-        """Rename a file in Google Drive using OAuth2.
-        
-        Args:
-            file_id: The Drive file ID
-            new_name: The new filename
-            
-        Raises:
-            RuntimeError: If OAuth2 is not configured
-        """
-        if not self._oauth_service:
-            raise RuntimeError("OAuth2 not configured — cannot rename files. Pass --oauth-creds.")
-        # Google API library uses dynamic typing; type checkers cannot resolve Resource.files()
-        self._oauth_service.files().update(  # type: ignore[attr-defined]
-            fileId=file_id, body={"name": new_name}
-        ).execute()  # type: ignore[no-any-return]
 
     def download_image_base64(self, file_id: str, width: int = 1200) -> tuple[str, str] | None:
         # Try lh3 CDN first (fast, no auth needed)
@@ -438,52 +391,6 @@ def phase_scan(drive: DriveClient, store: SupabaseStore, config: Config, folder_
     return discovered
 
 
-def phase_rename(drive: DriveClient, store: SupabaseStore, dry_run: bool, folder_filter: str | None) -> int:
-    log.info("─── PHASE 2: RENAME ───")
-    if not drive.is_oauth_configured():
-        log.error("OAuth2 not configured. Pass --oauth-creds to enable rename, or use --skip-rename.")
-        return 0
-
-    photos = store.get_all_photos()
-    if folder_filter:
-        photos = [p for p in photos if p["folder"] == folder_filter]
-
-    # Group by folder, sort by filename within each
-    by_folder: dict[str, list[dict]] = {}
-    for p in photos:
-        by_folder.setdefault(p["folder"], []).append(p)
-
-    renamed = 0
-    for folder_name, folder_photos in sorted(by_folder.items()):
-        folder_photos.sort(key=lambda p: p["filename"])
-        prefix = folder_name.upper().replace(" ", "_") if folder_name else "ROOT"
-
-        for i, photo in enumerate(tqdm(folder_photos, desc=f"Rename {prefix}"), start=1):
-            old_name = photo["filename"]
-            # Skip already renamed
-            if re.search(r"_scb\.\w+$", old_name, re.IGNORECASE):
-                log.debug("  Skip (already renamed): %s", old_name)
-                continue
-
-            ext = Path(old_name).suffix  # includes dot
-            new_name = f"{prefix}_{i:03d}_scb{ext}"
-
-            if dry_run:
-                log.info("  [DRY RUN] %s → %s", old_name, new_name)
-            else:
-                try:
-                    drive.rename_file(photo["drive_file_id"], new_name)
-                    store.update_photo_metadata(photo["drive_file_id"], {"filename": new_name})
-                    time.sleep(0.2)  # ~5/sec
-                except OSError as e:
-                    log.error("  Failed to rename %s: %s", old_name, e)
-                    continue
-            renamed += 1
-
-    log.info("Rename complete: %d files '%s' renamed", renamed, "would be " if dry_run else "")
-    return renamed
-
-
 def phase_describe(
     drive: DriveClient,
     gemini: GeminiClient,
@@ -492,7 +399,7 @@ def phase_describe(
     retry_errors: bool,
     folder_filter: str | None,
 ) -> int:
-    log.info("─── PHASE 3: DESCRIBE ───")
+    log.info("─── PHASE 2: DESCRIBE ───")
     if not _check_embedding_column(store):
         return 0
     statuses = ["pending"]
@@ -618,7 +525,7 @@ def phase_face_embed(
     store: SupabaseStore,
     folder_filter: str | None,
 ) -> int:
-    log.info("─── PHASE 4: FACE EMBED ───")
+    log.info("─── PHASE 3: FACE EMBED ───")
     if not face_api.health_check():
         log.error("Face API at %s is not reachable. Use --skip-face-embed or start the service.", face_api.base_url)
         return 0
@@ -686,11 +593,9 @@ def parse_args() -> argparse.Namespace:
 
     phase = p.add_argument_group("Phase control")
     phase.add_argument("--dry-run", action="store_true", help="Preview without making changes")
-    phase.add_argument("--skip-rename", action="store_true", help="Skip Drive rename phase")
     phase.add_argument("--skip-describe", action="store_true", help="Skip Gemini description phase")
     phase.add_argument("--skip-face-embed", action="store_true", help="Skip InsightFace phase")
     phase.add_argument("--only-scan", action="store_true", help="Run only scan phase")
-    phase.add_argument("--only-rename", action="store_true", help="Run only rename phase")
     phase.add_argument("--only-describe", action="store_true", help="Run only describe + text embedding phase")
     phase.add_argument("--only-embeddings", action="store_true", help="Run only text embedding sub-phase")
     phase.add_argument("--only-face-embed", action="store_true", help="Run only face embedding phase")
@@ -703,7 +608,6 @@ def parse_args() -> argparse.Namespace:
 
     conf = p.add_argument_group("Configuration")
     conf.add_argument("--env-file", type=str, help="Path to env file (default: .env.local)")
-    conf.add_argument("--oauth-creds", type=str, help="Path to Google OAuth credentials.json")
     conf.add_argument("--face-api-url", type=str, help="Override FACE_API_URL")
 
     p.add_argument("--verbose", action="store_true", help="Debug logging")
@@ -728,14 +632,12 @@ def main():
         config.face_api_url = args.face_api_url
 
     # Determine which phases to run
-    only_flags = [args.only_scan, args.only_rename, args.only_describe, args.only_embeddings, args.only_face_embed]
+    only_flags = [args.only_scan, args.only_describe, args.only_embeddings, args.only_face_embed]
     run_all = not any(only_flags)
 
     phases = []
     if run_all or args.only_scan:
         phases.append("scan")
-    if (run_all and not args.skip_rename) or args.only_rename:
-        phases.append("rename")
     if (run_all and not args.skip_describe) or args.only_describe:
         phases.append("describe")
     if args.only_embeddings:
@@ -747,7 +649,7 @@ def main():
 
     # Initialize clients
     store = SupabaseStore(config.supabase_url, config.supabase_key)
-    drive = DriveClient(config, args.oauth_creds if ("rename" in phases) else None)
+    drive = DriveClient(config)
     gemini = GeminiClient(config.gemini_api_key, args.gemini_rpm) if config.gemini_api_key else None
     face_api = None
     if config.face_api_url and "face_embed" in phases:
@@ -762,9 +664,6 @@ def main():
     try:
         if "scan" in phases:
             results["scan"] = phase_scan(drive, store, config, args.folder)
-
-        if "rename" in phases:
-            results["rename"] = phase_rename(drive, store, args.dry_run, args.folder)
 
         if "describe" in phases:
             if not gemini:
