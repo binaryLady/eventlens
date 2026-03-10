@@ -617,13 +617,13 @@ function PhotoGrid() {
       {/* Filter bar — always visible when we have photos */}
       {!loading && !error && allPhotos.length > 0 && (
         <div className="mx-auto max-w-5xl px-3 md:px-4 pb-2 md:pb-4 space-y-1.5 md:space-y-2">
-          {/* Row 1: folder tabs (scrollable) */}
+          {/* Desktop: folder tabs row */}
           {folders.length > 0 && (
-            <div className="scrollbar-hide overflow-x-auto -mx-3 px-3 md:-mx-4 md:px-4">
+            <div className="hidden md:block scrollbar-hide overflow-x-auto -mx-4 px-4">
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setActiveFolder("")}
-                  className={`shrink-0 px-2.5 py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider transition-all ${
+                  className={`shrink-0 px-2.5 py-1.5 text-xs font-mono uppercase tracking-wider transition-all ${
                     activeFolder === ""
                       ? "border border-[var(--el-magenta)] text-[var(--el-magenta)] bg-[var(--el-magenta-28)] glow-border-magenta"
                       : "border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
@@ -637,7 +637,7 @@ function PhotoGrid() {
                     onClick={() =>
                       setActiveFolder(activeFolder === folder ? "" : folder)
                     }
-                    className={`shrink-0 px-2.5 py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider transition-all ${
+                    className={`shrink-0 px-2.5 py-1.5 text-xs font-mono uppercase tracking-wider transition-all ${
                       activeFolder === folder
                         ? "border border-[var(--el-magenta)] text-[var(--el-magenta)] bg-[var(--el-magenta-28)] glow-border-magenta"
                         : "border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
@@ -650,17 +650,22 @@ function PhotoGrid() {
             </div>
           )}
 
-          {/* Row 2: filter/sort + select */}
+          {/* Filter/sort + select row */}
           <div className="flex items-center justify-between gap-2">
             <FilterSortSheet
               sortOrder={sortOrder}
               onSortChange={setSortOrder}
               activeType={activeType}
               onTypeChange={setActiveType}
+              folders={folders}
+              folderCounts={folderCounts}
+              activeFolder={activeFolder}
+              onFolderChange={setActiveFolder}
+              totalCount={allPhotos.length}
             />
             <button
               onClick={toggleSelectMode}
-              className={`px-2.5 py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider transition-all ${
+              className={`shrink-0 px-2.5 py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                 selectMode
                   ? "border border-[var(--el-magenta)] text-[var(--el-magenta)] bg-[var(--el-magenta-28)] glow-border-magenta"
                   : "border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
