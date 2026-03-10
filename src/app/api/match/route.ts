@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return vectorMatch(image, mimeType);
+    return vectorMatch(image);
   } catch {
     return NextResponse.json(
       { error: "Failed to process photo match" },
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
 const VECTOR_THRESHOLD = 0.68;
 
-async function vectorMatch(imageBase64: string, _mimeType: string) {
+async function vectorMatch(imageBase64: string) {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (FACE_API_SECRET) headers["Authorization"] = `Bearer ${FACE_API_SECRET}`;
 
