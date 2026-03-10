@@ -234,6 +234,13 @@ function PhotoGrid() {
         setShuffledPhotos(shuffled);
         setLastUpdated(data.lastUpdated);
         setLoading(false);
+
+        // Deep-link: open photo from URL param
+        const photoParam = searchParams.get("photo");
+        if (photoParam) {
+          const match = data.photos.find((p) => p.filename === photoParam);
+          if (match) setSelectedPhoto(match);
+        }
       } else {
         setError(true);
         setLoading(false);
@@ -306,14 +313,15 @@ function PhotoGrid() {
     return () => { cancelled = true; };
   }, [debouncedQuery, activeFolder, matchResults]);
 
-  // Sync URL params
+  // Sync URL params (including selected photo for sharing)
   useEffect(() => {
     const params = new URLSearchParams();
     if (debouncedQuery) params.set("q", debouncedQuery);
     if (activeFolder) params.set("folder", activeFolder);
+    if (selectedPhoto) params.set("photo", selectedPhoto.filename);
     const str = params.toString();
     router.replace(str ? `?${str}` : "/", { scroll: false });
-  }, [debouncedQuery, activeFolder, router]);
+  }, [debouncedQuery, activeFolder, selectedPhoto, router]);
 
   const handleMatchResults = useCallback(
     (data: { matches: MatchResult[]; description: string; tier?: MatchTier }) => {
@@ -510,7 +518,7 @@ function PhotoGrid() {
       <header className="px-3 pt-4 pb-4 md:px-4 md:pt-12 md:pb-8">
         <div className="mx-auto max-w-5xl">
           {/* Top bar with coordinates */}
-          <div className="flex items-center justify-between mb-3 md:mb-4 text-[9px] md:text-[10px] text-[#00ff4166] uppercase tracking-widest font-mono">
+          <div className="flex items-center justify-between mb-3 md:mb-4 text-[9px] md:text-[10px] text-[#ff00ff66] uppercase tracking-widest font-mono">
             <span className="hidden sm:inline">SYS://PHOTO_RECON</span>
             <span className="sm:hidden">EVENTLENS</span>
             <div className="flex items-center gap-2 md:gap-4">
@@ -518,7 +526,7 @@ function PhotoGrid() {
               <span className="sm:hidden">{allPhotos.length > 0 ? `${allPhotos.length}` : ""}</span>
               <button
                 onClick={handleLogout}
-                className="text-[#00ff4144] hover:text-[#00ff41] active:text-[#00ff41] transition-colors underline"
+                className="text-[#ff00ff44] hover:text-[#00ff41] active:text-[#00ff41] transition-colors underline"
                 title="Logout"
               >
                 [LOGOUT]
@@ -546,14 +554,14 @@ function PhotoGrid() {
                   </span>
                 )}
               </div>
-              <p className="mt-1.5 md:mt-2 text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-[#00ff4166] font-mono">
+              <p className="mt-1.5 md:mt-2 text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] text-[#ff00ff66] font-mono">
                 {config.eventTagline}
               </p>
             </div>
 
             {/* Search */}
             <div className="relative mt-4 md:mt-6 max-w-xl mx-auto">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#00ff4166] text-sm font-mono">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#ff00ff66] text-sm font-mono">
                 {">_"}
               </span>
               <input
@@ -561,14 +569,14 @@ function PhotoGrid() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="SEARCH PHOTOS, PEOPLE, SCENES..."
-                className="w-full border border-[#00ff4133] bg-black/60 py-3 pl-10 pr-10 text-base md:text-sm text-[#00ff41] font-mono placeholder-[#00ff4133] outline-none transition-all focus:border-[#00ff41] focus:shadow-[0_0_15px_rgba(0,255,65,0.15)]"
+                className="w-full border border-[#ff00ff33] bg-black/60 py-3 pl-10 pr-10 text-base md:text-sm text-[#00ff41] font-mono placeholder-[#ff00ff33] outline-none transition-all focus:border-[#00ff41] focus:shadow-[0_0_15px_rgba(0,255,65,0.15)]"
                 aria-label="Search photos"
                 enterKeyHint="search"
               />
               {searchInput && (
                 <button
                   onClick={() => setSearchInput("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#00ff4166] hover:text-[#00ff41] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#ff00ff66] hover:text-[#00ff41] transition-colors"
                   aria-label="Clear search"
                 >
                   <svg
