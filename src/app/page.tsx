@@ -467,8 +467,8 @@ function PhotoGrid() {
 
             {/* Photo upload for face matching */}
             <PhotoUpload
-              onMatchResults={handleMatchResults}
-              onClear={handleClearMatch}
+              onMatchResultsAction={handleMatchResults}
+              onClearAction={handleClearMatch}
               isActive={matchResults !== null}
             />
           </div>

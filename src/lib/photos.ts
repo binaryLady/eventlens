@@ -1,5 +1,6 @@
 import { PhotoRecord } from "./types";
 import { config } from "./config";
+import { createAnonClient, PhotoRow } from "./supabase";
 
 export function extractDriveFileId(driveUrl: string): string {
   // https://drive.google.com/file/d/{ID}/view
@@ -14,12 +15,68 @@ export function extractDriveFileId(driveUrl: string): string {
   return "";
 }
 
+// ── Main fetch (routes through feature flag) ──────────────────────────────
+
+/**
+ * Fetch photo records from the configured data source.
+ * Controlled by DATA_SOURCE env var: "supabase" (default) or "sheet" (legacy fallback).
+ */
+export async function fetchPhotos(): Promise<PhotoRecord[]> {
+  if (config.dataSource === "sheet") {
+    return fetchPhotosFromSheet();
+  }
+  return fetchPhotosFromSupabase();
+}
+
+// ── Supabase data source ──────────────────────────────────────────────────
+
+async function fetchPhotosFromSupabase(): Promise<PhotoRecord[]> {
+  try {
+    const supabase = createAnonClient();
+
+    const { data, error } = await supabase
+      .from("photos")
+      .select("*")
+      .eq("status", "completed")
+      .order("processed_at", { ascending: false });
+
+    if (error) {
+      console.error("Supabase fetch error:", error);
+      return [];
+    }
+
+    return (data || []).map((row: PhotoRow) => ({
+      id: row.id,
+      filename: row.filename,
+      driveUrl: row.drive_url,
+      driveFileId: row.drive_file_id,
+      folder: row.folder,
+      visibleText: row.visible_text,
+      peopleDescriptions: row.people_descriptions,
+      sceneDescription: row.scene_description,
+      faceCount: row.face_count,
+      processedAt: row.processed_at,
+      thumbnailUrl: row.drive_file_id
+        ? `https://lh3.googleusercontent.com/d/${row.drive_file_id}=w400`
+        : "",
+      downloadUrl: row.drive_file_id
+        ? `https://drive.google.com/uc?export=download&id=${row.drive_file_id}`
+        : "",
+    }));
+  } catch (error) {
+    console.error("Supabase fetch failed:", error);
+    return [];
+  }
+}
+
+// ── Google Sheet data source (legacy, kept for migration + fallback) ──────
+
 /**
  * Fetch photo metadata from a public Google Sheet.
  * Uses the Google Visualization API (gviz/tq) which works when the sheet
  * is shared as "Anyone with the link" — no API key needed.
  */
-export async function fetchPhotos(): Promise<PhotoRecord[]> {
+export async function fetchPhotosFromSheet(): Promise<PhotoRecord[]> {
   const { sheetId } = config;
 
   if (!sheetId) {
@@ -77,7 +134,10 @@ export async function fetchPhotos(): Promise<PhotoRecord[]> {
   }
 
   if (!jsonStr) {
-    console.error("Could not parse Google Sheets response. Raw:", text.slice(0, 200));
+    console.error(
+      "Could not parse Google Sheets response. Raw:",
+      text.slice(0, 200),
+    );
     return [];
   }
 
@@ -142,6 +202,8 @@ export async function fetchPhotos(): Promise<PhotoRecord[]> {
 
   return photos;
 }
+
+// ── Client-side helpers ───────────────────────────────────────────────────
 
 /** Client-side text search — runs in the browser, no server round-trip */
 export function searchPhotos(
@@ -237,7 +299,9 @@ export async function fetchDriveFolders(): Promise<string[]> {
 
     const res = await fetch(url, { next: { revalidate: 300 } });
     if (!res.ok) {
-      console.error(`Drive folders fetch error: ${res.status} ${res.statusText}`);
+      console.error(
+        `Drive folders fetch error: ${res.status} ${res.statusText}`,
+      );
       return [];
     }
 

@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 
 interface PhotoUploadProps {
-  onMatchResults: (results: {
+  onMatchResultsAction: (results: {
     matches: Array<{
       photo: {
         id: string;
@@ -24,13 +24,13 @@ interface PhotoUploadProps {
     }>;
     description: string;
   }) => void;
-  onClear: () => void;
+  onClearAction: () => void;
   isActive: boolean;
 }
 
 export default function PhotoUpload({
-  onMatchResults,
-  onClear,
+  onMatchResultsAction,
+  onClearAction,
   isActive,
 }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false);
@@ -99,7 +99,7 @@ export default function PhotoUpload({
           return;
         }
 
-        onMatchResults(data);
+        onMatchResultsAction(data);
       } catch {
         clearDeepScanTimer();
         setError("NETWORK ERROR — RETRY");
@@ -122,7 +122,7 @@ export default function PhotoUpload({
     setPreview(null);
     setError(null);
     setUploading(false);
-    onClear();
+    onClearAction();
   };
 
   return (

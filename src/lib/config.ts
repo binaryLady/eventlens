@@ -7,6 +7,10 @@ export interface EventLensConfig {
   geminiApiKey: string;
   googleApiKey: string;
   driveFolderId: string;
+  supabaseUrl: string;
+  supabaseServiceKey: string;
+  adminSecret: string;
+  dataSource: "supabase" | "sheet";
 }
 
 export const config: EventLensConfig = {
@@ -19,4 +23,8 @@ export const config: EventLensConfig = {
   geminiApiKey: process.env.GEMINI_API_KEY || "",
   googleApiKey: process.env.GOOGLE_API_KEY || "",
   driveFolderId: process.env.GOOGLE_DRIVE_FOLDER_ID || "",
+  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+  adminSecret: process.env.ADMIN_API_SECRET || "",
+  dataSource: (process.env.DATA_SOURCE as "supabase" | "sheet") || "supabase",
 };

@@ -199,3 +199,64 @@ Only include photos where confidence >= 35. If no matches, return [].
 
   return [];
 }
+
+// ── Photo indexing (replaces Apps Script analyzeImage_) ───────────────────
+
+export interface PhotoAnalysis {
+  visible_text: string;
+  people_descriptions: string;
+  scene_description: string;
+  face_count: number;
+}
+
+/**
+ * Analyze an event photo with Gemini — produces the same structured output
+ * that the Google Apps Script used to write to the Sheet.
+ *
+ * This is the in-app replacement for scripts/apps-script.gs analyzeImage_().
+ */
+export async function analyzeEventPhoto(
+  imageBase64: string,
+  mimeType: string,
+): Promise<PhotoAnalysis> {
+  const prompt = `Analyze this event photo. Return ONLY valid JSON with these fields:
+{
+  "visible_text": "ALL text visible in the image - banners, signs, screens, t-shirts, lanyards, stickers, name tags. Include everything, even partial text. If no text, return empty string.",
+  "people_descriptions": "For EACH person visible, provide a structured description using this format separated by semicolons: [gender], [skin tone], [hair color] [hair length] [hair style], [facial hair or clean-shaven], [glasses/no glasses], [age range], [build], [clothing color and type], [accessories], [any distinctive features]. Be SPECIFIC with colors (say navy blazer not dark jacket). Example: male, medium skin, short black hair, beard, glasses, 30s, medium build, blue polo shirt, lanyard with badge; female, light skin, long blonde hair, no glasses, 20s, slim, red flannel shirt, no accessories",
+  "scene_description": "Brief description of what is happening - presentation, networking, coding, panel, etc. Include notable objects like laptops, microphones, whiteboards.",
+  "face_count": number_of_faces_visible
+}
+Be thorough with visible_text and people_descriptions - both are used for search and face matching. Return ONLY the JSON, no markdown formatting.`;
+
+  const response = await callGemini([
+    {
+      inline_data: {
+        mime_type: mimeType,
+        data: imageBase64,
+      },
+    },
+    { text: prompt },
+  ]);
+
+  // Clean up Gemini response (same as apps-script.gs cleanup)
+  const text = response
+    .replace(/```json\n?/g, "")
+    .replace(/```\n?/g, "")
+    .trim()
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2018\u2019]/g, "'");
+
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error("No JSON object found in Gemini response");
+  }
+
+  const parsed = JSON.parse(jsonMatch[0]);
+
+  return {
+    visible_text: String(parsed.visible_text || ""),
+    people_descriptions: String(parsed.people_descriptions || ""),
+    scene_description: String(parsed.scene_description || ""),
+    face_count: parseInt(String(parsed.face_count || "0"), 10) || 0,
+  };
+}
