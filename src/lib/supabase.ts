@@ -46,6 +46,47 @@ export async function matchFacesByEmbedding(
   return (data as FaceMatch[]) || [];
 }
 
+/**
+ * Append appearance attributes to a photo's people_descriptions.
+ * Deduplicates against existing terms. No PII — only physical attributes.
+ */
+export async function enrichPhotoDescriptions(
+  driveFileId: string,
+  newTerms: string,
+): Promise<void> {
+  if (!newTerms.trim()) return;
+  try {
+    const supabase = createServerClient();
+    const { data } = await supabase
+      .from("photos")
+      .select("people_descriptions")
+      .eq("drive_file_id", driveFileId)
+      .single();
+
+    const existing = (data?.people_descriptions as string) || "";
+    const existingLower = existing.toLowerCase();
+
+    // Only append terms not already present
+    const additions = newTerms
+      .split(/[,;]+/)
+      .map((t) => t.trim())
+      .filter((t) => t.length > 2 && !existingLower.includes(t.toLowerCase()));
+
+    if (additions.length === 0) return;
+
+    const merged = existing
+      ? `${existing}; ${additions.join("; ")}`
+      : additions.join("; ");
+
+    await supabase
+      .from("photos")
+      .update({ people_descriptions: merged })
+      .eq("drive_file_id", driveFileId);
+  } catch {
+    // Non-critical — don't break match flow
+  }
+}
+
 export interface PhotoRow {
   id: string;
   drive_file_id: string;

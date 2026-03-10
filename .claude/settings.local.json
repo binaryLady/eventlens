@@ -21,7 +21,8 @@
       "Bash(curl -s \"http://localhost:3000/api/photos\")",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); p=[x for x in d[''photos''] if ''SONIA'' in x[''filename'']]; print\\(p[0][''driveFileId''] if p else ''none''\\)\")",
       "Bash(curl -s -b \"auth=true\" \"http://localhost:3000/api/photos\")",
-      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); p=[x for x in d[''photos''] if ''SONIA'' in x[''filename'']]; print\\(p[0][''driveFileId'']\\)\")"
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); p=[x for x in d[''photos''] if ''SONIA'' in x[''filename'']]; print\\(p[0][''driveFileId'']\\)\")",
+      "Bash(npx tsc --noEmit)"
     ]
   }
 }

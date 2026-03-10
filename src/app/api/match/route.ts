@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchPhotosWithMetadata } from "@/lib/photos";
 import { describePersonForMatching, verifyFaceMatches } from "@/lib/gemini";
 import { fetchDriveImage } from "@/lib/drive";
-import { PhotoRecord, MatchResult } from "@/lib/types";
+import { PhotoRecord, MatchResult, MatchTier } from "@/lib/types";
+import { enrichPhotoDescriptions } from "@/lib/supabase";
 import { config } from "@/lib/config";
 
 export const maxDuration = 60;
@@ -93,6 +94,7 @@ async function tryVectorMatch(
         photo,
         confidence: Math.round(match.similarity * 100),
         reason: `Face match (vector similarity ${(match.similarity * 100).toFixed(0)}%)`,
+        tier: "vector",
       });
     });
 
@@ -106,7 +108,17 @@ async function tryVectorMatch(
 // ── Gemini-based matching ──────────────────────────────────────────────
 
 async function geminiMatch(imageBase64: string, mimeType: string) {
-  const description = await describePersonForMatching(imageBase64, mimeType);
+  let description: string;
+  try {
+    description = await describePersonForMatching(imageBase64, mimeType);
+  } catch {
+    return NextResponse.json({
+      matches: [],
+      description: "",
+      tier: "text",
+      error: "Could not analyze the uploaded image. Please try a different photo — clear, well-lit selfies work best.",
+    });
+  }
 
   if (description.includes("NO_PERSON_DETECTED")) {
     return NextResponse.json({
@@ -126,16 +138,28 @@ async function geminiMatch(imageBase64: string, mimeType: string) {
   const textMatches = scoreByText(allPhotos, attributeTerms);
 
   let visualMatches: MatchResult[] = [];
-  let tier: "text" | "visual" | "both" = "text";
+  let tier: MatchTier = "text";
 
   if (config.googleApiKey) {
-    visualMatches = await runVisualMatching(imageBase64, mimeType, allPhotos, config.googleApiKey);
+    try {
+      visualMatches = await runVisualMatching(imageBase64, mimeType, allPhotos, config.googleApiKey);
+    } catch {
+      // Visual matching failed — continue with text matches only
+    }
   }
 
   if (textMatches.length > 0 && visualMatches.length > 0) tier = "both";
   else if (visualMatches.length > 0) tier = "visual";
 
-  return NextResponse.json({ matches: mergeResults(textMatches, visualMatches), description, tier });
+  const merged = mergeResults(textMatches, visualMatches);
+
+  // Enrich: write appearance terms to high-confidence visual matches
+  // so future text searches benefit (no PII — only attributes)
+  if (description && visualMatches.length > 0) {
+    enrichMatchedPhotos(description, visualMatches);
+  }
+
+  return NextResponse.json({ matches: merged, description, tier });
 }
 
 // ── Text matching ──────────────────────────────────────────────────────
@@ -190,6 +214,7 @@ function scoreByText(photos: PhotoRecord[], terms: string[]): MatchResult[] {
         photo,
         confidence: Math.round(normalizedScore),
         reason: `Text match: ${Array.from(new Set(matched)).join(", ")}`,
+        tier: "text",
       });
     }
   }
@@ -250,7 +275,7 @@ async function runVisualMatching(
 
     for (const match of matches) {
       const photo = batch.find((p) => p.id === match.id);
-      if (photo) allMatches.push({ photo, confidence: match.confidence, reason: match.reason });
+      if (photo) allMatches.push({ photo, confidence: match.confidence, reason: match.reason, tier: "visual" });
     }
 
     if (allMatches.filter((m) => m.confidence >= 60).length >= 5) break;
@@ -271,6 +296,7 @@ function mergeResults(textMatches: MatchResult[], visualMatches: MatchResult[]):
         photo: m.photo,
         confidence: Math.min(Math.max(m.confidence, existing.confidence) + 15, 99),
         reason: `${m.reason} + ${existing.reason}`,
+        tier: "both",
       });
     } else {
       byId.set(m.photo.id, m);
@@ -280,4 +306,23 @@ function mergeResults(textMatches: MatchResult[], visualMatches: MatchResult[]):
   const merged = Array.from(byId.values());
   merged.sort((a, b) => b.confidence - a.confidence);
   return merged;
+}
+
+// ── Feedback enrichment ─────────────────────────────────────────────
+
+const ENRICH_CONFIDENCE_THRESHOLD = 60;
+
+/**
+ * Fire-and-forget: for high-confidence visual matches, append the
+ * person-description attributes to the photo's people_descriptions.
+ * This improves future text-based searches without storing PII.
+ */
+function enrichMatchedPhotos(description: string, visualMatches: MatchResult[]): void {
+  const strong = visualMatches.filter((m) => m.confidence >= ENRICH_CONFIDENCE_THRESHOLD);
+  if (strong.length === 0) return;
+
+  // Run in background — don't block the response
+  Promise.allSettled(
+    strong.map((m) => enrichPhotoDescriptions(m.photo.driveFileId, description)),
+  ).catch(() => {});
 }

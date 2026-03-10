@@ -2,29 +2,10 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import { MatchResponse } from "@/lib/types";
 
 interface PhotoUploadProps {
-  onMatchResults: (results: {
-    matches: Array<{
-      photo: {
-        id: string;
-        filename: string;
-        driveUrl: string;
-        driveFileId: string;
-        folder: string;
-        visibleText: string;
-        peopleDescriptions: string;
-        sceneDescription: string;
-        faceCount: number;
-        processedAt: string;
-        thumbnailUrl: string;
-        downloadUrl: string;
-      };
-      confidence: number;
-      reason: string;
-    }>;
-    description: string;
-  }) => void;
+  onMatchResults: (results: MatchResponse) => void;
   onClear: () => void;
   isActive: boolean;
 }

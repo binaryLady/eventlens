@@ -20,10 +20,13 @@ export interface PhotosResponse {
   lastUpdated: string;
 }
 
+export type MatchTier = "text" | "visual" | "vector" | "both";
+
 export interface MatchResult {
   photo: PhotoRecord;
   confidence: number; // 0-100
   reason: string;
+  tier: MatchTier;
 }
 
 export interface MatchResponse {

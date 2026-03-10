@@ -10,7 +10,7 @@ import {
   Suspense,
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { PhotoRecord, PhotosResponse, MatchResult } from "@/lib/types";
+import { PhotoRecord, PhotosResponse, MatchResult, MatchTier } from "@/lib/types";
 import { searchPhotos } from "@/lib/photos";
 import { config } from "@/lib/config";
 import Lightbox from "@/components/Lightbox";
@@ -175,7 +175,7 @@ function PhotoGrid() {
   );
   const [matchResults, setMatchResults] = useState<MatchResult[] | null>(null);
   const [matchDescription, setMatchDescription] = useState("");
-  const [matchTier, setMatchTier] = useState<"text" | "visual" | "both">("text");
+  const [matchTier, setMatchTier] = useState<MatchTier>("text");
   const [shuffledPhotos, setShuffledPhotos] = useState<PhotoRecord[]>([]);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -291,7 +291,7 @@ function PhotoGrid() {
   }, [debouncedQuery, activeFolder, router]);
 
   const handleMatchResults = useCallback(
-    (data: { matches: MatchResult[]; description: string; tier?: "text" | "visual" | "both" }) => {
+    (data: { matches: MatchResult[]; description: string; tier?: MatchTier }) => {
       setMatchResults(data.matches);
       setMatchDescription(data.description);
       setMatchTier(data.tier || "text");
@@ -386,11 +386,11 @@ function PhotoGrid() {
     return shuffledPhotos.slice(0, 8);
   }, [shuffledPhotos]);
 
-  const matchConfidenceMap = useMemo(() => {
+  const matchInfoMap = useMemo(() => {
     if (!matchResults) return null;
-    const map = new Map<string, number>();
+    const map = new Map<string, { confidence: number; tier: MatchTier }>();
     for (const m of matchResults) {
-      map.set(m.photo.id, m.confidence);
+      map.set(m.photo.id, { confidence: m.confidence, tier: m.tier });
     }
     return map;
   }, [matchResults]);
@@ -632,16 +632,19 @@ function PhotoGrid() {
               {matchResults !== null ? (
                 <>
                   {matchResults.length} MATCH{matchResults.length !== 1 ? "ES" : ""}
-                  {matchTier === "visual" && (
-                    <span className="text-[#00ff41]">
-                      {" // "}DEEP SCAN
-                    </span>
-                  )}
-                  {matchTier === "both" && (
-                    <span className="text-[#00ff41]">
-                      {" // "}TEXT + VISUAL SCAN
-                    </span>
-                  )}
+                  {matchResults.length > 0 && (() => {
+                    const tiers = new Set(matchResults.map((m) => m.tier));
+                    const parts: string[] = [];
+                    if (tiers.has("text")) parts.push("TEXT");
+                    if (tiers.has("visual")) parts.push("VISUAL");
+                    if (tiers.has("vector")) parts.push("VECTOR");
+                    if (tiers.has("both")) { parts.length = 0; parts.push("TEXT", "VISUAL"); }
+                    return (
+                      <span className="text-[#00ff41]">
+                        {" // "}{parts.join(" + ")} SCAN
+                      </span>
+                    );
+                  })()}
                   {matchDescription && (
                     <span className="text-[#00ff4133]">
                       {" // "}
@@ -852,7 +855,7 @@ function PhotoGrid() {
                         setSelectedPhoto(photo);
                       }
                     }}
-                    matchConfidence={matchConfidenceMap?.get(photo.id)}
+                    matchInfo={matchInfoMap?.get(photo.id)}
                     index={index}
                     selectMode={selectMode}
                     selected={selectedIds.has(photo.id)}
@@ -1016,17 +1019,24 @@ function SortDropdown({
   );
 }
 
+const TIER_LABELS: Record<MatchTier, string> = {
+  text: "TXT",
+  visual: "VIS",
+  vector: "VEC",
+  both: "TXT+VIS",
+};
+
 function PhotoCard({
   photo,
   onClick,
-  matchConfidence,
+  matchInfo,
   index,
   selectMode,
   selected,
 }: {
   photo: PhotoRecord;
   onClick: () => void;
-  matchConfidence?: number;
+  matchInfo?: { confidence: number; tier: MatchTier };
   index: number;
   selectMode: boolean;
   selected: boolean;
@@ -1039,7 +1049,7 @@ function PhotoCard({
       className={`group relative aspect-[4/3] overflow-hidden border bg-black cursor-pointer transition-all duration-200 motion-safe:hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(0,255,65,0.15)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41] animate-grid-reveal ${
         selected
           ? "border-[#00ff41] shadow-[0_0_15px_rgba(0,255,65,0.25)] ring-1 ring-[#00ff41]"
-          : matchConfidence !== undefined && matchConfidence >= 70
+          : matchInfo && matchInfo.confidence >= 70
             ? "border-[#00ff41] shadow-[0_0_12px_rgba(0,255,65,0.2)]"
             : "border-[#00ff4122] hover:border-[#00ff4166]"
       }`}
@@ -1100,18 +1110,31 @@ function PhotoCard({
       <div className="absolute top-1 left-1 w-2.5 h-2.5 border-t border-l border-[#00ff4144] opacity-0 group-hover:opacity-100 transition-opacity" />
       <div className="absolute bottom-1 right-1 w-2.5 h-2.5 border-b border-r border-[#00ff4144] opacity-0 group-hover:opacity-100 transition-opacity" />
 
-      {/* Match confidence badge */}
-      {!selectMode && matchConfidence !== undefined ? (
-        <div
-          className={`absolute right-1.5 top-1.5 px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider ${
-            matchConfidence >= 70
-              ? "bg-[#00ff41] text-black"
-              : matchConfidence >= 50
-                ? "bg-[#00ff4188] text-black"
-                : "border border-[#00ff4144] bg-black/80 text-[#00ff4166]"
-          }`}
-        >
-          {matchConfidence}%
+      {/* Match confidence + tier badge */}
+      {!selectMode && matchInfo ? (
+        <div className="absolute right-1.5 top-1.5 flex items-center gap-0.5">
+          <span
+            className={`px-1 py-0.5 text-[8px] font-mono font-bold uppercase tracking-wider border ${
+              matchInfo.tier === "both"
+                ? "border-[#00ff41] bg-black/80 text-[#00ff41]"
+                : matchInfo.tier === "visual" || matchInfo.tier === "vector"
+                  ? "border-[#00ccff88] bg-black/80 text-[#00ccff]"
+                  : "border-[#ffaa0088] bg-black/80 text-[#ffaa00]"
+            }`}
+          >
+            {TIER_LABELS[matchInfo.tier]}
+          </span>
+          <span
+            className={`px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider ${
+              matchInfo.confidence >= 70
+                ? "bg-[#00ff41] text-black"
+                : matchInfo.confidence >= 50
+                  ? "bg-[#00ff4188] text-black"
+                  : "border border-[#00ff4144] bg-black/80 text-[#00ff4166]"
+            }`}
+          >
+            {matchInfo.confidence}%
+          </span>
         </div>
       ) : (
         !selectMode &&
