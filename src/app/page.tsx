@@ -643,12 +643,6 @@ function PhotoGrid() {
         </div>
       </header>
 
-      {/* Activity ticker */}
-      {!loading && !error && allPhotos.length > 0 && (
-        <div className="mx-auto max-w-5xl">
-          <ActivityTicker activity={recentActivity} />
-        </div>
-      )}
 
       {/* Filter bar — always visible when we have photos */}
       {!loading && !error && allPhotos.length > 0 && (
@@ -699,6 +693,25 @@ function PhotoGrid() {
               onFolderChange={setActiveFolder}
               totalCount={allPhotos.length}
             />
+            {/* Active filter label */}
+            {(() => {
+              const parts: string[] = [];
+              if (activeFolder) parts.push(activeFolder.replace(/_/g, " "));
+              if (activeType !== "all") parts.push(activeType === "photo" ? "PHOTOS" : "VIDEOS");
+              if (sortOrder !== "shuffle") {
+                const sortLabels: Record<string, string> = { newest: "NEWEST", oldest: "OLDEST", "name-asc": "A\u2192Z", "name-desc": "Z\u2192A" };
+                parts.push(sortLabels[sortOrder] || "");
+              }
+              if (parts.length === 0) return null;
+              return (
+                <span
+                  className="flex-1 min-w-0 truncate text-[9px] md:text-[10px] font-mono uppercase tracking-wider"
+                  style={{ color: "var(--el-cyan)" }}
+                >
+                  {parts.join(" // ")}
+                </span>
+              );
+            })()}
             <button
               onClick={toggleSelectMode}
               className={`shrink-0 px-2.5 py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider transition-all ${
