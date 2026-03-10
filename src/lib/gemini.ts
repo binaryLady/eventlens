@@ -1,3 +1,4 @@
+// EventLens — @TheTechMargin 2026
 import { config } from "./config";
 
 interface GeminiPart {

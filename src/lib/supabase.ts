@@ -1,3 +1,4 @@
+// EventLens — @TheTechMargin 2026
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 /**
