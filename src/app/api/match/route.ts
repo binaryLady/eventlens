@@ -18,15 +18,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing image or mimeType" }, { status: 400 });
     }
 
+    const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!ALLOWED_MIME.includes(mimeType)) {
+      return NextResponse.json({ error: "Invalid image type" }, { status: 400 });
+    }
+
+    const MAX_BASE64_SIZE = 10 * 1024 * 1024;
+    if (typeof image !== "string" || image.length > MAX_BASE64_SIZE) {
+      return NextResponse.json({ error: "Image too large" }, { status: 400 });
+    }
+
     if (FACE_API_URL) {
       const vectorResult = await tryVectorMatch(image, mimeType);
       if (vectorResult) return NextResponse.json(vectorResult);
     }
 
     return geminiMatch(image, mimeType);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to process photo match" },
+      { error: "Failed to process photo match" },
       { status: 500 },
     );
   }

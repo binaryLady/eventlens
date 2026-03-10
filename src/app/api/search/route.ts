@@ -6,8 +6,9 @@ import { PhotoRow } from "@/lib/supabase";
 export const maxDuration = 15;
 
 export async function GET(request: NextRequest) {
-  const query = request.nextUrl.searchParams.get("q") || "";
-  const folder = request.nextUrl.searchParams.get("folder") || "";
+  const rawQuery = request.nextUrl.searchParams.get("q") || "";
+  const query = rawQuery.slice(0, 200).replace(/<[^>]*>/g, "").trim();
+  const folder = (request.nextUrl.searchParams.get("folder") || "").slice(0, 100).replace(/<[^>]*>/g, "").trim();
 
   if (!query && !folder) {
     return NextResponse.json({ results: [], source: "none" });

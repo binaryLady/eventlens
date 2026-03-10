@@ -14,7 +14,9 @@ from flask_cors import CORS  # type: ignore[import-untyped]
 from insightface.app import FaceAnalysis  # type: ignore[import-untyped]
 
 app = Flask(__name__)
-CORS(app)
+app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10MB
+ALLOWED_ORIGINS = os.environ.get("CORS_ORIGINS", "*").split(",")
+CORS(app, origins=ALLOWED_ORIGINS)
 
 # Initialize InsightFace (same model as Colab notebook)
 face_app = FaceAnalysis(name="buffalo_l", providers=["CPUExecutionProvider"])
@@ -67,8 +69,8 @@ def embed():
 
         return jsonify({"faces": results, "count": len(results)})
 
-    except (ValueError, OSError) as e:
-        return jsonify({"error": str(e)}), 500
+    except (ValueError, OSError):
+        return jsonify({"error": "Failed to process image"}), 500
 
 
 if __name__ == "__main__":

@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const VALID_FILE_ID = /^[a-zA-Z0-9_-]+$/;
     const zip = new JSZip();
     const CONCURRENCY = 10;
     const usedNames = new Set<string>();
@@ -39,7 +40,8 @@ export async function POST(request: NextRequest) {
       const results = await Promise.all(
         batch.map(async (entry, batchIndex) => {
           try {
-            // Use Drive API for reliable server-side access to public files
+            if (!VALID_FILE_ID.test(entry.fileId)) return null;
+
             const url = config.googleApiKey
               ? `https://www.googleapis.com/drive/v3/files/${entry.fileId}?alt=media&key=${config.googleApiKey}`
               : `https://lh3.googleusercontent.com/d/${entry.fileId}=w1600`;
@@ -52,12 +54,12 @@ export async function POST(request: NextRequest) {
             const ext = contentType.includes("png") ? "png" : "jpg";
             const data = await res.arrayBuffer();
 
-            // Use original filename if available, else sequential
-            let name = entry.filename
-              ? entry.filename.replace(/\.[^.]+$/, `.${ext}`)
+            // Strip path components to prevent Zip Slip, then apply extension
+            const basename = (entry.filename || "").split(/[\\/]/).pop() || "";
+            let name = basename
+              ? basename.replace(/\.[^.]+$/, `.${ext}`)
               : `photo_${String(i + batchIndex + 1).padStart(3, "0")}.${ext}`;
 
-            // Deduplicate filenames
             if (usedNames.has(name)) {
               const base = name.replace(/\.[^.]+$/, "");
               const extension = name.match(/\.[^.]+$/)?.[0] || `.${ext}`;

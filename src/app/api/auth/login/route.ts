@@ -1,5 +1,6 @@
 // @TheTechMargin 2026
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,7 +14,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!password || password !== appPassword) {
+    if (
+      !password ||
+      typeof password !== "string" ||
+      password.length !== appPassword.length ||
+      !timingSafeEqual(Buffer.from(password), Buffer.from(appPassword))
+    ) {
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 }

@@ -44,8 +44,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const primaryColor = process.env.NEXT_PUBLIC_PRIMARY_COLOR || "#00ff41";
-  const accentColor = process.env.NEXT_PUBLIC_ACCENT_COLOR || "#00ff41";
+  const hexColor = /^#[0-9A-Fa-f]{6}$/;
+  const rawPrimary = process.env.NEXT_PUBLIC_PRIMARY_COLOR || "#00ff41";
+  const rawAccent = process.env.NEXT_PUBLIC_ACCENT_COLOR || "#00ff41";
+  const primaryColor = hexColor.test(rawPrimary) ? rawPrimary : "#00ff41";
+  const accentColor = hexColor.test(rawAccent) ? rawAccent : "#00ff41";
 
   return (
     <html lang="en" className="dark">

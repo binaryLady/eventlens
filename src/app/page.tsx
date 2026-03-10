@@ -1089,14 +1089,14 @@ function PhotoCard({
         </div>
       )}
 
-      {/* Bottom overlay */}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent px-2 pb-2 pt-6">
+      {/* Bottom overlay — hidden on hover so image is fully visible */}
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent px-2 pb-2 pt-6 group-hover:opacity-0 transition-opacity">
         <span className="inline-block border border-[#00ff4133] bg-black/80 px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-[#00ff4199]">
           {photo.folder}
         </span>
       </div>
 
-      {/* Top-left corner bracket */}
+      {/* Corner brackets */}
       <div className="absolute top-1 left-1 w-2.5 h-2.5 border-t border-l border-[#00ff4144] opacity-0 group-hover:opacity-100 transition-opacity" />
       <div className="absolute bottom-1 right-1 w-2.5 h-2.5 border-b border-r border-[#00ff4144] opacity-0 group-hover:opacity-100 transition-opacity" />
 
