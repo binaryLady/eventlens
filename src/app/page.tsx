@@ -293,6 +293,8 @@ function PhotoGrid() {
     setSelectMode(false);
   }, []);
 
+  const isSearchActive = debouncedQuery !== "" || activeFolder !== "" || matchResults !== null;
+
   const filteredPhotos = useMemo(() => {
     if (matchResults !== null) {
       return matchResults.map((m) => m.photo);
@@ -308,6 +310,19 @@ function PhotoGrid() {
     }
     return shuffledPhotos;
   }, [allPhotos, shuffledPhotos, activeFolder, debouncedQuery, matchResults]);
+
+  const folderPreviews = useMemo(() => {
+    const previews: Record<string, PhotoRecord[]> = {};
+    for (const p of shuffledPhotos) {
+      if (!previews[p.folder]) previews[p.folder] = [];
+      if (previews[p.folder].length < 4) previews[p.folder].push(p);
+    }
+    return previews;
+  }, [shuffledPhotos]);
+
+  const heroPhotos = useMemo(() => {
+    return shuffledPhotos.slice(0, 8);
+  }, [shuffledPhotos]);
 
   const matchConfidenceMap = useMemo(() => {
     if (!matchResults) return null;
@@ -488,7 +503,7 @@ function PhotoGrid() {
       </header>
 
       {/* Filter bar */}
-      {!loading && !error && allPhotos.length > 0 && (
+      {!loading && !error && allPhotos.length > 0 && isSearchActive && (
         <div className="scrollbar-hide mx-auto max-w-5xl overflow-x-auto px-4 pb-4">
           <div className="flex items-center gap-1.5">
             {folders.length > 0 && (
@@ -537,41 +552,43 @@ function PhotoGrid() {
       )}
 
       {/* Results info */}
-      <div className="mx-auto max-w-5xl px-4 pb-3">
-        {!loading && !error && (
-          <p className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
-            {matchResults !== null ? (
-              <>
-                {matchResults.length} MATCH{matchResults.length !== 1 ? "ES" : ""}
-                {matchTier === "visual" && (
-                  <span className="text-[#00ff41]">
-                    {" // "}DEEP SCAN
-                  </span>
-                )}
-                {matchTier === "both" && (
-                  <span className="text-[#00ff41]">
-                    {" // "}TEXT + VISUAL SCAN
-                  </span>
-                )}
-                {matchDescription && (
-                  <span className="text-[#00ff4133]">
-                    {" // "}
-                    {matchDescription}
-                  </span>
-                )}
-              </>
-            ) : debouncedQuery ? (
-              <>
-                {filteredPhotos.length} RESULT{filteredPhotos.length !== 1 ? "S" : ""} FOR &quot;{debouncedQuery.toUpperCase()}&quot;
-              </>
-            ) : (
-              <>
-                {filteredPhotos.length} / {allPhotos.length} ASSETS
-              </>
-            )}
-          </p>
-        )}
-      </div>
+      {isSearchActive && (
+        <div className="mx-auto max-w-5xl px-4 pb-3">
+          {!loading && !error && (
+            <p className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
+              {matchResults !== null ? (
+                <>
+                  {matchResults.length} MATCH{matchResults.length !== 1 ? "ES" : ""}
+                  {matchTier === "visual" && (
+                    <span className="text-[#00ff41]">
+                      {" // "}DEEP SCAN
+                    </span>
+                  )}
+                  {matchTier === "both" && (
+                    <span className="text-[#00ff41]">
+                      {" // "}TEXT + VISUAL SCAN
+                    </span>
+                  )}
+                  {matchDescription && (
+                    <span className="text-[#00ff4133]">
+                      {" // "}
+                      {matchDescription}
+                    </span>
+                  )}
+                </>
+              ) : debouncedQuery ? (
+                <>
+                  {filteredPhotos.length} RESULT{filteredPhotos.length !== 1 ? "S" : ""} FOR &quot;{debouncedQuery.toUpperCase()}&quot;
+                </>
+              ) : (
+                <>
+                  {filteredPhotos.length} / {allPhotos.length} ASSETS
+                </>
+              )}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Main content */}
       <main className="mx-auto max-w-5xl px-4 pb-12">
@@ -616,53 +633,160 @@ function PhotoGrid() {
           </div>
         )}
 
-        {/* Empty: no search results */}
-        {!loading &&
-          !error &&
-          allPhotos.length > 0 &&
-          filteredPhotos.length === 0 &&
-          matchResults === null && (
-            <div className="flex flex-col items-center py-20 text-center border border-[#00ff4122] p-8">
-              <p className="text-xs font-mono uppercase tracking-wider text-[#00ff4155]">
-                NO MATCHES FOR &quot;{debouncedQuery.toUpperCase()}&quot; {"//"} TRY ALTERNATE QUERY
-              </p>
-            </div>
-          )}
+        {/* Browse landing */}
+        {!loading && !error && allPhotos.length > 0 && !isSearchActive && (
+          <>
+            {/* Folder cards */}
+            {folders.length > 0 && (
+              <section className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
+                    &#x2500;&#x2500; FOLDERS
+                  </span>
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4133]">
+                    [{folders.length}]
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+                  {folders.map((folder) => {
+                    const previews = folderPreviews[folder] || [];
+                    const count = folderCounts[folder] || 0;
+                    return (
+                      <button
+                        key={folder}
+                        onClick={() => setActiveFolder(folder)}
+                        className="group relative aspect-[4/3] overflow-hidden border border-[#00ff4122] bg-black cursor-pointer transition-all duration-200 hover:border-[#00ff41] hover:shadow-[0_0_20px_rgba(0,255,65,0.15)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#00ff41]"
+                      >
+                        {/* 2x2 thumbnail mosaic */}
+                        <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-px bg-[#00ff4111]">
+                          {[0, 1, 2, 3].map((i) => (
+                            <div key={i} className="relative overflow-hidden bg-black">
+                              {previews[i]?.thumbnailUrl ? (
+                                <img
+                                  src={previews[i].thumbnailUrl}
+                                  alt=""
+                                  className="h-full w-full object-cover opacity-50 group-hover:opacity-70 transition-opacity"
+                                />
+                              ) : (
+                                <div className="h-full w-full flex items-center justify-center">
+                                  <span className="text-[#00ff4111] text-lg">+</span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
 
-        {/* Empty: no face match results */}
-        {!loading &&
-          !error &&
-          matchResults !== null &&
-          matchResults.length === 0 && (
-            <div className="flex flex-col items-center py-20 text-center border border-[#00ff4122] p-8">
-              <div className="text-4xl text-[#00ff4133] mb-4 animate-crosshair-spin">&#x2295;</div>
-              <p className="text-xs font-mono uppercase tracking-wider text-[#00ff4155]">
-                {"NO FACIAL MATCH DETECTED // TRY HIGHER RESOLUTION INPUT"}
-              </p>
-            </div>
-          )}
+                        {/* Dark overlay + folder label */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent flex flex-col items-center justify-end pb-4">
+                          <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#00ff41] group-hover:glow-text transition-all">
+                            {folder}
+                          </span>
+                          <span className="mt-1 text-[9px] font-mono uppercase tracking-widest text-[#00ff4155]">
+                            {count} PHOTO{count !== 1 ? "S" : ""}
+                          </span>
+                        </div>
 
-        {/* Photo grid */}
-        {!loading && !error && filteredPhotos.length > 0 && (
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
-            {filteredPhotos.map((photo, index) => (
-              <PhotoCard
-                key={photo.id}
-                photo={photo}
-                onClick={() => {
-                  if (selectMode) {
-                    togglePhotoSelection(photo.id);
-                  } else {
-                    setSelectedPhoto(photo);
-                  }
-                }}
-                matchConfidence={matchConfidenceMap?.get(photo.id)}
-                index={index}
-                selectMode={selectMode}
-                selected={selectedIds.has(photo.id)}
-              />
-            ))}
-          </div>
+                        {/* Corner brackets */}
+                        <div className="absolute top-1 left-1 w-2.5 h-2.5 border-t border-l border-[#00ff4144] opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute bottom-1 right-1 w-2.5 h-2.5 border-b border-r border-[#00ff4144] opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {/* Random photo grid preview */}
+            {heroPhotos.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
+                      &#x2500;&#x2500; RANDOM SELECTION
+                    </span>
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4133]">
+                      [{allPhotos.length} TOTAL]
+                    </span>
+                  </div>
+                  <button
+                    onClick={toggleSelectMode}
+                    className={`shrink-0 px-3 py-1 text-xs font-mono uppercase tracking-wider transition-all ${
+                      selectMode
+                        ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
+                        : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
+                    }`}
+                  >
+                    {selectMode ? "EXIT SELECT" : "SELECT"}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+                  {shuffledPhotos.map((photo, index) => (
+                    <PhotoCard
+                      key={photo.id}
+                      photo={photo}
+                      onClick={() => {
+                        if (selectMode) {
+                          togglePhotoSelection(photo.id);
+                        } else {
+                          setSelectedPhoto(photo);
+                        }
+                      }}
+                      index={index}
+                      selectMode={selectMode}
+                      selected={selectedIds.has(photo.id)}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )}
+
+        {/* Search/filter results */}
+        {!loading && !error && isSearchActive && (
+          <>
+            {/* No search results */}
+            {filteredPhotos.length === 0 && matchResults === null && (
+              <div className="flex flex-col items-center py-20 text-center border border-[#00ff4122] p-8">
+                <p className="text-xs font-mono uppercase tracking-wider text-[#00ff4155]">
+                  NO MATCHES FOR &quot;{debouncedQuery.toUpperCase()}&quot; {"//"} TRY ALTERNATE QUERY
+                </p>
+              </div>
+            )}
+
+            {/* No face matches */}
+            {matchResults !== null && matchResults.length === 0 && (
+              <div className="flex flex-col items-center py-20 text-center border border-[#00ff4122] p-8">
+                <div className="text-4xl text-[#00ff4133] mb-4 animate-crosshair-spin">&#x2295;</div>
+                <p className="text-xs font-mono uppercase tracking-wider text-[#00ff4155]">
+                  {"NO FACIAL MATCH DETECTED // TRY HIGHER RESOLUTION INPUT"}
+                </p>
+              </div>
+            )}
+
+            {/* Results grid */}
+            {filteredPhotos.length > 0 && (
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+                {filteredPhotos.map((photo, index) => (
+                  <PhotoCard
+                    key={photo.id}
+                    photo={photo}
+                    onClick={() => {
+                      if (selectMode) {
+                        togglePhotoSelection(photo.id);
+                      } else {
+                        setSelectedPhoto(photo);
+                      }
+                    }}
+                    matchConfidence={matchConfidenceMap?.get(photo.id)}
+                    index={index}
+                    selectMode={selectMode}
+                    selected={selectedIds.has(photo.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </main>
 
