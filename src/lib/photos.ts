@@ -50,7 +50,10 @@ export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
       const url = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,mimeType,modifiedTime),nextPageToken&orderBy=modifiedTime%20desc&pageSize=1000&key=${googleApiKey}${pageTokenParam}`;
 
       const res = await fetch(url, { next: { revalidate: 30 } });
-      if (!res.ok) throw new Error(`Drive API error: ${res.status}`);
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`Drive API ${res.status}: ${body}`);
+      }
 
       const data: {
         files?: Array<{
@@ -102,7 +105,10 @@ export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
       const url = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name),nextPageToken&orderBy=name&pageSize=200&key=${googleApiKey}${pageTokenParam}`;
 
       const res = await fetch(url, { next: { revalidate: 30 } });
-      if (!res.ok) throw new Error(`Drive API error: ${res.status}`);
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`Drive API ${res.status}: ${body}`);
+      }
 
       const data: {
         files?: Array<{ id: string; name: string }>;
@@ -379,7 +385,8 @@ export async function fetchDriveFolders(): Promise<string[]> {
 
       const res = await fetch(url, { next: { revalidate: 30 } });
       if (!res.ok) {
-        throw new Error(`Drive API error: ${res.status} ${res.statusText}`);
+        const body = await res.text();
+        throw new Error(`Drive API ${res.status}: ${body}`);
       }
 
       const data: {
