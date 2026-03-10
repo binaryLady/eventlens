@@ -618,7 +618,7 @@ function PhotoGrid() {
                   className={`shrink-0 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                     activeFolder === ""
                       ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
-                      : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
+                      : "border border-[#ff00ff22] text-[#ff00ff66] hover:border-[#ff00ff44] hover:text-[#00ff41]"
                   }`}
                 >
                   ALL [{allPhotos.length}]
@@ -632,7 +632,7 @@ function PhotoGrid() {
                     className={`shrink-0 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                       activeFolder === folder
                         ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
-                        : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
+                        : "border border-[#ff00ff22] text-[#ff00ff66] hover:border-[#ff00ff44] hover:text-[#00ff41]"
                     }`}
                   >
                     {folder} [{folderCounts[folder] || 0}]
@@ -644,7 +644,7 @@ function PhotoGrid() {
 
           {/* Row 2: sort + select */}
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[#00ff4166]">
+            <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[#ff00ff66]">
               {debouncedQuery && searchSource === "server" ? "SEMANTIC SEARCH" : debouncedQuery ? "TEXT SEARCH" : ""}
             </span>
             <div className="flex items-center gap-1.5">
@@ -654,7 +654,7 @@ function PhotoGrid() {
                 className={`px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                   selectMode
                     ? "border border-[#00ff41] text-[#00ff41] bg-[#00ff4111] glow-border"
-                    : "border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41]"
+                    : "border border-[#ff00ff22] text-[#ff00ff66] hover:border-[#ff00ff44] hover:text-[#00ff41]"
                 }`}
               >
                 {selectMode ? "EXIT" : "SELECT"}
@@ -756,10 +756,10 @@ function PhotoGrid() {
             {folders.length > 1 && (
               <section className="mb-6 md:mb-8">
                 <div className="flex items-center gap-3 mb-3 md:mb-4">
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4177]">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#ff00ff77]">
                     &#x2500;&#x2500; ALBUMS
                   </span>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#ff00ff55]">
                     [{folders.length}]
                   </span>
                 </div>
@@ -819,10 +819,10 @@ function PhotoGrid() {
             {heroPhotos.length > 0 && (
               <section>
                 <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
-                  <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[#00ff4177]">
+                  <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[#ff00ff77]">
                     &#x2500;&#x2500; {sortOrder === "shuffle" ? "FEATURED" : sortOrder === "newest" ? "NEWEST" : sortOrder === "oldest" ? "OLDEST" : sortOrder === "name-asc" ? "NAME A\u2192Z" : "NAME Z\u2192A"}
                   </span>
-                  <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
+                  <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[#ff00ff55]">
                     [{allPhotos.length} TOTAL]
                   </span>
                 </div>
@@ -848,7 +848,7 @@ function PhotoGrid() {
                 <div className="mt-4 md:mt-6 flex justify-center">
                   <button
                     onClick={() => setBrowseAll(true)}
-                    className="inline-flex items-center gap-2 border border-[#00ff4133] bg-black/60 px-5 py-2.5 text-[11px] md:text-xs font-mono uppercase tracking-wider text-[#00ff4199] transition-all hover:border-[#00ff41] hover:text-[#00ff41] hover:shadow-[0_0_10px_rgba(0,255,65,0.15)] active:bg-[#00ff4111]"
+                    className="inline-flex items-center gap-2 border border-[#ff00ff33] bg-black/60 px-5 py-2.5 text-[11px] md:text-xs font-mono uppercase tracking-wider text-[#ff00ff99] transition-all hover:border-[#00ff41] hover:text-[#00ff41] hover:shadow-[0_0_10px_rgba(0,255,65,0.15)] active:bg-[#ff00ff11]"
                   >
                     BROWSE ALL {allPhotos.length} PHOTOS
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -911,8 +911,8 @@ function PhotoGrid() {
 
       {/* Footer */}
       {!loading && !error && allPhotos.length > 0 && (
-        <footer className="border-t border-[#00ff4115] px-4 py-6 text-center">
-          <div className="flex items-center justify-center gap-4 text-[10px] font-mono uppercase tracking-widest text-[#00ff4155]">
+        <footer className="border-t border-[#ff00ff15] px-4 py-6 text-center">
+          <div className="flex items-center justify-center gap-4 text-[10px] font-mono uppercase tracking-widest text-[#ff00ff55]">
             <span>&#x2500;&#x2500;&#x253c;&#x2500;&#x2500;</span>
             <span>
               {allPhotos.length} PHOTOS {"//"} {folders.length} FOLDER{folders.length !== 1 ? "S" : ""}
@@ -920,7 +920,7 @@ function PhotoGrid() {
             </span>
             <span>&#x2500;&#x2500;&#x253c;&#x2500;&#x2500;</span>
           </div>
-          <p className="mt-2 text-[10px] font-mono tracking-wider text-[#00ff4122]">
+          <p className="mt-2 text-[10px] font-mono tracking-wider text-[#ff00ff22]">
             POWERED BY EVENTLENS
           </p>
         </footer>
@@ -996,7 +996,7 @@ function SortDropdown({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider border border-[#00ff4122] text-[#00ff4166] hover:border-[#00ff4144] hover:text-[#00ff41] transition-all"
+        className="flex items-center gap-1.5 px-3 py-2 md:py-1.5 text-[11px] md:text-xs font-mono uppercase tracking-wider border border-[#ff00ff22] text-[#ff00ff66] hover:border-[#ff00ff44] hover:text-[#00ff41] transition-all"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 6h18M6 12h12M9 18h6" />
@@ -1006,7 +1006,7 @@ function SortDropdown({
 
       {/* Desktop: dropdown */}
       {open && (
-        <div className="hidden md:block absolute right-0 top-full mt-1 z-50 border border-[#00ff4133] bg-black min-w-[120px]">
+        <div className="hidden md:block absolute right-0 top-full mt-1 z-50 border border-[#ff00ff33] bg-black min-w-[120px]">
           {options.map((opt) => (
             <button
               key={opt.value}
@@ -1014,7 +1014,7 @@ function SortDropdown({
               className={`block w-full text-left px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider transition-all ${
                 sortOrder === opt.value
                   ? "text-[#00ff41] bg-[#00ff4111]"
-                  : "text-[#00ff4166] hover:text-[#00ff41] hover:bg-[#00ff4108]"
+                  : "text-[#ff00ff66] hover:text-[#00ff41] hover:bg-[#00ff4108]"
               }`}
             >
               {opt.label}
@@ -1027,21 +1027,21 @@ function SortDropdown({
       {open && (
         <div className="md:hidden fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="absolute bottom-0 left-0 right-0 border-t border-[#00ff4133] bg-black animate-slide-up safe-bottom">
+          <div className="absolute bottom-0 left-0 right-0 border-t border-[#ff00ff33] bg-black animate-slide-up safe-bottom">
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-8 h-1 rounded-full bg-[#00ff4133]" />
+              <div className="w-8 h-1 rounded-full bg-[#ff00ff33]" />
             </div>
             <div className="px-4 pb-2 pt-1">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[#00ff4166]">SORT BY</span>
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[#ff00ff66]">SORT BY</span>
             </div>
             {options.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => { onChange(opt.value); setOpen(false); }}
-                className={`flex items-center w-full text-left px-4 py-3.5 text-sm font-mono uppercase tracking-wider transition-all active:bg-[#00ff4111] ${
+                className={`flex items-center w-full text-left px-4 py-3.5 text-sm font-mono uppercase tracking-wider transition-all active:bg-[#ff00ff11] ${
                   sortOrder === opt.value
                     ? "text-[#00ff41]"
-                    : "text-[#00ff4188]"
+                    : "text-[#ff00ff88]"
                 }`}
               >
                 {sortOrder === opt.value && (
