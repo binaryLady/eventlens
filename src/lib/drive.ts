@@ -12,7 +12,8 @@ interface FetchOpts {
 }
 
 function fetchInit(opts?: FetchOpts): RequestInit {
-  return opts?.revalidate ? ({ next: { revalidate: opts.revalidate } } as RequestInit) : {};
+  if (!opts?.revalidate) return {};
+  return { cache: "force-cache", next: { revalidate: opts.revalidate } } as RequestInit;
 }
 
 export async function fetchDriveImage(
