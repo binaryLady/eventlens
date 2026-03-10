@@ -139,7 +139,7 @@ export default function Lightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-black/95 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex flex-col bg-[rgba(26,26,26,0.95)] backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -167,7 +167,7 @@ export default function Lightbox({
         <button
           ref={closeRef}
           onClick={onClose}
-          className="flex h-10 w-10 items-center justify-center border border-[var(--el-flame-99)] bg-black text-[var(--el-flame-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] active:bg-[var(--el-green-99)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] transition-all"
+          className="flex h-10 w-10 items-center justify-center border border-[var(--el-flame-99)] bg-[var(--el-bg)] text-[var(--el-flame-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] active:bg-[var(--el-green-99)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] transition-all"
           aria-label="Close lightbox"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

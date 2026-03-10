@@ -148,7 +148,7 @@ export default function AdminPage() {
   if (!authenticated) {
     return (
       <div className="min-h-screen bg-[var(--el-bg)] flex items-center justify-center p-4">
-        <div className="border border-[var(--el-green-33)] bg-black/80 p-8 max-w-md w-full">
+        <div className="border border-[var(--el-green-33)] bg-[rgba(26,26,26,0.8)] p-8 max-w-md w-full">
           <h1 className="text-[var(--el-green)] font-mono text-lg mb-6 tracking-wider">
             ADMIN ACCESS
           </h1>

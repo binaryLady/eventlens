@@ -126,7 +126,7 @@ class DriveClient:
             }
             if page_token:
                 params["pageToken"] = page_token
-            r = requests.get(DRIVE_API, params=params)
+            r = requests.get(DRIVE_API, params=params, timeout=30)
             r.raise_for_status()
             data = r.json()
             folders.extend(data.get("files", []))
@@ -161,9 +161,10 @@ class DriveClient:
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=2, min=2, max=16),
            retry=retry_if_exception(_is_rate_limited))
     def rename_file(self, file_id: str, new_name: str):
-        if not self._oauth_service:
+        if not self._oauth_service:  # type: ignore[attr-defined]
             raise RuntimeError("OAuth2 not configured — cannot rename files. Pass --oauth-creds.")
-        self._oauth_service.files().update(fileId=file_id, body={"name": new_name}).execute()  # type: ignore
+        # noinspection PyUnresolvedReference
+        self._oauth_service.files().update(fileId=file_id, body={"name": new_name}).execute()  # type: ignore[attr-defined,union-attr]
 
     def download_image_base64(self, file_id: str, width: int = 1200) -> tuple[str, str] | None:
         # Try lh3 CDN first (fast, no auth needed)
@@ -341,7 +342,7 @@ class SupabaseStore:
         try:
             self.client.table("photos").select("description_embedding").limit(1).execute()
             return True
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             return False
 
     def update_description_embedding(self, drive_file_id: str, embedding: list[float]):
@@ -397,12 +398,12 @@ def phase_scan(drive: DriveClient, store: SupabaseStore, config: Config, folder_
     log.info("─── PHASE 1: SCAN ───")
     subfolders = drive.list_subfolders(config.drive_folder_id)
     all_folders = [{"id": config.drive_folder_id, "name": "root"}] + subfolders
-    log.info(f"Found {len(all_folders)} folders (including root)")
+    log.info("Found %d folders (including root)", len(all_folders))
 
     if folder_filter:
         all_folders = [f for f in all_folders if f["name"] == folder_filter]
         if not all_folders:
-            log.error(f"Folder '{folder_filter}' not found")
+            log.error("Folder '%s' not found", folder_filter)
             return 0
 
     discovered = 0
@@ -418,13 +419,13 @@ def phase_scan(drive: DriveClient, store: SupabaseStore, config: Config, folder_
                 "status": "pending",
             })
             discovered += 1
-    log.info(f"Scan complete: {discovered} photos discovered")
+    log.info("Scan complete: %d photos discovered", discovered)
     return discovered
 
 
 def phase_rename(drive: DriveClient, store: SupabaseStore, dry_run: bool, folder_filter: str | None) -> int:
     log.info("─── PHASE 2: RENAME ───")
-    if not drive._oauth_service:
+    if not drive._oauth_service:  # type: ignore[attr-defined]
         log.error("OAuth2 not configured. Pass --oauth-creds to enable rename, or use --skip-rename.")
         return 0
 
@@ -446,25 +447,25 @@ def phase_rename(drive: DriveClient, store: SupabaseStore, dry_run: bool, folder
             old_name = photo["filename"]
             # Skip already renamed
             if re.search(r"_scb\.\w+$", old_name, re.IGNORECASE):
-                log.debug(f"  Skip (already renamed): {old_name}")
+                log.debug("  Skip (already renamed): %s", old_name)
                 continue
 
             ext = Path(old_name).suffix  # includes dot
             new_name = f"{prefix}_{i:03d}_scb{ext}"
 
             if dry_run:
-                log.info(f"  [DRY RUN] {old_name} → {new_name}")
+                log.info("  [DRY RUN] %s → %s", old_name, new_name)
             else:
                 try:
                     drive.rename_file(photo["drive_file_id"], new_name)
                     store.update_photo_metadata(photo["drive_file_id"], {"filename": new_name})
                     time.sleep(0.2)  # ~5/sec
-                except Exception as e:
-                    log.error(f"  Failed to rename {old_name}: {e}")
+                except OSError as e:
+                    log.error("  Failed to rename %s: %s", old_name, e)
                     continue
             renamed += 1
 
-    log.info(f"Rename complete: {renamed} files {'would be ' if dry_run else ''}renamed")
+    log.info("Rename complete: %d files '%s' renamed", renamed, "would be " if dry_run else "")
     return renamed
 
 
@@ -491,7 +492,7 @@ def phase_describe(
         log.info("No photos to describe")
         return 0
 
-    log.info(f"{len(photos)} photos to process")
+    log.info("%d photos to process", len(photos))
     errors = []
     processed = 0
 
@@ -504,7 +505,7 @@ def phase_describe(
             try:
                 img = drive.download_image_base64(fid)
                 if not img:
-                    log.warning(f"  Could not download {photo['filename']}")
+                    log.warning("  Could not download %s", photo['filename'])
                     store.update_photo_metadata(fid, {"status": "error", "error_message": "Download failed"})
                     errors.append(photo["filename"])
                     continue
@@ -525,8 +526,8 @@ def phase_describe(
             except KeyboardInterrupt:
                 log.info("Interrupted — saving progress")
                 break
-            except Exception as e:
-                log.error(f"  Failed {photo['filename']}: {e}")
+            except (IOError, ValueError, RuntimeError) as e:
+                log.error("  Failed %s: %s", photo['filename'], e)
                 store.update_photo_metadata(fid, {"status": "error", "error_message": str(e)[:500]})
                 errors.append(photo["filename"])
 
@@ -535,8 +536,9 @@ def phase_describe(
             _embed_descriptions(gemini, store, batch_described)
 
     if errors:
-        log.warning(f"{len(errors)} errors: {errors[:10]}{'...' if len(errors) > 10 else ''}")
-    log.info(f"Describe complete: {processed} photos processed")
+        error_str = ', '.join(errors[:10]) + ('...' if len(errors) > 10 else '')
+        log.warning("%d errors: %s", len(errors), error_str)
+    log.info("Describe complete: %d photos processed", processed)
     return processed
 
 
@@ -550,7 +552,7 @@ def phase_embed_only(gemini: GeminiClient, store: SupabaseStore, folder_filter: 
     if not photos:
         log.info("All photos already have description embeddings")
         return 0
-    log.info(f"{len(photos)} photos missing description embeddings")
+    log.info("%d photos missing description embeddings", len(photos))
     return _embed_descriptions(gemini, store, photos)
 
 
@@ -583,15 +585,15 @@ def _embed_descriptions(gemini: GeminiClient, store: SupabaseStore, photos: list
     if not texts:
         return 0
 
-    log.info(f"Embedding {len(texts)} descriptions...")
+    log.info("Embedding %d descriptions...", len(texts))
     try:
         embeddings = gemini.embed_texts_batch(texts)
         for fid, emb in tqdm(zip(file_ids, embeddings), total=len(file_ids), desc="Storing embeddings"):
             store.update_description_embedding(fid, emb)
-        log.info(f"Stored {len(embeddings)} description embeddings")
+        log.info("Stored %d description embeddings", len(embeddings))
         return len(embeddings)
-    except Exception as e:
-        log.error(f"Embedding batch failed: {e}")
+    except (IOError, ValueError, RuntimeError) as e:
+        log.error("Embedding batch failed: %s", e)
         return 0
 
 
@@ -603,7 +605,7 @@ def phase_face_embed(
 ) -> int:
     log.info("─── PHASE 4: FACE EMBED ───")
     if not face_api.health_check():
-        log.error(f"Face API at {face_api.base_url} is not reachable. Use --skip-face-embed or start the service.")
+        log.error("Face API at %s is not reachable. Use --skip-face-embed or start the service.", face_api.base_url)
         return 0
 
     all_photos = store.get_photos_by_status(["completed"])
@@ -617,7 +619,7 @@ def phase_face_embed(
         log.info("All photos already have face embeddings")
         return 0
 
-    log.info(f"{len(todo)} photos need face embeddings ({len(existing_ids)} already done)")
+    log.info("%d photos need face embeddings (%d already done)", len(todo), len(existing_ids))
     processed = 0
     errors = []
 
@@ -626,7 +628,7 @@ def phase_face_embed(
         try:
             img = drive.download_image_base64(fid)
             if not img:
-                log.warning(f"  Could not download {photo['filename']}")
+                log.warning("  Could not download %s", photo['filename'])
                 errors.append(photo["filename"])
                 continue
 
@@ -650,13 +652,14 @@ def phase_face_embed(
         except KeyboardInterrupt:
             log.info("Interrupted — saving progress")
             break
-        except Exception as e:
-            log.error(f"  Failed {photo['filename']}: {e}")
+        except (IOError, ValueError, RuntimeError) as e:
+            log.error("  Failed %s: %s", photo['filename'], e)
             errors.append(photo["filename"])
 
     if errors:
-        log.warning(f"{len(errors)} errors: {errors[:10]}{'...' if len(errors) > 10 else ''}")
-    log.info(f"Face embed complete: {processed} photos processed")
+        error_str = ', '.join(errors[:10]) + ('...' if len(errors) > 10 else '')
+        log.warning("%d errors: %s", len(errors), error_str)
+    log.info("Face embed complete: %d photos processed", processed)
     return processed
 
 
@@ -702,7 +705,7 @@ def main():
     project_root = Path(__file__).resolve().parent.parent
     env_file = args.env_file or str(project_root / ".env.local")
     if not Path(env_file).exists():
-        log.error(f"Env file not found: {env_file}")
+        log.error("Env file not found: %s", env_file)
         sys.exit(1)
 
     config = Config(env_file)
@@ -735,7 +738,7 @@ def main():
     if config.face_api_url and "face_embed" in phases:
         face_api = FaceApiClient(config.face_api_url, config.face_api_secret)
 
-    log.info(f"EventLens Photo Pipeline — phases: {', '.join(phases)}")
+    log.info("EventLens Photo Pipeline — phases: %s", ', '.join(phases))
     if args.dry_run:
         log.info("[DRY RUN MODE]")
 
@@ -774,7 +777,7 @@ def main():
     # Summary
     log.info("─── SUMMARY ───")
     for phase_name, count in results.items():
-        log.info(f"  {phase_name}: {count}")
+        log.info("  %s: %d", phase_name, count)
 
 
 if __name__ == "__main__":

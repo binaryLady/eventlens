@@ -115,7 +115,7 @@ export default function PhotoUpload({
         <div className="flex items-center justify-center gap-2">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-2 border border-[var(--el-green-99)] bg-black/60 px-4 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)]"
+            className="inline-flex items-center gap-2 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-4 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)]"
           >
             {/* Crosshair/target icon */}
             <svg
@@ -141,7 +141,7 @@ export default function PhotoUpload({
           {/* Camera capture (mobile) */}
           <button
             onClick={() => cameraInputRef.current?.click()}
-            className="inline-flex items-center gap-2 border border-[var(--el-green-99)] bg-black/60 px-4 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)] md:hidden"
+            className="inline-flex items-center gap-2 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-4 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)] md:hidden"
           >
             <svg
               width="14"
@@ -208,7 +208,7 @@ export default function PhotoUpload({
           ) : (
             <button
               onClick={handleClear}
-              className="inline-flex items-center gap-1.5 border border-[var(--el-green-99)] bg-black/60 px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
+              className="inline-flex items-center gap-1.5 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
             >
               <svg
                 width="12"

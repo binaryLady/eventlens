@@ -79,7 +79,7 @@ function TerminalLoader() {
     <div className="min-h-screen bg-[var(--el-bg)] grid-bg flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         {/* Terminal window */}
-        <div className="border border-[var(--el-green-d9)] bg-black/80 p-6">
+        <div className="border border-[var(--el-green-d9)] bg-[rgba(26,26,26,0.8)] p-6">
           {/* Terminal header bar */}
           <div className="flex items-center gap-2 border-b border-[var(--el-green-99)] pb-3 mb-4">
             <div className="h-2 w-2 rounded-full bg-[var(--el-green)]" />
@@ -569,7 +569,7 @@ function PhotoGrid() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="SEARCH PHOTOS, PEOPLE, SCENES..."
-                className="w-full border border-[var(--el-green-d9)] bg-black/60 py-3 pl-10 pr-10 text-base md:text-sm text-[var(--el-green)] font-mono placeholder-[var(--el-magenta)] outline-none transition-all focus:border-[var(--el-green)] focus:shadow-[0_0_15px_rgba(0,255,65,0.15)]"
+                className="w-full border border-[var(--el-green-d9)] bg-[rgba(26,26,26,0.6)] py-3 pl-10 pr-10 text-base md:text-sm text-[var(--el-green)] font-mono placeholder-[var(--el-magenta)] outline-none transition-all focus:border-[var(--el-green)] focus:shadow-[0_0_15px_rgba(0,255,65,0.15)]"
                 aria-label="Search photos"
                 enterKeyHint="search"
               />
@@ -771,12 +771,12 @@ function PhotoGrid() {
                       <button
                         key={folder}
                         onClick={() => setActiveFolder(folder)}
-                        className="group relative aspect-[4/3] overflow-hidden border border-[var(--el-green-22)] bg-black cursor-pointer transition-all duration-200 hover:border-[var(--el-magenta)] hover:shadow-[0_0_20px_rgba(255,0,255,0.25)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)]"
+                        className="group relative aspect-[4/3] overflow-hidden border border-[var(--el-green-22)] bg-[var(--el-bg)] cursor-pointer transition-all duration-200 hover:border-[var(--el-magenta)] hover:shadow-[0_0_20px_rgba(255,0,255,0.25)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)]"
                       >
                         {/* 2x2 thumbnail mosaic */}
                         <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-px bg-[var(--el-green-11)]">
                           {[0, 1, 2, 3].map((i) => (
-                            <div key={i} className="relative overflow-hidden bg-black">
+                            <div key={i} className="relative overflow-hidden bg-[var(--el-bg)]">
                               {previews[i]?.thumbnailUrl ? (
                                 <Image
                                   src={previews[i].thumbnailUrl}
@@ -848,7 +848,7 @@ function PhotoGrid() {
                 <div className="mt-4 md:mt-6 flex justify-center">
                   <button
                     onClick={() => setBrowseAll(true)}
-                    className="inline-flex items-center gap-2 border border-[var(--el-green-99)] bg-black/60 px-5 py-2.5 text-[11px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)] active:bg-[var(--el-green-99)]"
+                    className="inline-flex items-center gap-2 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-5 py-2.5 text-[11px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)] active:bg-[var(--el-green-99)]"
                   >
                     BROWSE ALL {allPhotos.length} PHOTOS
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1026,7 +1026,7 @@ function SortDropdown({
       {/* Mobile: bottom sheet */}
       {open && (
         <div className="md:hidden fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <div className="absolute inset-0 bg-[rgba(26,26,26,0.8)] backdrop-blur-sm" onClick={() => setOpen(false)} />
           <div className="absolute bottom-0 left-0 right-0 border-t border-[var(--el-green-99)] bg-[var(--el-bg)] animate-slide-up safe-bottom">
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-8 h-1 rounded-full bg-[var(--el-green-99)]" />
@@ -1118,7 +1118,7 @@ function PhotoCard({
       {/* Video play indicator */}
       {(photo.mimeType?.startsWith("video/") || /\.(mp4|mov|webm|avi)$/i.test(photo.filename)) && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 border border-[var(--el-green-d9)]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(26,26,26,0.6)] border border-[var(--el-green-d9)]">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--el-green)">
               <polygon points="8,5 20,12 8,19" />
             </svg>
@@ -1133,7 +1133,7 @@ function PhotoCard({
             className={`flex h-5 w-5 items-center justify-center border transition-all ${
               selected
                 ? "border-[var(--el-green)] bg-[var(--el-green)]"
-                : "border-[var(--el-green-99)] bg-black/60"
+                : "border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)]"
             }`}
           >
             {selected && (
@@ -1156,7 +1156,7 @@ function PhotoCard({
 
       {/* Bottom overlay — hidden on hover so image is fully visible */}
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent px-2 pb-2 pt-6 group-hover:opacity-0 transition-opacity">
-        <span className="inline-block border border-[var(--el-green-d9)] bg-black/80 px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-[var(--el-green-d9)]">
+        <span className="inline-block border border-[var(--el-green-d9)] bg-[rgba(26,26,26,0.8)] px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-[var(--el-green-d9)]">
           {photo.folder}
         </span>
       </div>
@@ -1171,10 +1171,10 @@ function PhotoCard({
           <span
             className={`px-1 py-0.5 text-[8px] font-mono font-bold uppercase tracking-wider border ${
               matchInfo.tier === "both"
-                ? "border-[var(--el-green)] bg-black/80 text-[var(--el-green)]"
+                ? "border-[var(--el-green)] bg-[rgba(26,26,26,0.8)] text-[var(--el-green)]"
                 : matchInfo.tier === "visual" || matchInfo.tier === "vector"
-                  ? "border-[var(--el-cyan-88)] bg-black/80 text-[var(--el-cyan)]"
-                  : "border-[var(--el-amber-88)] bg-black/80 text-[var(--el-amber)]"
+                  ? "border-[var(--el-cyan-88)] bg-[rgba(26,26,26,0.8)] text-[var(--el-cyan)]"
+                  : "border-[var(--el-amber-88)] bg-[rgba(26,26,26,0.8)] text-[var(--el-amber)]"
             }`}
           >
             {TIER_LABELS[matchInfo.tier]}
@@ -1185,7 +1185,7 @@ function PhotoCard({
                 ? "bg-[var(--el-green)] text-black"
                 : matchInfo.confidence >= 50
                   ? "bg-[var(--el-green-88)] text-black"
-                  : "border border-[var(--el-green-99)] bg-black/80 text-[var(--el-green-d9)]"
+                  : "border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.8)] text-[var(--el-green-d9)]"
             }`}
           >
             {matchInfo.confidence}%
