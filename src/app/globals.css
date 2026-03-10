@@ -260,6 +260,39 @@ input:focus {
   color: #00ff41;
 }
 
+/* ═══════════════════════════════════════════
+   SAFE AREA / MOBILE UTILITIES
+   ═══════════════════════════════════════════ */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Prevent iOS zoom on input focus (text-base = 16px) */
+@media (max-width: 767px) {
+  input[type="text"],
+  input[type="search"],
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+/* Tap highlight for mobile */
+@media (hover: none) {
+  button, a {
+    -webkit-tap-highlight-color: rgba(0, 255, 65, 0.1);
+  }
+}
+
+/* Smooth scroll but not during search */
+html {
+  scroll-behavior: smooth;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
