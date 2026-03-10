@@ -1,3 +1,4 @@
+// @TheTechMargin 2026
 export interface PhotoRecord {
   id: string;
   filename: string;

@@ -1,9 +1,9 @@
+// @TheTechMargin 2026
 import { NextResponse } from "next/server";
 import { fetchPhotosWithMetadata, getFolders } from "@/lib/photos";
 
 export const revalidate = 30;
 
-// @TheTechMargin 2026
 export async function GET() {
   try {
     const photos = await fetchPhotosWithMetadata();

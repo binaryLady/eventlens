@@ -1,27 +1,25 @@
+// @TheTechMargin 2026
 import { config } from "./config";
 
 interface GeminiPart {
   text?: string;
-  inline_data?: {
-    mime_type: string;
-    data: string;
-  };
+  inline_data?: { mime_type: string; data: string };
 }
 
 interface GeminiResponse {
-  candidates?: Array<{
-    content: {
-      parts: Array<{ text: string }>;
-    };
-  }>;
+  candidates?: Array<{ content: { parts: Array<{ text: string }> } }>;
   error?: { message: string };
+}
+
+function parseGeminiJson(response: string): unknown {
+  return JSON.parse(
+    response.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim(),
+  );
 }
 
 async function callGemini(parts: GeminiPart[], model = "gemini-2.0-flash"): Promise<string> {
   const { geminiApiKey } = config;
-  if (!geminiApiKey) {
-    throw new Error("Missing GEMINI_API_KEY");
-  }
+  if (!geminiApiKey) throw new Error("Missing GEMINI_API_KEY");
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
@@ -30,10 +28,7 @@ async function callGemini(parts: GeminiPart[], model = "gemini-2.0-flash"): Prom
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts }],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 2048,
-        },
+        generationConfig: { temperature: 0.1, maxOutputTokens: 2048 },
       }),
     },
   );
@@ -44,19 +39,18 @@ async function callGemini(parts: GeminiPart[], model = "gemini-2.0-flash"): Prom
   }
 
   const data: GeminiResponse = await res.json();
-  if (data.error) {
-    throw new Error(`Gemini error: ${data.error.message}`);
-  }
+  if (data.error) throw new Error(`Gemini error: ${data.error.message}`);
 
   return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 }
 
-// @TheTechMargin 2026
 export async function describePersonForMatching(
   imageBase64: string,
   mimeType: string,
 ): Promise<string> {
-  const prompt = `You are analyzing a selfie/photo to find this person in a large set of event photos.
+  return callGemini([
+    {
+      text: `You are analyzing a selfie/photo to find this person in a large set of event photos.
 
 Describe this person using SPECIFIC, SEARCHABLE attributes. Prioritize PERSISTENT physical features over clothing (clothing helps but faces are primary).
 
@@ -78,28 +72,16 @@ Categories to cover (in order of matching importance):
 Be precise with colors (don't say "dark shirt" — say "black t-shirt" or "navy blazer").
 Output ONLY the comma-separated description, nothing else.
 
-If no person is clearly visible, respond with exactly: NO_PERSON_DETECTED`;
-
-  return callGemini([
-    { text: prompt },
-    {
-      inline_data: {
-        mime_type: mimeType,
-        data: imageBase64,
-      },
+If no person is clearly visible, respond with exactly: NO_PERSON_DETECTED`,
     },
+    { inline_data: { mime_type: mimeType, data: imageBase64 } },
   ]);
 }
 
-// @TheTechMargin 2026
 export async function verifyFaceMatches(
   uploadedImageBase64: string,
   uploadedMimeType: string,
-  candidateThumbnails: Array<{
-    id: string;
-    imageBase64: string;
-    mimeType: string;
-  }>,
+  candidateThumbnails: Array<{ id: string; imageBase64: string; mimeType: string }>,
 ): Promise<Array<{ id: string; confidence: number; reason: string }>> {
   if (candidateThumbnails.length === 0) return [];
 
@@ -109,12 +91,7 @@ export async function verifyFaceMatches(
 
 REFERENCE PHOTO (the person we are looking for):`,
     },
-    {
-      inline_data: {
-        mime_type: uploadedMimeType,
-        data: uploadedImageBase64,
-      },
-    },
+    { inline_data: { mime_type: uploadedMimeType, data: uploadedImageBase64 } },
     {
       text: `
 Below are ${candidateThumbnails.length} EVENT PHOTOS. For each one, compare faces carefully.
@@ -146,9 +123,7 @@ Only include photos where confidence >= 35. If no matches, return [].
   ];
 
   for (let i = 0; i < candidateThumbnails.length; i++) {
-    parts.push({
-      text: `\nEVENT PHOTO ${i + 1} (id: ${candidateThumbnails[i].id}):`,
-    });
+    parts.push({ text: `\nEVENT PHOTO ${i + 1} (id: ${candidateThumbnails[i].id}):` });
     parts.push({
       inline_data: {
         mime_type: candidateThumbnails[i].mimeType,
@@ -160,26 +135,20 @@ Only include photos where confidence >= 35. If no matches, return [].
   const response = await callGemini(parts);
 
   try {
-    const jsonStr = response.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const parsed = JSON.parse(jsonStr);
-    if (Array.isArray(parsed)) {
-      return parsed
-        .filter(
-          (m: { confidence?: number }) =>
-            typeof m.confidence === "number" && m.confidence >= 35,
-        )
-        .map((m: { id: string; confidence: number; reason?: string }) => ({
-          id: String(m.id),
-          confidence: m.confidence,
-          reason: m.reason || "Visual match",
-        }));
-    }
-  } catch {}
-
-  return [];
+    const parsed = parseGeminiJson(response);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((m: { confidence?: number }) => typeof m.confidence === "number" && m.confidence >= 35)
+      .map((m: { id: string; confidence: number; reason?: string }) => ({
+        id: String(m.id),
+        confidence: m.confidence,
+        reason: m.reason || "Visual match",
+      }));
+  } catch {
+    return [];
+  }
 }
 
-// @TheTechMargin 2026
 export async function analyzeEventPhoto(
   imageBase64: string,
   mimeType: string,
@@ -189,7 +158,9 @@ export async function analyzeEventPhoto(
   scene_description: string;
   face_count: number;
 }> {
-  const prompt = `Analyze this event photo and provide structured information in JSON format.
+  const response = await callGemini([
+    {
+      text: `Analyze this event photo and provide structured information in JSON format.
 
 Return ONLY valid JSON with this exact structure:
 {
@@ -199,36 +170,20 @@ Return ONLY valid JSON with this exact structure:
   "face_count": number of distinct faces visible in the photo
 }
 
-Be specific and factual. For visible_text, only include actual readable text. For people_descriptions, describe each person briefly. For scene_description, describe the environment and context.`;
-
-  const response = await callGemini([
-    { text: prompt },
-    {
-      inline_data: {
-        mime_type: mimeType,
-        data: imageBase64,
-      },
+Be specific and factual. For visible_text, only include actual readable text. For people_descriptions, describe each person briefly. For scene_description, describe the environment and context.`,
     },
+    { inline_data: { mime_type: mimeType, data: imageBase64 } },
   ]);
 
   try {
-    const jsonStr = response.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const parsed = JSON.parse(jsonStr);
-
-    // Validate and provide defaults
+    const parsed = parseGeminiJson(response) as Record<string, unknown>;
     return {
-      visible_text: parsed.visible_text || "",
-      people_descriptions: parsed.people_descriptions || "",
-      scene_description: parsed.scene_description || "",
+      visible_text: String(parsed.visible_text || ""),
+      people_descriptions: String(parsed.people_descriptions || ""),
+      scene_description: String(parsed.scene_description || ""),
       face_count: typeof parsed.face_count === "number" ? parsed.face_count : 0,
     };
-  } catch (error) {
-    console.error("Failed to parse Gemini response for analyzeEventPhoto:", error);
-    return {
-      visible_text: "",
-      people_descriptions: "",
-      scene_description: "",
-      face_count: 0,
-    };
+  } catch {
+    return { visible_text: "", people_descriptions: "", scene_description: "", face_count: 0 };
   }
 }

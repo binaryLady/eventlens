@@ -1,3 +1,4 @@
+// @TheTechMargin 2026
 import { NextRequest, NextResponse } from "next/server";
 import JSZip from "jszip";
 import { config } from "@/lib/config";
@@ -9,7 +10,6 @@ interface FileEntry {
   filename?: string;
 }
 
-// @TheTechMargin 2026
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

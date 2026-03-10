@@ -1,3 +1,4 @@
+// @TheTechMargin 2026
 import type { Metadata } from "next";
 import { JetBrains_Mono, Space_Mono, Pacifico } from "next/font/google";
 import "./globals.css";

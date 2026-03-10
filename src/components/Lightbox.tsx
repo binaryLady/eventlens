@@ -1,3 +1,4 @@
+// @TheTechMargin 2026
 "use client";
 
 import { PhotoRecord } from "@/lib/types";

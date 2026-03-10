@@ -1,3 +1,4 @@
+// @TheTechMargin 2026
 "use client";
 
 import { Component, ReactNode } from "react";

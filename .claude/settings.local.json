@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx next lint)",
+      "Bash(npx next build)",
+      "Bash(git add src/app/api/match/route.ts src/app/page.tsx src/lib/photos.ts src/middleware.ts vercel.json src/app/api/search/route.ts supabase/migrations/002_search_photos.sql)",
+      "Bash(git commit:*)",
+      "Bash(find /Users/soniacookbroen/Development/eventlens -maxdepth 2 -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" -o -name \"*.mjs\" \\\\\\) ! -path '*/node_modules/*' ! -path '*/.next/*' -exec wc -l {} +)",
+      "Bash(find /Users/soniacookbroen/Development/eventlens/src -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" \\\\\\) -exec wc -l {} +)",
+      "Bash(grep -r \"3000\\\\|3001\\\\|8080\\\\|port\" /Users/soniacookbroen/Development/eventlens/.env*)",
+      "Bash(for f in src/components/Lightbox.tsx src/components/PhotoUpload.tsx src/components/FloatingActionBar.tsx src/components/Toast.tsx src/components/ErrorBoundary.tsx src/app/admin/page.tsx)",
+      "Bash(do if ! head -1 \"$f\")",
+      "Bash(then sed -i '' '1s/^/\\\\/\\\\/ @TheTechMargin 2026\\\\n/' \"$f\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(do sed -i '' '1i// @TheTechMargin 2026:*)"
+    ]
+  }
+}
