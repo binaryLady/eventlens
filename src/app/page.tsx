@@ -1184,9 +1184,9 @@ function FilterSortSheet({
           <div className="px-4 pb-1 pt-1">
             <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">FOLDER</span>
           </div>
-          {menuRow(activeFolder === "" || !activeFolder, `ALL [${totalCount || 0}]`, () => { onFolderChange(""); })}
+          {menuRow(activeFolder === "" || !activeFolder, `ALL [${totalCount || 0}]`, () => { onFolderChange(""); setOpen(false); })}
           {folders.map((folder) =>
-            <div key={folder}>{menuRow(activeFolder === folder, `${folder} [${folderCounts?.[folder] || 0}]`, () => { onFolderChange(activeFolder === folder ? "" : folder); })}</div>
+            <div key={folder}>{menuRow(activeFolder === folder, `${folder} [${folderCounts?.[folder] || 0}]`, () => { onFolderChange(activeFolder === folder ? "" : folder); setOpen(false); })}</div>
           )}
           <div className="mx-4 my-1 border-t border-[var(--el-green-22)]" />
         </>
