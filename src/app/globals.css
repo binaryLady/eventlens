@@ -130,6 +130,11 @@ body {
   100% { background-position: 200% 0; }
 }
 
+@keyframes gradient-shift {
+  0% { background-position: 0% center; }
+  100% { background-position: 100% center; }
+}
+
 .animate-boot-line {
   animation: boot-line 0.4s ease-out forwards;
 }

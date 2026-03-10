@@ -12,6 +12,7 @@ const config: Config = {
       fontFamily: {
         mono: ["var(--font-mono)", "JetBrains Mono", "Fira Code", "monospace"],
         heading: ["var(--font-heading)", "Space Mono", "monospace"],
+        pacifico: ["var(--font-pacifico)", "Pacifico", "cursive"],
       },
       colors: {
         terminal: {

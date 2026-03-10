@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Space_Mono } from "next/font/google";
+import { JetBrains_Mono, Space_Mono, Pacifico } from "next/font/google";
 import "./globals.css";
+import Footer from "@/components/Footer";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -13,6 +14,13 @@ const spaceMono = Space_Mono({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-heading",
+  display: "swap",
+});
+
+const pacifico = Pacifico({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-pacifico",
   display: "swap",
 });
 
@@ -48,9 +56,12 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${jetbrainsMono.variable} ${spaceMono.variable} font-mono antialiased bg-black text-zinc-100 scan-lines`}
+        className={`${jetbrainsMono.variable} ${spaceMono.variable} ${pacifico.variable} font-mono antialiased bg-black text-zinc-100 scan-lines flex flex-col min-h-screen`}
       >
-        {children}
+        <div className="flex-1">
+          {children}
+        </div>
+        <Footer />
       </body>
     </html>
   );

@@ -10,11 +10,6 @@ export const maxDuration = 60;
  * POST /api/match
  * Accepts an uploaded photo and finds matching people across all event photos.
  *
- * Strategy (revised):
- *   1. Describe the person via Gemini (shared step)
- *   2. Run BOTH text and visual matching in parallel (not gated)
- *   3. Merge results — boost confidence when both tiers agree
- *
  * Body: { image: string (base64), mimeType: string }
  * Returns: { matches: MatchResult[], description: string, tier: "text" | "visual" | "both" }
  */
