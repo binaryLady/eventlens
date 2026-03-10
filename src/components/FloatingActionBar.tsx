@@ -23,7 +23,6 @@ export default function FloatingActionBar({
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--el-green)] bg-[var(--el-bg)] animate-slide-up safe-bottom">
       <div className="mx-auto max-w-5xl flex items-center justify-between px-3 py-2.5 md:px-4 md:py-3 gap-2 md:gap-3">
-        {/* Left: Cancel */}
         <button
           onClick={onClearSelection}
           className="shrink-0 border border-[var(--el-green-99)] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] active:bg-[var(--el-green-99)] transition-all"
@@ -31,7 +30,6 @@ export default function FloatingActionBar({
           CANCEL
         </button>
 
-        {/* Center: Count */}
         <span className="text-[10px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green)] whitespace-nowrap">
           {selectedCount} {"/"} {totalCount}
         </span>

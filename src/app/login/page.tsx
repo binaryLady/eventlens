@@ -42,9 +42,7 @@ export default function LoginPage() {
       className="w-full h-full bg-[var(--el-bg)] text-zinc-100 font-mono flex items-center justify-center p-4 scan-line-bg"
     >
       <div className="w-full max-w-sm">
-        {/* Terminal window */}
         <div className="border border-[var(--el-green-d9)] bg-[rgba(26,26,26,0.8)] p-6 backdrop-blur">
-          {/* Terminal header */}
           <div className="flex items-center gap-2 border-b border-[var(--el-green-99)] pb-3 mb-6">
             <div className="h-2 w-2 rounded-full bg-[var(--el-green)]" />
             <div className="h-2 w-2 rounded-full bg-[var(--el-green-d9)]" />
@@ -54,7 +52,6 @@ export default function LoginPage() {
             </span>
           </div>
 
-          {/* Content */}
           <div className="space-y-6">
             <div>
               <h1 className="text-lg font-bold text-[var(--el-green)] uppercase tracking-wider mb-2">
