@@ -677,9 +677,6 @@ function PhotoGrid() {
             </span>
             <span>&#x2500;&#x2500;&#x253c;&#x2500;&#x2500;</span>
           </div>
-          <p className="mt-2 text-[10px] font-mono tracking-wider text-[#00ff4122]">
-            POWERED BY EVENTLENS
-          </p>
         </footer>
       )}
 
