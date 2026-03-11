@@ -1,3 +1,4 @@
+// @TheTechMargin 2026
 "use client";
 
 interface FloatingActionBarProps {
@@ -20,27 +21,24 @@ export default function FloatingActionBar({
   if (selectedCount === 0) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#00ff41] bg-black animate-slide-up">
-      <div className="mx-auto max-w-5xl flex items-center justify-between px-4 py-3 gap-3">
-        {/* Left: Cancel */}
+    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--el-green)] bg-[var(--el-bg)] animate-slide-up safe-bottom">
+      <div className="mx-auto max-w-5xl flex items-center justify-between px-3 py-2.5 md:px-4 md:py-3 gap-2 md:gap-3">
         <button
           onClick={onClearSelection}
-          className="shrink-0 border border-[#00ff4133] px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-[#00ff4166] hover:border-[#00ff41] hover:text-[#00ff41] transition-all"
+          className="shrink-0 border border-[var(--el-green-99)] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] active:bg-[var(--el-green-99)] transition-all"
         >
           CANCEL
         </button>
 
-        {/* Center: Count */}
-        <span className="text-xs font-mono uppercase tracking-wider text-[#00ff41] whitespace-nowrap">
-          {selectedCount} {"/"} {totalCount} SELECTED
+        <span className="text-[10px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green)] whitespace-nowrap">
+          {selectedCount} {"/"} {totalCount}
         </span>
 
-        {/* Right: Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 md:gap-2">
           {selectedCount < totalCount && (
             <button
               onClick={onSelectAll}
-              className="hidden sm:block shrink-0 border border-[#00ff4133] px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-[#00ff4166] hover:border-[#00ff41] hover:text-[#00ff41] transition-all"
+              className="hidden sm:block shrink-0 border border-[var(--el-green-99)] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] active:bg-[var(--el-green-99)] transition-all"
             >
               SELECT ALL
             </button>
@@ -48,14 +46,15 @@ export default function FloatingActionBar({
           <button
             onClick={onDownloadZip}
             disabled={downloading}
-            className="shrink-0 inline-flex items-center gap-2 border border-[#00ff41] bg-[#00ff4111] px-4 py-1.5 text-xs font-mono uppercase tracking-wider text-[#00ff41] hover:bg-[#00ff4122] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="shrink-0 inline-flex items-center gap-1.5 md:gap-2 border border-[var(--el-green-99)] bg-[var(--el-green-11)] px-3 md:px-4 py-2 md:py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] active:bg-[var(--el-green-22)] transition-all disabled:border-[var(--el-amber)]/20 disabled:text-[var(--el-amber)]/40 disabled:bg-transparent disabled:cursor-not-allowed"
           >
             {downloading ? (
               <>
                 <div className="relative w-3 h-3">
-                  <div className="absolute inset-0 border border-[#00ff41] animate-crosshair-spin" />
+                  <div className="absolute inset-0 border border-[var(--el-green)] animate-crosshair-spin" />
                 </div>
-                PACKAGING...
+                <span className="hidden sm:inline">PACKAGING...</span>
+                <span className="sm:hidden">...</span>
               </>
             ) : (
               <>
@@ -73,7 +72,8 @@ export default function FloatingActionBar({
                   <polyline points="7 10 12 15 17 10" />
                   <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
-                DOWNLOAD ZIP
+                <span className="hidden sm:inline">DOWNLOAD ZIP</span>
+                <span className="sm:hidden">ZIP</span>
               </>
             )}
           </button>

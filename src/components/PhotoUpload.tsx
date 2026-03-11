@@ -1,29 +1,12 @@
+// @TheTechMargin 2026
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import Image from "next/image";
+import { MatchResponse } from "@/lib/types";
 
 interface PhotoUploadProps {
-  onMatchResults: (results: {
-    matches: Array<{
-      photo: {
-        id: string;
-        filename: string;
-        driveUrl: string;
-        driveFileId: string;
-        folder: string;
-        visibleText: string;
-        peopleDescriptions: string;
-        sceneDescription: string;
-        faceCount: number;
-        processedAt: string;
-        thumbnailUrl: string;
-        downloadUrl: string;
-      };
-      confidence: number;
-      reason: string;
-    }>;
-    description: string;
-  }) => void;
+  onMatchResults: (results: MatchResponse) => void;
   onClear: () => void;
   isActive: boolean;
 }
@@ -39,7 +22,8 @@ export default function PhotoUpload({
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const deepScanTimerRef = useRef<NodeJS.Timeout>();
+  const deepScanTimerRef = useRef<NodeJS.Timeout>(undefined);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const clearDeepScanTimer = useCallback(() => {
     if (deepScanTimerRef.current) {
@@ -63,7 +47,6 @@ export default function PhotoUpload({
     setUploading(true);
     setStatusText("SCANNING...");
 
-    // If response takes > 4s, visual fallback kicked in
     clearDeepScanTimer();
     deepScanTimerRef.current = setTimeout(() => {
       setStatusText("DEEP SCANNING...");
@@ -78,10 +61,14 @@ export default function PhotoUpload({
       const mimeType = file.type;
 
       try {
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
         const res = await fetch("/api/match", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ image: base64, mimeType }),
+          signal: controller.signal,
         });
 
         clearDeepScanTimer();
@@ -100,11 +87,13 @@ export default function PhotoUpload({
         }
 
         onMatchResults(data);
-      } catch {
+      } catch (err) {
         clearDeepScanTimer();
+        if (err instanceof DOMException && err.name === "AbortError") return;
         setError("NETWORK ERROR — RETRY");
       }
 
+      abortControllerRef.current = null;
       setUploading(false);
     };
 
@@ -117,6 +106,16 @@ export default function PhotoUpload({
     e.target.value = "";
   };
 
+  const handleCancel = useCallback(() => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    clearDeepScanTimer();
+    setPreview(null);
+    setError(null);
+    setUploading(false);
+    onClear();
+  }, [clearDeepScanTimer, onClear]);
+
   const handleClear = () => {
     clearDeepScanTimer();
     setPreview(null);
@@ -126,18 +125,16 @@ export default function PhotoUpload({
   };
 
   return (
-    <div className="mt-4">
-      {/* Upload buttons row */}
+    <div className="mt-2.5 md:mt-4">
       {!isActive && !uploading && (
         <div className="flex items-center justify-center gap-2">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-2 border border-[#00ff4133] bg-black/60 px-4 py-2 text-xs font-mono uppercase tracking-wider text-[#00ff4199] transition-all hover:border-[#00ff41] hover:text-[#00ff41] hover:shadow-[0_0_10px_rgba(0,255,65,0.15)]"
+            className="inline-flex items-center gap-1.5 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-3 py-1.5 text-[10px] md:text-xs md:px-4 md:py-2 font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)]"
           >
-            {/* Crosshair/target icon */}
             <svg
-              width="14"
-              height="14"
+              width="12"
+              height="12"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -152,17 +149,17 @@ export default function PhotoUpload({
               <line x1="2" y1="12" x2="6" y2="12" />
               <line x1="18" y1="12" x2="22" y2="12" />
             </svg>
-            Upload Photo to Search for Matches
+            <span className="sm:hidden">SCAN FACE</span>
+            <span className="hidden sm:inline">Upload Photo to Search for Matches</span>
           </button>
 
-          {/* Camera capture (mobile) */}
           <button
             onClick={() => cameraInputRef.current?.click()}
-            className="inline-flex items-center gap-2 border border-[#00ff4133] bg-black/60 px-4 py-2 text-xs font-mono uppercase tracking-wider text-[#00ff4199] transition-all hover:border-[#00ff41] hover:text-[#00ff41] hover:shadow-[0_0_10px_rgba(0,255,65,0.15)] md:hidden"
+            className="inline-flex items-center gap-1.5 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)] md:hidden"
           >
             <svg
-              width="14"
-              height="14"
+              width="12"
+              height="12"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -176,7 +173,6 @@ export default function PhotoUpload({
             CAPTURE
           </button>
 
-          {/* Hidden file inputs */}
           <input
             ref={fileInputRef}
             type="file"
@@ -197,33 +193,44 @@ export default function PhotoUpload({
         </div>
       )}
 
-      {/* Active state: preview + status */}
       {(uploading || isActive) && (
         <div className="flex items-center justify-center gap-3">
-          {/* Photo preview thumbnail */}
           {preview && (
-            <div className="relative h-10 w-10 shrink-0 overflow-hidden border border-[#00ff41] animate-pulse-green">
-              <img
+            <div className="relative h-10 w-10 shrink-0 overflow-hidden border border-[var(--el-green)] animate-pulse-green">
+              <Image
                 src={preview}
                 alt="Your photo"
-                className="h-full w-full object-cover"
+                fill
+                unoptimized
+                className="object-cover"
               />
             </div>
           )}
 
           {uploading ? (
-            <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#00ff4199]">
-              {/* Scanning animation */}
-              <div className="relative w-4 h-4">
-                <div className="absolute inset-0 border border-[#00ff41] animate-crosshair-spin" />
-                <div className="absolute inset-1 bg-[#00ff41] animate-pulse" />
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--el-flame-dd)]">
+                <div className="relative w-4 h-4">
+                  <div className="absolute inset-0 border border-[var(--el-green)] animate-crosshair-spin" />
+                  <div className="absolute inset-1 bg-[var(--el-green)] animate-pulse" />
+                </div>
+                {statusText}
               </div>
-              {statusText}
+              <button
+                onClick={handleCancel}
+                className="inline-flex items-center gap-1.5 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+                CANCEL
+              </button>
             </div>
           ) : (
             <button
               onClick={handleClear}
-              className="inline-flex items-center gap-1.5 border border-[#00ff4133] bg-black/60 px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-[#00ff4166] transition-all hover:border-[#00ff41] hover:text-[#00ff41]"
+              className="inline-flex items-center gap-1.5 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
             >
               <svg
                 width="12"
@@ -244,7 +251,6 @@ export default function PhotoUpload({
         </div>
       )}
 
-      {/* Error message */}
       {error && (
         <p className="mt-2 text-center text-[10px] font-mono uppercase tracking-wider text-red-500">
           &#9888; {error}
