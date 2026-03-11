@@ -124,7 +124,7 @@ function TerminalLoader() {
 
 function GridSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {Array.from({ length: 12 }).map((_, i) => (
         <div
           key={i}
@@ -824,7 +824,7 @@ function PhotoGrid() {
                     [{folders.length}]
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-1.5 md:gap-2 md:grid-cols-3 lg:grid-cols-4">
+                <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 md:gap-2 md:grid-cols-3 lg:grid-cols-4">
                   {folders.map((folder) => {
                     const previews = folderPreviews[folder] || [];
                     const count = folderCounts[folder] || 0;
@@ -883,7 +883,7 @@ function PhotoGrid() {
                     [{allPhotos.length} TOTAL]
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-1.5 md:gap-2 md:grid-cols-3 lg:grid-cols-4">
+                <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 md:gap-2 md:grid-cols-3 lg:grid-cols-4">
                   {heroPhotos.map((photo, index) => (
                     <PhotoCard
                       key={photo.id}
@@ -939,7 +939,7 @@ function PhotoGrid() {
             )}
 
             {filteredPhotos.length > 0 && (
-              <div className="grid grid-cols-2 gap-1.5 md:gap-2 md:grid-cols-3 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 md:gap-2 md:grid-cols-3 lg:grid-cols-4">
                 {filteredPhotos.map((photo, index) => (
                   <PhotoCard
                     key={photo.id}
@@ -971,7 +971,7 @@ function PhotoGrid() {
                       &#x2500;&#x2500; YOU MIGHT ALSO APPEAR IN
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-1.5 md:gap-2 md:grid-cols-3 lg:grid-cols-4">
+                  <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 md:gap-2 md:grid-cols-3 lg:grid-cols-4">
                     {recPhotos.map((photo, index) => (
                       <PhotoCard
                         key={photo.id}

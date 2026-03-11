@@ -237,7 +237,7 @@ export default function Lightbox({
         <div className="w-full h-full scan-line-bg" />
       </div>
 
-      <div className="relative z-[52] flex items-center justify-between px-3 pt-safe-area-max md:px-4">
+      <div className="relative z-[52] flex items-center justify-between px-3 py-2 pt-safe-area-max md:px-4">
         {photos.length > 1 && (
           <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-77)]">
             {currentIndex + 1} / {photos.length}
@@ -264,6 +264,23 @@ export default function Lightbox({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
+        {/* Mobile tap zones — invisible left/right halves for prev/next */}
+        {photos.length > 1 && (
+          <>
+            <button
+              onClick={goPrev}
+              className="md:hidden absolute left-0 top-0 bottom-0 w-1/4 z-[52]"
+              aria-label="Previous photo"
+            />
+            <button
+              onClick={goNext}
+              className="md:hidden absolute right-0 top-0 bottom-0 w-1/4 z-[52]"
+              aria-label="Next photo"
+            />
+          </>
+        )}
+
+        {/* Desktop arrow buttons */}
         {photos.length > 1 && (
           <button
             onClick={goPrev}
