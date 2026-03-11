@@ -1352,7 +1352,7 @@ function PhotoCard({
         </span>
       </div>
 
-      <div className="absolute inset-0 pointer-events-none z-[2] opacity-100 group-hover:opacity-0 transition-opacity duration-300 scan-line-bg" />
+      <div className="absolute inset-0 pointer-events-none z-[2] group-hover:opacity-0 transition-opacity duration-300 scan-line-bg" />
 
       <div className="absolute top-1 left-1 w-2.5 h-2.5 border-t border-l border-[var(--el-green-44)] opacity-0 group-hover:opacity-100 transition-opacity" />
       <div className="absolute bottom-1 right-1 w-2.5 h-2.5 border-b border-r border-[var(--el-green-44)] opacity-0 group-hover:opacity-100 transition-opacity" />
