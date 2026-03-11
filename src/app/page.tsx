@@ -421,7 +421,9 @@ function PhotoGrid() {
       result = debouncedQuery ? searchPhotos(debouncedQuery, matchPhotos) : matchPhotos;
     } else if (debouncedQuery) {
       if (serverResults && serverResults.length > 0) {
-        result = serverResults;
+        result = activeFolder
+          ? serverResults.filter((p) => p.folder === activeFolder)
+          : serverResults;
       } else {
         const base = activeFolder
           ? allPhotos.filter((p) => p.folder === activeFolder)
