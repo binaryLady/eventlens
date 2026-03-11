@@ -417,8 +417,3 @@ html {
 .lightbox-image {
   transition: opacity 0.3s ease-in-out, transform 0.2s ease-out;
 }
-
-.lightbox-image.swiping {
-  transition: opacity 0.3s ease-in-out;
-  transform: translateX(var(--swipe-x, 0px));
-}

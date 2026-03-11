@@ -12,6 +12,10 @@ interface LightboxProps {
   onNavigate: (photo: PhotoRecord) => void;
 }
 
+function getDriveImageUrl(fileId: string) {
+  return `https://lh3.googleusercontent.com/d/${fileId}=w1200`;
+}
+
 export default function Lightbox({
   photo,
   photos,
@@ -19,18 +23,27 @@ export default function Lightbox({
   onNavigate,
 }: LightboxProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [showSpinner, setShowSpinner] = useState(false);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
-  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
   const [showMeta, setShowMeta] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const imageElRef = useRef<HTMLDivElement>(null);
+  const spinnerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentIndex = photo
     ? photos.findIndex((p) => p.id === photo.id)
     : -1;
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < photos.length - 1;
+
+  // Stable refs for navigation callbacks so keyboard listener doesn't need re-attaching
+  const goPrevRef = useRef(() => {});
+  const goNextRef = useRef(() => {});
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   const goPrev = useCallback(() => {
     if (hasPrev) {
@@ -48,23 +61,58 @@ export default function Lightbox({
     }
   }, [hasNext, currentIndex, photos, onNavigate]);
 
+  goPrevRef.current = goPrev;
+  goNextRef.current = goNext;
+
   const prevPhotoRef = useRef<PhotoRecord | null>(null);
 
+  // Delayed spinner: only show loading indicator if image takes >150ms
   useEffect(() => {
     if (!photo) return;
 
+    if (spinnerTimerRef.current) {
+      clearTimeout(spinnerTimerRef.current);
+      spinnerTimerRef.current = null;
+    }
+
     setImageLoaded(false);
-    setSwipeOffset(0);
+    setShowSpinner(false);
+
+    spinnerTimerRef.current = setTimeout(() => {
+      setShowSpinner(true);
+    }, 150);
 
     if (prevPhotoRef.current === null) {
       setShowMeta(false);
     }
     prevPhotoRef.current = photo;
 
+    return () => {
+      if (spinnerTimerRef.current) {
+        clearTimeout(spinnerTimerRef.current);
+        spinnerTimerRef.current = null;
+      }
+    };
+  }, [photo]);
+
+  // Mark loaded — also clears pending spinner timer
+  const handleImageLoaded = useCallback(() => {
+    if (spinnerTimerRef.current) {
+      clearTimeout(spinnerTimerRef.current);
+      spinnerTimerRef.current = null;
+    }
+    setShowSpinner(false);
+    setImageLoaded(true);
+  }, []);
+
+  // Stable keyboard listener — attach once when lightbox opens, never re-attach on navigation
+  useEffect(() => {
+    if (!photo) return;
+
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-      if (e.key === "ArrowLeft") goPrev();
-      if (e.key === "ArrowRight") goNext();
+      if (e.key === "Escape") onCloseRef.current();
+      if (e.key === "ArrowLeft") goPrevRef.current();
+      if (e.key === "ArrowRight") goNextRef.current();
     };
 
     document.addEventListener("keydown", handleKey);
@@ -74,7 +122,9 @@ export default function Lightbox({
       document.removeEventListener("keydown", handleKey);
       document.body.style.overflow = "";
     };
-  }, [photo, onClose, goPrev, goNext]);
+  // Only depend on whether photo is truthy (lightbox open/closed), not the photo value
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!photo]);
 
   useEffect(() => {
     if (photo && closeRef.current) {
@@ -82,9 +132,31 @@ export default function Lightbox({
     }
   }, [photo]);
 
+  // Preload adjacent images
+  useEffect(() => {
+    if (currentIndex < 0 || photos.length <= 1) return;
+
+    const toPreload: string[] = [];
+    const nextIdx = currentIndex < photos.length - 1 ? currentIndex + 1 : 0;
+    const prevIdx = currentIndex > 0 ? currentIndex - 1 : photos.length - 1;
+
+    const nextPhoto = photos[nextIdx];
+    const prevPhoto = photos[prevIdx];
+
+    if (nextPhoto?.driveFileId) toPreload.push(getDriveImageUrl(nextPhoto.driveFileId));
+    if (prevPhoto?.driveFileId && prevIdx !== nextIdx) toPreload.push(getDriveImageUrl(prevPhoto.driveFileId));
+
+    toPreload.forEach((url) => {
+      const img = new window.Image();
+      img.src = url;
+    });
+  }, [currentIndex, photos]);
+
+  // Swipe handlers — use ref for offset to avoid per-frame re-renders
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStartX(e.touches[0].clientX);
     setTouchStartY(e.touches[0].clientY);
+    setIsSwiping(false);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -92,7 +164,15 @@ export default function Lightbox({
     const dx = e.touches[0].clientX - touchStartX;
     const dy = e.touches[0].clientY - touchStartY;
     if (Math.abs(dx) > Math.abs(dy)) {
-      setSwipeOffset(dx);
+      if (!isSwiping) setIsSwiping(true);
+      // Direct DOM update — avoids React re-render per touch frame
+      if (imageElRef.current) {
+        const el = imageElRef.current.querySelector('.lightbox-image') as HTMLElement | null;
+        if (el) {
+          el.style.transform = `translateX(${dx * 0.3}px)`;
+          el.style.transition = 'none';
+        }
+      }
     }
   };
 
@@ -100,6 +180,15 @@ export default function Lightbox({
     if (touchStartX === null) return;
     const dx = e.changedTouches[0].clientX - touchStartX;
     const dy = e.changedTouches[0].clientY - (touchStartY ?? 0);
+
+    // Reset DOM styles
+    if (imageElRef.current) {
+      const el = imageElRef.current.querySelector('.lightbox-image') as HTMLElement | null;
+      if (el) {
+        el.style.transform = '';
+        el.style.transition = '';
+      }
+    }
 
     if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
       if (dx > 0) goPrev();
@@ -111,7 +200,7 @@ export default function Lightbox({
 
     setTouchStartX(null);
     setTouchStartY(null);
-    setSwipeOffset(0);
+    setIsSwiping(false);
   };
 
   if (!photo) {
@@ -124,7 +213,7 @@ export default function Lightbox({
     photo.mimeType?.startsWith("video/");
 
   const fullImageUrl = photo.driveFileId
-    ? `https://lh3.googleusercontent.com/d/${photo.driveFileId}=w1200`
+    ? getDriveImageUrl(photo.driveFileId)
     : "";
 
   const videoUrl = photo.driveFileId
@@ -199,8 +288,8 @@ export default function Lightbox({
           </button>
         )}
 
-        <div className="relative flex items-center justify-center w-full h-full">
-          {!imageLoaded && (
+        <div ref={imageElRef} className="relative flex items-center justify-center w-full h-full">
+          {showSpinner && !imageLoaded && (
             <div className="absolute inset-0 flex items-center justify-center z-10">
               <div className="flex flex-col items-center gap-2">
                 <div className="relative w-8 h-8">
@@ -221,8 +310,8 @@ export default function Lightbox({
               autoPlay
               playsInline
               className={`max-w-full max-h-full object-contain select-none lightbox-media ${imageLoaded ? 'loaded' : ''}`}
-              onLoadedData={() => setImageLoaded(true)}
-              onError={() => setImageLoaded(true)}
+              onLoadedData={handleImageLoaded}
+              onError={handleImageLoaded}
             />
           ) : fullImageUrl ? (
             <Image
@@ -231,11 +320,10 @@ export default function Lightbox({
               alt={photo.filename}
               fill
               unoptimized
-              className={`object-contain select-none lightbox-media lightbox-image ${imageLoaded ? 'loaded' : ''} ${swipeOffset ? 'swiping' : ''}`}
-              style={swipeOffset ? { '--swipe-x': `${swipeOffset * 0.3}px` } as React.CSSProperties : undefined}
+              className={`object-contain select-none lightbox-media lightbox-image ${imageLoaded ? 'loaded' : ''}`}
               draggable={false}
-              onLoad={() => setImageLoaded(true)}
-              onError={() => setImageLoaded(true)}
+              onLoad={handleImageLoaded}
+              onError={handleImageLoaded}
             />
           ) : null}
         </div>
