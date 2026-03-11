@@ -237,7 +237,7 @@ export default function Lightbox({
       aria-label="Photo viewer"
       ref={dialogRef}
     >
-      <div className="absolute inset-0 pointer-events-none z-[51] opacity-30">
+      <div className="absolute inset-0 pointer-events-none z-[51] opacity-30 group-hover/lb:opacity-0 transition-opacity duration-300">
         <div className="w-full h-full scan-line-bg" />
       </div>
 
@@ -263,7 +263,7 @@ export default function Lightbox({
       </div>
 
       <div
-        className="relative flex-1 flex items-center justify-center min-h-0 px-2 md:px-16"
+        className="group/lb relative flex-1 flex items-center justify-center min-h-0 px-2 md:px-16"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
