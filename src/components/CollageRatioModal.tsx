@@ -137,7 +137,7 @@ export default function CollageRatioModal({
 
         <button
           onClick={onDismiss}
-          className="mt-2 w-full border border-[var(--el-green-99)]/40 px-3 py-2 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] transition-all"
+          className="mt-2 w-full px-3 py-1.5 text-[9px] font-mono uppercase tracking-wider text-[var(--el-green-44)] hover:text-[var(--el-green-99)] transition-colors"
         >
           CANCEL
         </button>
