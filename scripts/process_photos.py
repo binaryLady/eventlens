@@ -571,9 +571,11 @@ def phase_sync(
                 stored_folder or "(root)",
                 changes.get("folder", stored_folder) or "(root)",
             )
-            # Reset status so phase_describe re-processes with updated filename/folder
-            # Update photos row (includes status reset)
-            store.update_photo_metadata(fid, {**changes, "status": "pending"})
+            # Update photos row — keep status as 'completed' since the image
+            # content hasn't changed (only name/folder moved).  Nulling the
+            # description_embedding below is enough to trigger re-embedding
+            # with the corrected filename/folder on the next --only-embeddings run.
+            store.update_photo_metadata(fid, changes)
             # Null out description embedding (re-embeds with correct filename/folder)
             store.null_description_embedding(fid)
             # Update face_embeddings rows (filename/folder only — no status column there)
