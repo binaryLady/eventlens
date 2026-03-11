@@ -389,6 +389,30 @@ export default function Lightbox({
                 </button>
               )}
 
+              {onToggleSelect && (
+                <button
+                  onClick={() => onToggleSelect(photo.id)}
+                  className={`inline-flex h-9 items-center gap-2 border px-3 text-xs font-mono uppercase tracking-wider transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] ${
+                    isSelected
+                      ? "border-[var(--el-magenta)] bg-[var(--el-magenta-28)] text-[var(--el-magenta-bb)]"
+                      : "border-[var(--el-green-99)] bg-[var(--el-green-11)] text-[var(--el-green-99)] active:bg-[var(--el-green-22)]"
+                  }`}
+                  aria-label={isSelected ? "Remove from selection" : "Add to selection"}
+                >
+                  {isSelected ? (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  ) : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                  )}
+                  <span className="hidden sm:inline">{isSelected ? "SELECTED" : "SELECT"}</span>
+                </button>
+              )}
+
               <a
                 href={photo.downloadUrl}
                 className="inline-flex h-9 items-center gap-2 border border-[var(--el-green-99)] bg-[var(--el-green-11)] px-3 text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] active:bg-[var(--el-green-22)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] transition-all"
