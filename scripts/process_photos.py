@@ -581,6 +581,7 @@ def phase_describe(
         batch = photos[i : i + batch_size]
         batch_described = []
 
+        interrupted = False
         for photo in tqdm(batch, desc=f"Describe batch {i // batch_size + 1}"):
             fid = photo["drive_file_id"]
             try:
@@ -606,6 +607,7 @@ def phase_describe(
                 processed += 1
             except KeyboardInterrupt:
                 log.info("Interrupted — saving progress")
+                interrupted = True
                 break
             except (IOError, ValueError, RuntimeError) as e:
                 log.error("  Failed %s: %s", photo['filename'], e)
@@ -615,6 +617,9 @@ def phase_describe(
         # Generate text embeddings for this batch
         if batch_described:
             _embed_descriptions(gemini, store, batch_described)
+
+        if interrupted:
+            break
 
     if errors:
         error_str = ', '.join(errors[:10]) + ('...' if len(errors) > 10 else '')
@@ -730,6 +735,16 @@ def phase_face_embed(
                 continue
 
             faces = face_api.get_embeddings(b64)
+            if not faces:
+                # Sentinel row so this photo is not re-processed on re-run
+                store.upsert_face_embedding({
+                    "drive_file_id": fid,
+                    "filename": photo["filename"],
+                    "folder": photo["folder"],
+                    "face_index": -1,
+                    "embedding": None,
+                    "bbox_x1": 0, "bbox_y1": 0, "bbox_x2": 0, "bbox_y2": 0,
+                })
             for face in faces:
                 bbox = face.get("bbox", [0, 0, 0, 0])
                 store.upsert_face_embedding({
