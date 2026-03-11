@@ -10,6 +10,8 @@ interface LightboxProps {
   photos: PhotoRecord[];
   onClose: () => void;
   onNavigate: (photo: PhotoRecord) => void;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
 function getDriveImageUrl(fileId: string) {
@@ -224,7 +226,7 @@ export default function Lightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-[rgba(26,26,26,0.95)] backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex flex-col bg-[rgba(26,26,26,0.95)] backdrop-blur-sm h-[100dvh] overflow-hidden"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -346,28 +348,31 @@ export default function Lightbox({
         </div>
       </div>
 
-      <div className="relative z-[52] border-t border-[var(--el-green-22)] bg-[var(--el-bg)] pb-safe-area-max">
+      <div className="relative z-[52] shrink-0 border-t border-[var(--el-green-22)] bg-[var(--el-bg)] pb-safe-area-max">
         <div className="flex justify-center pt-1.5 pb-0.5 md:hidden">
           <div className="w-8 h-0.5 rounded-full bg-[var(--el-green-33)]" />
         </div>
 
         <div className="px-3 py-2 md:px-6 md:py-3">
+          {/* Row 1: filename + folder tag + actions */}
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="min-w-0">
               <h3 className="font-mono text-xs font-bold text-[var(--el-green)] uppercase tracking-wider truncate">
                 {photo.filename}
               </h3>
-              <span className="hidden sm:inline-block shrink-0 border border-[var(--el-green-33)] px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-[var(--el-green-99)]">
-                {photo.folder}
-              </span>
-              {photo.faceCount > 0 && (
-                <span className="hidden sm:inline-block shrink-0 border border-[var(--el-green-22)] px-1.5 py-0.5 text-[9px] font-mono text-[var(--el-green-66)]">
-                  {photo.faceCount} {photo.faceCount === 1 ? "FACE" : "FACES"}
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="shrink-0 border border-[var(--el-green-33)] px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-[var(--el-green-99)]">
+                  {photo.folder}
                 </span>
-              )}
+                {photo.faceCount > 0 && (
+                  <span className="shrink-0 border border-[var(--el-green-22)] px-1.5 py-0.5 text-[9px] font-mono text-[var(--el-green-66)]">
+                    {photo.faceCount} {photo.faceCount === 1 ? "FACE" : "FACES"}
+                  </span>
+                )}
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
               {hasMeta && (
                 <button
                   onClick={() => setShowMeta(!showMeta)}
@@ -396,18 +401,8 @@ export default function Lightbox({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mt-1.5 sm:hidden">
-            <span className="border border-[var(--el-green-33)] px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-[var(--el-green-99)]">
-              {photo.folder}
-            </span>
-            {photo.faceCount > 0 && (
-              <span className="border border-[var(--el-green-22)] px-1.5 py-0.5 text-[9px] font-mono text-[var(--el-green-66)]">
-                {photo.faceCount} {photo.faceCount === 1 ? "FACE" : "FACES"}
-              </span>
-            )}
-          </div>
-
-          <div className={`overflow-hidden transition-all duration-200 ${showMeta ? "max-h-60 opacity-100 mt-3" : "md:max-h-60 md:opacity-100 md:mt-3 max-h-0 opacity-0"}`}>
+          {/* Expandable meta section */}
+          <div className={`overflow-y-auto transition-all duration-200 ${showMeta ? "max-h-40 opacity-100 mt-2" : "md:max-h-60 md:opacity-100 md:mt-3 max-h-0 opacity-0"}`}>
             {photo.visibleText && (
               <div className="mb-2">
                 <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-66)]">

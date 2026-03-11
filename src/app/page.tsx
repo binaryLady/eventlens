@@ -1008,6 +1008,11 @@ function PhotoGrid() {
         photos={filteredPhotos}
         onClose={() => setSelectedPhoto(null)}
         onNavigate={setSelectedPhoto}
+        isSelected={selectedPhoto ? selectedIds.has(selectedPhoto.id) : false}
+        onToggleSelect={(id: string) => {
+          if (!selectMode) setSelectMode(true);
+          togglePhotoSelection(id);
+        }}
       />
 
       {toast && (

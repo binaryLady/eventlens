@@ -399,19 +399,7 @@ class SupabaseStore:
         return ids
 
     def upsert_face_embedding(self, row: dict):
-        # Check if already exists to avoid overwriting
-        existing = (
-            self.client.table("face_embeddings")
-            .select("id")
-            .eq("drive_file_id", row["drive_file_id"])
-            .eq("face_index", row["face_index"])
-            .execute()
-        )
-        if existing.data:
-            return  # already exists, don't overwrite
-        
-        # Insert new face embedding
-        self.client.table("face_embeddings").insert(row).execute()
+        self.client.table("face_embeddings").upsert(row, on_conflict="drive_file_id,face_index").execute()
 
 
 # ── Pipeline Phases ────────────────────────────────────────────────
@@ -594,7 +582,9 @@ def phase_face_embed(
     if folder_filter:
         all_photos = [p for p in all_photos if p["folder"] == folder_filter]
 
-    todo = all_photos
+    already_done = store.get_existing_face_file_ids()
+    todo = [p for p in all_photos if p["drive_file_id"] not in already_done]
+    log.info("Skipping %d photos already face-embedded", len(all_photos) - len(todo))
 
     if not todo:
         log.info("No completed photos to process")
