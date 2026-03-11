@@ -699,7 +699,7 @@ def phase_face_embed(
         log.error("Face API at %s is not reachable. Use --skip-face-embed or start the service.", face_api.base_url)
         return 0
 
-    all_photos = store.get_photos_by_status(["completed"])
+    all_photos = store.get_photos_by_status(["pending", "completed"])
     if folder_filter:
         all_photos = [p for p in all_photos if p["folder"] == folder_filter]
 
