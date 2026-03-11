@@ -61,7 +61,8 @@
       "Bash(find /Users/soniacookbroen/Development/eventlens/src -name \"*.ts\" -exec grep -l \"photos\\\\|face_embeddings\" {})",
       "Bash(python -c \"import ast; ast.parse\\(open\\(''scripts/process_photos.py''\\).read\\(\\)\\); print\\(''Syntax OK''\\)\")",
       "Bash(python3 -c \"import ast; ast.parse\\(open\\(''scripts/process_photos.py''\\).read\\(\\)\\); print\\(''Syntax OK''\\)\")",
-      "Bash(curl -s --max-time 10 \"$FACE_API_URL/health\")"
+      "Bash(curl -s --max-time 10 \"$FACE_API_URL/health\")",
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\(''/Users/soniacookbroen/Development/eventlens/scripts/process_photos.py''\\).read\\(\\)\\); print\\(''OK''\\)\")"
     ]
   }
 }

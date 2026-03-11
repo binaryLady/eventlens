@@ -56,7 +56,8 @@ async function fetchSupabaseMetadata(): Promise<Map<string, PhotoRow>> {
     const { data, error } = await supabase
       .from("photos")
       .select("*")
-      .eq("status", "completed");
+      .eq("status", "completed")
+      .neq("hidden", true);
     if (error) return new Map();
     const map = new Map<string, PhotoRow>();
     for (const row of data as PhotoRow[]) map.set(row.drive_file_id, row);

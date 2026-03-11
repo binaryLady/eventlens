@@ -12,6 +12,7 @@ const VALID_PHASES = [
   "describe",
   "embeddings",
   "face-embed",
+  "phash",
   "full",
 ] as const;
 
@@ -32,6 +33,9 @@ function phaseToArgs(phase: Phase, options?: { retryErrors?: boolean; folder?: s
       break;
     case "face-embed":
       args.push("--only-face-embed");
+      break;
+    case "phash":
+      args.push("--only-phash");
       break;
     case "full":
       args.push("--skip-rename", "--skip-face-embed");

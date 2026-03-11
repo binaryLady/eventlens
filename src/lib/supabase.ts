@@ -141,7 +141,8 @@ export async function getPhotosByDriveFileIds(
     .from("photos")
     .select("*")
     .in("drive_file_id", driveFileIds)
-    .eq("status", "completed");
+    .eq("status", "completed")
+    .neq("hidden", true);
   if (error) return [];
   return (data as PhotoRow[]) || [];
 }

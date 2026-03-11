@@ -18,8 +18,11 @@ import time
 from collections import deque
 from pathlib import Path
 
+import io
+
 import requests
 from dotenv import load_dotenv
+from PIL import Image
 from supabase import create_client, Client
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception
 from tqdm import tqdm
@@ -87,6 +90,7 @@ def _is_rate_limited(exc: BaseException) -> bool:
 class DriveClient:
     def __init__(self, config: Config):
         self.api_key = config.google_api_key
+        self.session = requests.Session()
 
     def list_subfolders(self, parent_id: str) -> list[dict]:
         folders = []
@@ -102,7 +106,7 @@ class DriveClient:
             }
             if page_token:
                 params["pageToken"] = page_token
-            r = requests.get(DRIVE_API, params=params, timeout=30)
+            r = self.session.get(DRIVE_API, params=params, timeout=30)
             r.raise_for_status()
             data = r.json()
             folders.extend(data.get("files", []))
@@ -125,7 +129,7 @@ class DriveClient:
             }
             if page_token:
                 params["pageToken"] = page_token
-            r = requests.get(DRIVE_API, params=params, timeout=30)
+            r = self.session.get(DRIVE_API, params=params, timeout=30)
             r.raise_for_status()
             data = r.json()
             files.extend(data.get("files", []))
@@ -138,7 +142,7 @@ class DriveClient:
         """Fetch current name and parents for a single file. Returns None if deleted/inaccessible."""
         url = f"{DRIVE_API}/{file_id}"
         params = {"fields": "name,parents,trashed", "key": self.api_key}
-        r = requests.get(url, params=params, timeout=15)
+        r = self.session.get(url, params=params, timeout=15)
         if r.status_code == 404:
             return None
         r.raise_for_status()
@@ -147,7 +151,7 @@ class DriveClient:
     def download_media_base64(self, file_id: str, width: int = 1200) -> tuple[str, str] | None:
         # Try lh3 CDN first (fast, no auth needed)
         try:
-            r = requests.get(f"https://lh3.googleusercontent.com/d/{file_id}=w{width}", timeout=30)
+            r = self.session.get(f"https://lh3.googleusercontent.com/d/{file_id}=w{width}", timeout=30)
             if r.ok:
                 ct = r.headers.get("content-type", "")
                 if ct.startswith("image/") or ct.startswith("video/"):
@@ -157,7 +161,7 @@ class DriveClient:
 
         # Fallback: Drive API
         try:
-            r = requests.get(
+            r = self.session.get(
                 f"{DRIVE_API}/{file_id}",
                 params={"alt": "media", "key": self.api_key},
                 timeout=30,
@@ -222,6 +226,7 @@ class GeminiClient:
     def __init__(self, api_key: str, rpm: int = 30):
         self.api_key = api_key
         self.limiter = RateLimiter(rpm)
+        self.session = requests.Session()
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=2, min=2, max=16),
            retry=retry_if_exception(_is_rate_limited))
@@ -235,7 +240,7 @@ class GeminiClient:
             ]}],
             "generationConfig": {"temperature": 0.1, "maxOutputTokens": 8192},
         }
-        r = requests.post(url, json=body, timeout=120)
+        r = self.session.post(url, json=body, timeout=120)
         r.raise_for_status()
         data = r.json()
         if "error" in data:
@@ -259,7 +264,7 @@ class GeminiClient:
         all_embeddings = []
         for i in range(0, len(reqs), 100):
             chunk = reqs[i : i + 100]
-            r = requests.post(url, json={"requests": chunk}, timeout=60)
+            r = self.session.post(url, json={"requests": chunk}, timeout=60)
             r.raise_for_status()
             data = r.json()
             for emb in data.get("embeddings", []):
@@ -274,12 +279,15 @@ class FaceApiClient:
     def __init__(self, base_url: str, secret: str = ""):
         self.base_url = base_url.rstrip("/")
         self.secret = secret
+        self.session = requests.Session()
+        if secret:
+            self.session.headers["Authorization"] = f"Bearer {secret}"
 
     def health_check(self, retries: int = 6, retry_delay: float = 5.0) -> bool:
         """Check reachability, retrying to allow for Railway cold-start (~30s)."""
         for attempt in range(1, retries + 1):
             try:
-                r = requests.get(f"{self.base_url}/health", timeout=10)
+                r = self.session.get(f"{self.base_url}/health", timeout=10)
                 if r.ok:
                     return True
             except requests.RequestException:
@@ -290,17 +298,37 @@ class FaceApiClient:
         return False
 
     def get_embeddings(self, base64_data: str) -> list[dict]:
-        headers = {}
-        if self.secret:
-            headers["Authorization"] = f"Bearer {self.secret}"
-        r = requests.post(
+        r = self.session.post(
             f"{self.base_url}/embed",
             json={"image": base64_data},
-            headers=headers,
             timeout=60,
         )
         r.raise_for_status()
         return r.json().get("faces", [])
+
+
+# ── Perceptual Hashing ─────────────────────────────────────────────
+
+
+def dhash(base64_data: str) -> int:
+    """Compute a 64-bit difference hash (dHash) from base64-encoded image data.
+
+    Resizes to 9x8 grayscale, compares adjacent horizontal pixels to produce
+    a 64-bit hash. Hamming distance <= 10 indicates near-duplicate images.
+    """
+    img = Image.open(io.BytesIO(base64.b64decode(base64_data)))
+    img = img.convert("L").resize((9, 8), Image.LANCZOS)
+    pixels = list(img.getdata())
+    bits = 0
+    for row in range(8):
+        for col in range(8):
+            idx = row * 9 + col
+            if pixels[idx] > pixels[idx + 1]:
+                bits |= 1 << (row * 8 + col)
+    # Convert to signed 64-bit int for PostgreSQL bigint compatibility
+    if bits >= (1 << 63):
+        bits -= 1 << 64
+    return bits
 
 
 # ── Supabase Store ─────────────────────────────────────────────────
@@ -446,6 +474,29 @@ class SupabaseStore:
 
     def upsert_face_embedding(self, row: dict):
         self.client.table("face_embeddings").upsert(row, on_conflict="drive_file_id,face_index").execute()
+
+    def update_phash(self, drive_file_id: str, phash_value: int):
+        self.client.table("photos").update(
+            {"phash": phash_value}
+        ).eq("drive_file_id", drive_file_id).execute()
+
+    def get_photos_missing_phash(self) -> list[dict]:
+        rows = []
+        offset = 0
+        while True:
+            resp = (
+                self.client.table("photos")
+                .select("*")
+                .eq("status", "completed")
+                .is_("phash", "null")
+                .range(offset, offset + 999)
+                .execute()
+            )
+            rows.extend(resp.data)
+            if len(resp.data) < 1000:
+                break
+            offset += 1000
+        return rows
 
 
 # ── Pipeline Phases ────────────────────────────────────────────────
@@ -781,6 +832,57 @@ def phase_face_embed(
     return processed
 
 
+def phase_phash(
+    drive: DriveClient,
+    store: SupabaseStore,
+    folder_filter: str | None,
+) -> int:
+    """Compute dHash perceptual hashes for photos missing them."""
+    log.info("─── PHASE: PHASH ───")
+    photos = store.get_photos_missing_phash()
+    if folder_filter:
+        photos = [p for p in photos if p["folder"] == folder_filter]
+
+    if not photos:
+        log.info("All photos already have perceptual hashes")
+        return 0
+
+    log.info("%d photos missing perceptual hashes", len(photos))
+    processed = 0
+    errors = []
+
+    for photo in tqdm(photos, desc="Computing dHash"):
+        fid = photo["drive_file_id"]
+        try:
+            # Download a small thumbnail — dHash only needs low-res
+            img = drive.download_media_base64(fid, width=64)
+            if not img:
+                log.warning("  Could not download %s", photo["filename"])
+                errors.append(photo["filename"])
+                continue
+
+            b64, mime = img
+            if mime.startswith("video/"):
+                log.debug("  Skipping video %s for phash", photo["filename"])
+                continue
+
+            hash_value = dhash(b64)
+            store.update_phash(fid, hash_value)
+            processed += 1
+        except KeyboardInterrupt:
+            log.info("Interrupted — saving progress")
+            break
+        except (IOError, ValueError, RuntimeError) as e:
+            log.error("  Failed %s: %s", photo["filename"], e)
+            errors.append(photo["filename"])
+
+    if errors:
+        error_str = ", ".join(errors[:10]) + ("..." if len(errors) > 10 else "")
+        log.warning("%d errors: %s", len(errors), error_str)
+    log.info("Phash complete: %d photos hashed", processed)
+    return processed
+
+
 # ── CLI ────────────────────────────────────────────────────────────
 
 
@@ -796,6 +898,7 @@ def parse_args() -> argparse.Namespace:
     phase.add_argument("--only-embeddings", action="store_true", help="Run only text embedding sub-phase")
     phase.add_argument("--only-face-embed", action="store_true", help="Run only face embedding phase")
     phase.add_argument("--only-sync", action="store_true", help="Detect renames/moves in Drive and update stale metadata")
+    phase.add_argument("--only-phash", action="store_true", help="Compute perceptual hashes only")
 
     proc = p.add_argument_group("Processing options")
     proc.add_argument("--retry-errors", action="store_true", help="Re-process photos with error status")
@@ -829,7 +932,7 @@ def main():
         config.face_api_url = args.face_api_url
 
     # Determine which phases to run
-    only_flags = [args.only_scan, args.only_describe, args.only_embeddings, args.only_face_embed, args.only_sync]
+    only_flags = [args.only_scan, args.only_describe, args.only_embeddings, args.only_face_embed, args.only_sync, args.only_phash]
     run_all = not any(only_flags)
 
     phases = []
@@ -841,6 +944,8 @@ def main():
         phases.append("describe")
     if args.only_embeddings:
         phases.append("embeddings")
+    if run_all or args.only_phash:
+        phases.append("phash")
     if (run_all and not args.skip_face_embed) or args.only_face_embed:
         phases.append("face_embed")
 
@@ -855,8 +960,45 @@ def main():
         face_api = FaceApiClient(config.face_api_url, config.face_api_secret)
 
     log.info("EventLens Photo Pipeline — phases: %s", ', '.join(phases))
+
+    # Dry-run: report what *would* happen, then exit without mutations
     if args.dry_run:
-        log.info("[DRY RUN MODE]")
+        log.info("[DRY RUN MODE] — previewing counts only")
+        if "scan" in phases:
+            subfolders = drive.list_subfolders(config.drive_folder_id)
+            all_folders = [{"id": config.drive_folder_id, "name": "root"}] + subfolders
+            if args.folder:
+                all_folders = [f for f in all_folders if f["name"] == args.folder]
+            total = sum(len(drive.list_images(f["id"])) for f in all_folders)
+            log.info("  scan: %d photos would be discovered", total)
+        if "describe" in phases:
+            pending = store.get_photos_by_status(["pending"])
+            if args.folder:
+                pending = [p for p in pending if p["folder"] == args.folder]
+            log.info("  describe: %d pending photos would be processed", len(pending))
+        if "embeddings" in phases:
+            missing = store.get_photos_missing_embedding()
+            if args.folder:
+                missing = [p for p in missing if p["folder"] == args.folder]
+            log.info("  embeddings: %d photos missing embeddings", len(missing))
+        if "phash" in phases:
+            missing_phash = store.get_photos_missing_phash()
+            if args.folder:
+                missing_phash = [p for p in missing_phash if p["folder"] == args.folder]
+            log.info("  phash: %d photos missing perceptual hashes", len(missing_phash))
+        if "face_embed" in phases:
+            candidates = store.get_photos_by_status(["pending", "completed"])
+            if args.folder:
+                candidates = [p for p in candidates if p["folder"] == args.folder]
+            already = store.get_existing_face_file_ids()
+            todo = [p for p in candidates if p["drive_file_id"] not in already]
+            log.info("  face_embed: %d photos would be processed", len(todo))
+        if args.retry_errors:
+            errored = store.get_photos_by_status(["error"])
+            if args.folder:
+                errored = [p for p in errored if p["folder"] == args.folder]
+            log.info("  retry-errors: %d errored photos would be re-queued", len(errored))
+        return
 
     # Re-queue errored photos so they get picked up by describe/face phases
     if args.retry_errors:
@@ -889,6 +1031,9 @@ def main():
                 log.error("Gemini API key required for embeddings phase")
             else:
                 results["embeddings"] = phase_embed_only(gemini, store, args.folder)
+
+        if "phash" in phases:
+            results["phash"] = phase_phash(drive, store, args.folder)
 
         if "face_embed" in phases:
             if not face_api:
