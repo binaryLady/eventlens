@@ -275,12 +275,19 @@ class FaceApiClient:
         self.base_url = base_url.rstrip("/")
         self.secret = secret
 
-    def health_check(self) -> bool:
-        try:
-            r = requests.get(f"{self.base_url}/health", timeout=5)
-            return r.ok
-        except requests.RequestException:
-            return False
+    def health_check(self, retries: int = 6, retry_delay: float = 5.0) -> bool:
+        """Check reachability, retrying to allow for Railway cold-start (~30s)."""
+        for attempt in range(1, retries + 1):
+            try:
+                r = requests.get(f"{self.base_url}/health", timeout=10)
+                if r.ok:
+                    return True
+            except requests.RequestException:
+                pass
+            if attempt < retries:
+                log.info("  Face API not ready (attempt %d/%d), retrying in %.0fs…", attempt, retries, retry_delay)
+                time.sleep(retry_delay)
+        return False
 
     def get_embeddings(self, base64_data: str) -> list[dict]:
         headers = {}
