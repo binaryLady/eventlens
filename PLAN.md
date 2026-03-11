@@ -107,3 +107,15 @@ These are ideas for future improvement, not committed work:
 
 - [ ] Remove Google Sheets fallback from `/api/photos` (fully migrated to Supabase)
 - [ ] Remove legacy `GOOGLE_SHEET_ID` env var if Sheets fallback is dropped
+
+### Vision AI Features (planned — see CLAUDE-*.md for full prompts)
+
+- [ ] **Perceptual Hash De-duplication** → `CLAUDE-DEDUP.md` (5 commits)
+  - dHash column, duplicate cluster RPC, pipeline integration, admin review UI, hidden filter
+  - Zero API cost — pure pixel math + SQL
+- [ ] **Auto-Albums via Embedding Clustering** → `CLAUDE-AUTOALBUMS.md` (5 commits)
+  - k-means on existing 768-dim embeddings, Gemini names clusters, tag filter chips in gallery
+  - ~5-10 Gemini calls total (one per cluster for naming)
+- [ ] **Collage from Selection** → `CLAUDE-COLLAGE.md` (5 commits)
+  - Sharp server-side compositing, grid layout, FloatingActionBar button, preview modal, optional Gemini hero pick
+  - Zero API cost for basic version; 1 call for hero mode
