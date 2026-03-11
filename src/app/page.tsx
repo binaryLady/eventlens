@@ -1272,7 +1272,7 @@ function PhotoCard({
             unoptimized
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className={`object-cover transition-opacity duration-300 ${
-              !imgLoaded ? "opacity-0" : selected ? "opacity-70" : "opacity-90 group-hover:opacity-100"
+              !imgLoaded ? "opacity-0" : selected ? "opacity-70" : "opacity-100"
             }`}
             onLoad={() => setImgLoaded(true)}
             onError={() => setImgError(true)}
