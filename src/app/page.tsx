@@ -1323,7 +1323,6 @@ function PhotoCard({
         </div>
       )}
 
-      {/* Trending badge — top-left */}
       {!selectMode && isHot && !matchInfo && (
         <div className="absolute left-1.5 top-1.5">
           <span
@@ -1339,18 +1338,15 @@ function PhotoCard({
         </div>
       )}
 
-      {/* Bottom overlay — hidden on hover so image is fully visible */}
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent px-2 pb-2 pt-6 group-hover:opacity-0 transition-opacity">
         <span className="inline-block border border-[var(--el-green-d9)] bg-[rgba(26,26,26,0.8)] px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-[var(--el-green-d9)]">
           {photo.folder}
         </span>
       </div>
 
-      {/* Corner brackets */}
       <div className="absolute top-1 left-1 w-2.5 h-2.5 border-t border-l border-[var(--el-green-44)] opacity-0 group-hover:opacity-100 transition-opacity" />
       <div className="absolute bottom-1 right-1 w-2.5 h-2.5 border-b border-r border-[var(--el-green-44)] opacity-0 group-hover:opacity-100 transition-opacity" />
 
-      {/* Match confidence + tier badge */}
       {!selectMode && matchInfo ? (
         <div className="absolute right-1.5 top-1.5 flex items-center gap-0.5">
           <span
