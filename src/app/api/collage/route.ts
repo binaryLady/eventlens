@@ -18,11 +18,23 @@ interface GridCell {
   h: number;
 }
 
+type CollageRatio = "letterbox" | "portrait" | "square";
+
 const GAP = 4;
+
+/** Returns the cell aspect multiplier (height/width) for each ratio mode */
+function cellAspect(ratio: CollageRatio): number {
+  switch (ratio) {
+    case "letterbox": return 9 / 16;
+    case "portrait": return 16 / 9;
+    case "square": return 1;
+  }
+}
 
 function calculateGrid(
   count: number,
   canvasWidth: number,
+  ratio: CollageRatio,
   heroIndex?: number,
 ): { cols: number; rows: number; canvasHeight: number; positions: GridCell[] } {
   let cols: number;
@@ -58,7 +70,7 @@ function calculateGrid(
   }
 
   const cellWidth = Math.floor((canvasWidth - GAP * (cols - 1)) / cols);
-  const cellHeight = cellWidth; // square cells
+  const cellHeight = Math.floor(cellWidth * cellAspect(ratio));
   const canvasHeight = rows * cellHeight + GAP * (rows - 1);
 
   // If hero mode and we have room for a 2x2 hero cell
@@ -103,17 +115,23 @@ function calculateGrid(
   const positions: GridCell[] = [];
 
   if (count === 3) {
-    // Special: 1 top full-width + 2 bottom
-    const topWidth = canvasWidth;
-    positions.push({ x: 0, y: 0, w: topWidth, h: cellHeight });
+    // 2 top + 1 bottom centered
     for (let c = 0; c < 2; c++) {
       positions.push({
         x: c * (cellWidth + GAP),
-        y: cellHeight + GAP,
+        y: 0,
         w: cellWidth,
         h: cellHeight,
       });
     }
+    const bottomW = cellWidth;
+    const bottomX = Math.floor((canvasWidth - bottomW) / 2);
+    positions.push({
+      x: bottomX,
+      y: cellHeight + GAP,
+      w: bottomW,
+      h: cellHeight,
+    });
     return { cols: 2, rows: 2, canvasHeight: cellHeight * 2 + GAP, positions };
   }
 
@@ -165,12 +183,14 @@ export async function POST(request: NextRequest) {
       format = "jpeg",
       heroIndex,
       hero = false,
+      ratio = "letterbox",
     } = body as {
       files: FileEntry[];
       width?: number;
       format?: "jpeg" | "png";
       heroIndex?: number;
       hero?: boolean;
+      ratio?: CollageRatio;
     };
 
     if (!Array.isArray(files) || files.length === 0) {
@@ -223,6 +243,7 @@ export async function POST(request: NextRequest) {
         const thumbnails = await Promise.all(
           validImages.map(async ({ buffer }) => {
             const thumb = await sharp(buffer)
+              .rotate()
               .resize(256, 256, { fit: "cover" })
               .jpeg({ quality: 60 })
               .toBuffer();
@@ -243,9 +264,12 @@ export async function POST(request: NextRequest) {
       mappedHeroIndex = 0;
     }
 
+    const validRatio: CollageRatio = ["letterbox", "portrait", "square"].includes(ratio) ? ratio : "letterbox";
+
     const grid = calculateGrid(
       validImages.length,
       canvasWidth,
+      validRatio,
       mappedHeroIndex,
     );
 
@@ -254,17 +278,54 @@ export async function POST(request: NextRequest) {
       validImages.map(async ({ buffer }, i) => {
         const pos = grid.positions[i];
         const resized = await sharp(buffer)
+          .rotate() // auto-orient from EXIF
           .resize(pos.w, pos.h, { fit: "cover", position: "centre" })
           .toBuffer();
         return { input: resized, left: pos.x, top: pos.y };
       }),
     );
 
+    // Build branded header and footer strips
+    const headerHeight = 80;
+    const footerHeight = 48;
+    const totalHeight = headerHeight + grid.canvasHeight + footerHeight;
+    const primaryColor = config.primaryColor || "#00ff41";
+    const eventName = (config.eventName || "EVENTLENS").toUpperCase();
+
+    // SVG header: event name centered
+    const headerSvg = Buffer.from(`
+      <svg width="${canvasWidth}" height="${headerHeight}" xmlns="http://www.w3.org/2000/svg">
+        <rect width="${canvasWidth}" height="${headerHeight}" fill="#1a1a1a"/>
+        <line x1="0" y1="${headerHeight - 1}" x2="${canvasWidth}" y2="${headerHeight - 1}" stroke="${primaryColor}" stroke-opacity="0.3" stroke-width="1"/>
+        <text x="${canvasWidth / 2}" y="${headerHeight / 2 + 2}" text-anchor="middle" dominant-baseline="middle"
+          font-family="monospace, 'Courier New'" font-size="32" font-weight="bold"
+          letter-spacing="8" fill="${primaryColor}">${eventName}</text>
+      </svg>
+    `);
+
+    // SVG footer: EVENTLENS branding
+    const footerSvg = Buffer.from(`
+      <svg width="${canvasWidth}" height="${footerHeight}" xmlns="http://www.w3.org/2000/svg">
+        <rect width="${canvasWidth}" height="${footerHeight}" fill="#1a1a1a"/>
+        <line x1="0" y1="0" x2="${canvasWidth}" y2="0" stroke="${primaryColor}" stroke-opacity="0.3" stroke-width="1"/>
+        <text x="${canvasWidth / 2}" y="${footerHeight / 2 + 1}" text-anchor="middle" dominant-baseline="middle"
+          font-family="monospace, 'Courier New'" font-size="14" letter-spacing="6"
+          fill="${primaryColor}" fill-opacity="0.5">EVENTLENS</text>
+      </svg>
+    `);
+
+    // Offset all photo composites down by the header height
+    const brandedComposites = [
+      { input: headerSvg, left: 0, top: 0 },
+      ...compositeInputs.map((c) => ({ ...c, top: c.top + headerHeight })),
+      { input: footerSvg, left: 0, top: headerHeight + grid.canvasHeight },
+    ];
+
     // Create canvas and composite
     const canvas = sharp({
       create: {
         width: canvasWidth,
-        height: grid.canvasHeight,
+        height: totalHeight,
         channels: 4,
         background: { r: 26, g: 26, b: 26, alpha: 1 }, // --el-bg #1a1a1a
       },
@@ -272,10 +333,10 @@ export async function POST(request: NextRequest) {
 
     let output: Buffer;
     if (format === "png") {
-      output = await canvas.composite(compositeInputs).png().toBuffer();
+      output = await canvas.composite(brandedComposites).png().toBuffer();
     } else {
       output = await canvas
-        .composite(compositeInputs)
+        .composite(brandedComposites)
         .jpeg({ quality: 90 })
         .toBuffer();
     }

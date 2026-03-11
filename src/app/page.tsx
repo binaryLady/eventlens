@@ -19,6 +19,7 @@ import Toast from "@/components/Toast";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import PhotoUpload from "@/components/PhotoUpload";
 import FloatingActionBar from "@/components/FloatingActionBar";
+import type { CollageRatio } from "@/components/FloatingActionBar";
 import CollagePreview from "@/components/CollagePreview";
 
 
@@ -185,6 +186,7 @@ function PhotoGrid() {
   const [downloading, setDownloading] = useState(false);
   const [collagePending, setCollagePending] = useState(false);
   const [collagePreviewUrl, setCollagePreviewUrl] = useState<string | null>(null);
+  const [collageRatio, setCollageRatio] = useState<CollageRatio>("letterbox");
   const [sortOrder, setSortOrderRaw] = useState<"shuffle" | "newest" | "oldest" | "name-asc" | "name-desc">(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("eventlens:sortOrder");
@@ -541,7 +543,7 @@ function PhotoGrid() {
       const res = await fetch("/api/collage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ files, hero: files.length > 4 }),
+        body: JSON.stringify({ files, hero: files.length > 4, ratio: collageRatio }),
       });
 
       if (!res.ok) throw new Error("Collage generation failed");
@@ -554,7 +556,7 @@ function PhotoGrid() {
     } finally {
       setCollagePending(false);
     }
-  }, [selectedIds, filteredPhotos]);
+  }, [selectedIds, filteredPhotos, collageRatio]);
 
   const handleCollageDownload = useCallback(() => {
     if (!collagePreviewUrl) return;
@@ -1129,6 +1131,8 @@ function PhotoGrid() {
         onMakeCollage={handleMakeCollage}
         downloading={downloading}
         collagePending={collagePending}
+        collageRatio={collageRatio}
+        onCollageRatioChange={setCollageRatio}
       />
     </div>
   );
