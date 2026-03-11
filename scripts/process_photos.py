@@ -513,6 +513,8 @@ def phase_sync(
                 stored_folder or "(root)",
                 changes.get("folder", stored_folder) or "(root)",
             )
+            # Reset status so phase_describe re-processes with updated filename/folder
+            changes["status"] = "pending"
             # Update photos row
             store.update_photo_metadata(fid, changes)
             # Null out description embedding (re-embeds with correct filename/folder)
