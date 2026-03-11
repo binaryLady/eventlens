@@ -546,11 +546,6 @@ function PhotoGrid() {
             <span className="sm:hidden">EVENTLENS</span>
             <div className="flex items-center gap-2 md:gap-4">
               <span className="hidden sm:inline">{allPhotos.length > 0 ? `${allPhotos.length} ASSETS INDEXED` : "STANDBY"}</span>
-              {operativesCount > 0 && (
-                <span className="hidden md:inline" style={{ color: "var(--el-cyan)" }}>
-                  {operativesCount} OPERATIVE{operativesCount !== 1 ? "S" : ""} DETECTED
-                </span>
-              )}
               <span className="sm:hidden">{allPhotos.length > 0 ? `${allPhotos.length}` : ""}</span>
               <button
                 onClick={handleLogout}
