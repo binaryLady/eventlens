@@ -358,6 +358,24 @@ class SupabaseStore:
             "mime_type": photo["mime_type"],
         }).eq("drive_file_id", photo["drive_file_id"]).execute()
 
+    def reconnect_photo(self, old_file_id: str, new_file_id: str, filename: str, folder: str):
+        """Reassign a photo row to a new Drive file ID, preserving all embeddings."""
+        drive_url = f"https://drive.google.com/file/d/{new_file_id}/view"
+        # Update face_embeddings first (FK child)
+        self.client.table("face_embeddings").update(
+            {"drive_file_id": new_file_id, "filename": filename, "folder": folder}
+        ).eq("drive_file_id", old_file_id).execute()
+        # Update photos row
+        self.client.table("photos").update(
+            {"drive_file_id": new_file_id, "filename": filename, "folder": folder, "drive_url": drive_url}
+        ).eq("drive_file_id", old_file_id).execute()
+        # Null embedding so it re-embeds with corrected filename/folder
+        self.null_description_embedding(new_file_id)
+
+    def delete_photo(self, drive_file_id: str):
+        """Remove a photo and its face_embeddings (CASCADE)."""
+        self.client.table("photos").delete().eq("drive_file_id", drive_file_id).execute()
+
     def get_all_photos(self) -> list[dict]:
         rows = []
         offset = 0
@@ -533,7 +551,7 @@ def phase_sync(
     log.info("Checking %d tracked photos against Drive", len(all_photos))
     limiter = RateLimiter(600)  # Drive read quota is generous
     updated = 0
-    missing = 0
+    missing_photos: list[dict] = []
 
     for photo in tqdm(all_photos, desc="Syncing metadata"):
         fid = photo["drive_file_id"]
@@ -546,13 +564,28 @@ def phase_sync(
             continue
 
         if meta is None or meta.get("trashed"):
-            log.warning("  Missing/trashed in Drive: %s (%s)", photo["filename"], fid)
-            missing += 1
+            missing_photos.append(photo)
             continue
 
         current_name = meta.get("name", "")
         parents = meta.get("parents", [])
-        current_folder = folder_id_to_name.get(parents[0], "") if parents else ""
+
+        # Resolve parent folder name — look up unknown IDs from Drive
+        current_folder = ""
+        if parents:
+            parent_id = parents[0]
+            if parent_id in folder_id_to_name:
+                current_folder = folder_id_to_name[parent_id]
+            else:
+                # Unknown parent — fetch its name and cache it
+                try:
+                    limiter.wait()
+                    parent_meta = drive.get_file_metadata(parent_id)
+                    if parent_meta:
+                        current_folder = parent_meta.get("name", "")
+                        folder_id_to_name[parent_id] = current_folder
+                except requests.HTTPError:
+                    pass
 
         stored_name = photo.get("filename", "")
         stored_folder = photo.get("folder", "")
@@ -582,8 +615,39 @@ def phase_sync(
             store.update_face_embedding_metadata(fid, changes)
             updated += 1
 
-    log.info("Sync complete: %d updated, %d missing/trashed", updated, missing)
-    return updated
+    # ── Reconnect missing/trashed files ───────────────────────────
+    reconnected = 0
+    if missing_photos:
+        log.info("Attempting to reconnect %d missing files by scanning Drive...", len(missing_photos))
+
+        # Build filename → new Drive file lookup across all subfolders
+        all_folders = [{"id": config.drive_folder_id, "name": ""}] + [
+            {"id": f["id"], "name": f["name"]} for f in subfolders
+        ]
+        drive_by_name: dict[str, dict] = {}  # filename → {id, folder_name}
+        for folder in tqdm(all_folders, desc="Scanning Drive for reconnect"):
+            for f in drive.list_images(folder["id"]):
+                drive_by_name[f["name"]] = {"id": f["id"], "folder": folder["name"]}
+
+        for photo in missing_photos:
+            old_fid = photo["drive_file_id"]
+            stored_name = photo.get("filename", "")
+            match = drive_by_name.get(stored_name)
+            if match and match["id"] != old_fid:
+                log.info(
+                    "  RECONNECT: %s — %s → %s (folder: %s)",
+                    stored_name, old_fid[:12], match["id"][:12], match["folder"] or "(root)",
+                )
+                store.reconnect_photo(old_fid, match["id"], stored_name, match["folder"])
+                reconnected += 1
+            else:
+                log.warning("  ORPHAN: %s (%s) — not found in Drive", stored_name, old_fid)
+
+    log.info(
+        "Sync complete: %d updated, %d reconnected, %d orphaned",
+        updated, reconnected, len(missing_photos) - reconnected,
+    )
+    return updated + reconnected
 
 
 def phase_scan(drive: DriveClient, store: SupabaseStore, config: Config, folder_filter: str | None) -> int:

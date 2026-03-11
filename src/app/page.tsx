@@ -19,6 +19,7 @@ import Toast from "@/components/Toast";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import PhotoUpload from "@/components/PhotoUpload";
 import FloatingActionBar from "@/components/FloatingActionBar";
+import CollagePreview from "@/components/CollagePreview";
 
 
 function timeAgo(dateStr: string): string {
@@ -182,6 +183,8 @@ function PhotoGrid() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [downloading, setDownloading] = useState(false);
+  const [collagePending, setCollagePending] = useState(false);
+  const [collagePreviewUrl, setCollagePreviewUrl] = useState<string | null>(null);
   const [sortOrder, setSortOrderRaw] = useState<"shuffle" | "newest" | "oldest" | "name-asc" | "name-desc">(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("eventlens:sortOrder");
@@ -526,6 +529,52 @@ function PhotoGrid() {
       setDownloading(false);
     }
   }, [selectedIds, filteredPhotos, clearSelection]);
+
+  const handleMakeCollage = useCallback(async () => {
+    if (selectedIds.size === 0) return;
+    setCollagePending(true);
+    try {
+      const files = filteredPhotos
+        .filter((p) => selectedIds.has(p.id))
+        .map((p) => ({ fileId: p.driveFileId, filename: p.filename }));
+
+      const res = await fetch("/api/collage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ files, hero: files.length > 4 }),
+      });
+
+      if (!res.ok) throw new Error("Collage generation failed");
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setCollagePreviewUrl(url);
+    } catch {
+      setToast({ message: "COLLAGE GENERATION FAILED — RETRY", count: 0 });
+    } finally {
+      setCollagePending(false);
+    }
+  }, [selectedIds, filteredPhotos]);
+
+  const handleCollageDownload = useCallback(() => {
+    if (!collagePreviewUrl) return;
+    const a = document.createElement("a");
+    a.href = collagePreviewUrl;
+    a.download = "eventlens-collage.jpg";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(collagePreviewUrl);
+    setCollagePreviewUrl(null);
+    clearSelection();
+  }, [collagePreviewUrl, clearSelection]);
+
+  const handleCollageDismiss = useCallback(() => {
+    if (collagePreviewUrl) {
+      URL.revokeObjectURL(collagePreviewUrl);
+    }
+    setCollagePreviewUrl(null);
+  }, [collagePreviewUrl]);
 
   // Escape key exits select mode
   useEffect(() => {
@@ -1063,13 +1112,23 @@ function PhotoGrid() {
         />
       )}
 
+      {collagePreviewUrl && (
+        <CollagePreview
+          blobUrl={collagePreviewUrl}
+          onDownload={handleCollageDownload}
+          onDismiss={handleCollageDismiss}
+        />
+      )}
+
       <FloatingActionBar
         selectedCount={selectedIds.size}
         totalCount={filteredPhotos.length}
         onSelectAll={selectAll}
         onClearSelection={clearSelection}
         onDownloadZip={handleDownloadZip}
+        onMakeCollage={handleMakeCollage}
         downloading={downloading}
+        collagePending={collagePending}
       />
     </div>
   );
