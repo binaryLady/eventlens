@@ -4,6 +4,6 @@ google-auth-oauthlib==1.2.1
 google-auth-httplib2==0.2.0
 supabase>=2.28.0
 python-dotenv==1.1.0
-requests==2.32.3
+requests==2.32.4
 tqdm==4.67.1
 tenacity==9.1.2
