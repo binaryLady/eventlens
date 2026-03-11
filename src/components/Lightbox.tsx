@@ -23,6 +23,8 @@ export default function Lightbox({
   photos,
   onClose,
   onNavigate,
+  isSelected = false,
+  onToggleSelect,
 }: LightboxProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [showSpinner, setShowSpinner] = useState(false);
