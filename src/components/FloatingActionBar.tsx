@@ -12,15 +12,7 @@ interface FloatingActionBarProps {
   onMakeCollage: () => void;
   downloading: boolean;
   collagePending: boolean;
-  collageRatio: CollageRatio;
-  onCollageRatioChange: (ratio: CollageRatio) => void;
 }
-
-const RATIO_OPTIONS: { value: CollageRatio; label: string; shortLabel: string; icon: string }[] = [
-  { value: "letterbox", label: "16:9", shortLabel: "16:9", icon: "▬" },
-  { value: "portrait", label: "9:16", shortLabel: "9:16", icon: "▮" },
-  { value: "square", label: "1:1", shortLabel: "1:1", icon: "■" },
-];
 
 export default function FloatingActionBar({
   selectedCount,
@@ -31,8 +23,6 @@ export default function FloatingActionBar({
   onMakeCollage,
   downloading,
   collagePending,
-  collageRatio,
-  onCollageRatioChange,
 }: FloatingActionBarProps) {
   if (selectedCount === 0) return null;
 
@@ -61,22 +51,6 @@ export default function FloatingActionBar({
               SELECT ALL
             </button>
           )}
-          <div className="hidden sm:flex items-center border border-[var(--el-green-99)]/40 overflow-hidden">
-            {RATIO_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => onCollageRatioChange(opt.value)}
-                className={`px-2 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider transition-all ${
-                  collageRatio === opt.value
-                    ? "bg-[var(--el-green-22)] text-[var(--el-green)] border-r border-[var(--el-green-99)]/40 last:border-r-0"
-                    : "text-[var(--el-green-99)] hover:text-[var(--el-green)] border-r border-[var(--el-green-99)]/40 last:border-r-0"
-                }`}
-                title={`${opt.label} ratio`}
-              >
-                <span className="mr-1">{opt.icon}</span>{opt.shortLabel}
-              </button>
-            ))}
-          </div>
           <button
             onClick={onMakeCollage}
             disabled={busy || selectedCount > 20}

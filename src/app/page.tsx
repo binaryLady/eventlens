@@ -21,6 +21,7 @@ import PhotoUpload from "@/components/PhotoUpload";
 import FloatingActionBar from "@/components/FloatingActionBar";
 import type { CollageRatio } from "@/components/FloatingActionBar";
 import CollagePreview from "@/components/CollagePreview";
+import CollageRatioModal from "@/components/CollageRatioModal";
 
 
 function timeAgo(dateStr: string): string {
@@ -186,7 +187,7 @@ function PhotoGrid() {
   const [downloading, setDownloading] = useState(false);
   const [collagePending, setCollagePending] = useState(false);
   const [collagePreviewUrl, setCollagePreviewUrl] = useState<string | null>(null);
-  const [collageRatio, setCollageRatio] = useState<CollageRatio>("letterbox");
+  const [showRatioModal, setShowRatioModal] = useState(false);
   const [sortOrder, setSortOrderRaw] = useState<"shuffle" | "newest" | "oldest" | "name-asc" | "name-desc">(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("eventlens:sortOrder");
@@ -532,8 +533,13 @@ function PhotoGrid() {
     }
   }, [selectedIds, filteredPhotos, clearSelection]);
 
-  const handleMakeCollage = useCallback(async () => {
+  const handleMakeCollage = useCallback(() => {
     if (selectedIds.size === 0) return;
+    setShowRatioModal(true);
+  }, [selectedIds]);
+
+  const handleRatioSelect = useCallback(async (ratio: CollageRatio) => {
+    setShowRatioModal(false);
     setCollagePending(true);
     try {
       const files = filteredPhotos
@@ -543,7 +549,7 @@ function PhotoGrid() {
       const res = await fetch("/api/collage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ files, hero: files.length > 4, ratio: collageRatio }),
+        body: JSON.stringify({ files, hero: files.length > 4, ratio }),
       });
 
       if (!res.ok) throw new Error("Collage generation failed");
@@ -556,7 +562,7 @@ function PhotoGrid() {
     } finally {
       setCollagePending(false);
     }
-  }, [selectedIds, filteredPhotos, collageRatio]);
+  }, [selectedIds, filteredPhotos]);
 
   const handleCollageDownload = useCallback(() => {
     if (!collagePreviewUrl) return;
@@ -1114,6 +1120,14 @@ function PhotoGrid() {
         />
       )}
 
+      {showRatioModal && (
+        <CollageRatioModal
+          onSelect={handleRatioSelect}
+          onDismiss={() => setShowRatioModal(false)}
+          selectedCount={selectedIds.size}
+        />
+      )}
+
       {collagePreviewUrl && (
         <CollagePreview
           blobUrl={collagePreviewUrl}
@@ -1131,8 +1145,6 @@ function PhotoGrid() {
         onMakeCollage={handleMakeCollage}
         downloading={downloading}
         collagePending={collagePending}
-        collageRatio={collageRatio}
-        onCollageRatioChange={setCollageRatio}
       />
     </div>
   );
