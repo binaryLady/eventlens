@@ -1,3 +1,4 @@
+// @TheTechMargin 2026
 import type { Metadata } from "next";
 import { JetBrains_Mono, Space_Mono, Pacifico } from "next/font/google";
 import "./globals.css";
@@ -43,12 +44,21 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const primaryColor = process.env.NEXT_PUBLIC_PRIMARY_COLOR || "#00ff41";
-  const accentColor = process.env.NEXT_PUBLIC_ACCENT_COLOR || "#00ff41";
+  const hexColor = /^#[0-9A-Fa-f]{6}$/;
+  const rawPrimary = process.env.NEXT_PUBLIC_PRIMARY_COLOR || "#00ff41";
+  const rawAccent = process.env.NEXT_PUBLIC_ACCENT_COLOR || "#00ff41";
+  const primaryColor = hexColor.test(rawPrimary) ? rawPrimary : "#00ff41";
+  const accentColor = hexColor.test(rawAccent) ? rawAccent : "#00ff41";
 
   return (
     <html lang="en" className="dark">
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="theme-color" content="#000000" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <link rel="preconnect" href="https://lh3.googleusercontent.com" />
+        <link rel="dns-prefetch" href="https://lh3.googleusercontent.com" />
         <style
           dangerouslySetInnerHTML={{
             __html: `:root { --color-primary: ${primaryColor}; --color-accent: ${accentColor}; }`,
@@ -56,7 +66,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${jetbrainsMono.variable} ${spaceMono.variable} ${pacifico.variable} font-mono antialiased bg-black text-zinc-100 scan-lines flex flex-col min-h-screen`}
+        className={`${jetbrainsMono.variable} ${spaceMono.variable} ${pacifico.variable} font-mono antialiased bg-[var(--el-bg)] text-zinc-100 scan-lines flex flex-col min-h-screen`}
       >
         <div className="flex-1">
           {children}

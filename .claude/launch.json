@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "next-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "face-api",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["services/face-api/app.py"],
+      "port": 8080
+    }
+  ]
+}

@@ -18,7 +18,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+
+  response.headers.set(
+    "Content-Security-Policy",
+    "frame-ancestors 'self'"
+  );
+
+  return response;
 }
 
 export const config = {
