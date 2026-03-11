@@ -249,4 +249,5 @@ export interface PhotoRow {
   created_at: string;
   status: "pending" | "processing" | "completed" | "error";
   error_message: string | null;
+  auto_tag: string | null;
 }

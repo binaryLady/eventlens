@@ -161,6 +161,8 @@ function PhotoGrid() {
     searchParams.get("q") || "",
   );
   const [serverResults, setServerResults] = useState<PhotoRecord[] | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
+  const [activeTag, setActiveTag] = useState<string | null>(null);
   const [activeFolder, setActiveFolderRaw] = useState(() => {
     const fromUrl = searchParams.get("folder");
     if (fromUrl) return fromUrl;
@@ -224,6 +226,7 @@ function PhotoGrid() {
       if (data) {
         setAllPhotos(data.photos);
         setFolders(data.folders);
+        setTags(data.tags || []);
         const shuffled = [...data.photos];
         for (let i = shuffled.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -259,9 +262,11 @@ function PhotoGrid() {
           count: diff,
         });
         setFolders(data.folders);
+        setTags(data.tags || []);
         setLastUpdated(data.lastUpdated);
       } else if (data) {
         setFolders(data.folders);
+        setTags(data.tags || []);
         setLastUpdated(data.lastUpdated);
       }
     }, 30000);
@@ -343,6 +348,7 @@ function PhotoGrid() {
       setMatchTier(data.tier || "text");
       setRecommendations(data.recommendations || []);
       setActiveFolder("");
+      setActiveTag(null);
     },
     [setActiveFolder],
   );
@@ -383,7 +389,7 @@ function PhotoGrid() {
     }
     return false;
   });
-  const isSearchActive = debouncedQuery !== "" || activeFolder !== "" || matchResults !== null || browseAll || activeType !== "all";
+  const isSearchActive = debouncedQuery !== "" || activeFolder !== "" || activeTag !== null || matchResults !== null || browseAll || activeType !== "all";
 
   const applySorting = useCallback((photos: PhotoRecord[]): PhotoRecord[] => {
     if (sortOrder === "shuffle") return photos;
@@ -436,8 +442,11 @@ function PhotoGrid() {
     } else {
       result = sortOrder === "shuffle" ? shuffledPhotos : applySorting(allPhotos);
     }
+    if (activeTag) {
+      result = result.filter((p) => p.autoTag === activeTag);
+    }
     return applyTypeFilter(result);
-  }, [allPhotos, shuffledPhotos, activeFolder, debouncedQuery, matchResults, serverResults, applySorting, sortOrder, applyTypeFilter]);
+  }, [allPhotos, shuffledPhotos, activeFolder, activeTag, debouncedQuery, matchResults, serverResults, applySorting, sortOrder, applyTypeFilter]);
 
   const folderPreviews = useMemo(() => {
     const previews: Record<string, PhotoRecord[]> = {};
@@ -466,6 +475,14 @@ function PhotoGrid() {
     const counts: Record<string, number> = {};
     for (const p of allPhotos) {
       counts[p.folder] = (counts[p.folder] || 0) + 1;
+    }
+    return counts;
+  }, [allPhotos]);
+
+  const tagCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const p of allPhotos) {
+      if (p.autoTag) counts[p.autoTag] = (counts[p.autoTag] || 0) + 1;
     }
     return counts;
   }, [allPhotos]);
@@ -618,13 +635,13 @@ function PhotoGrid() {
               )}
             </div>
 
-            {(activeFolder || activeType !== "all") && (
+            {(activeFolder || activeTag || activeType !== "all") && (
               <p className="mt-1.5 text-center text-[10px] font-mono uppercase tracking-wider text-[var(--el-amber)]">
-                {activeFolder && activeType !== "all"
-                  ? `Searching within "${activeFolder}" \u00b7 ${activeType}s only`
-                  : activeFolder
-                    ? `Searching within "${activeFolder}"`
-                    : `Searching ${activeType}s only`}
+                {[
+                  activeFolder ? `"${activeFolder}"` : "",
+                  activeTag ? `#${activeTag}` : "",
+                  activeType !== "all" ? `${activeType}s only` : "",
+                ].filter(Boolean).join(" \u00b7 ")}
               </p>
             )}
 
@@ -672,6 +689,27 @@ function PhotoGrid() {
             </div>
           )}
 
+          {tags.length > 0 && (
+            <div className="hidden md:block scrollbar-hide overflow-x-auto -mx-4 px-4">
+              <div className="flex items-center gap-1.5">
+                <span className="shrink-0 text-[10px] font-mono uppercase tracking-widest text-[var(--el-cyan)] opacity-60 mr-1">TAGS</span>
+                {tags.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                    className={`shrink-0 px-2.5 py-1.5 text-xs font-mono uppercase tracking-wider transition-all ${
+                      activeTag === tag
+                        ? "border border-[var(--el-cyan)] text-[var(--el-cyan)] bg-[rgba(0,255,255,0.1)] shadow-[0_0_8px_rgba(0,255,255,0.2)]"
+                        : "border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-cyan)] hover:text-[var(--el-cyan)]"
+                    }`}
+                  >
+                    {tag} [{tagCounts[tag] || 0}]
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-2">
             <FilterSortSheet
               sortOrder={sortOrder}
@@ -692,6 +730,7 @@ function PhotoGrid() {
                 const sortLabels: Record<string, string> = { newest: "NEWEST", oldest: "OLDEST", "name-asc": "A\u2192Z", "name-desc": "Z\u2192A" };
                 parts.push(sortLabels[sortOrder] || "");
               }
+              if (activeTag) parts.push(activeTag);
               if (parts.length === 0) return null;
               return (
                 <span
@@ -703,6 +742,7 @@ function PhotoGrid() {
                     onClick={(e) => {
                       e.stopPropagation();
                       setActiveFolder("");
+                      setActiveTag(null);
                       setActiveType("all");
                       setSortOrder("shuffle");
                     }}

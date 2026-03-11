@@ -93,6 +93,7 @@ export async function GET(request: NextRequest) {
             created_at: "",
             status: "completed",
             error_message: null,
+            auto_tag: null,
           }),
           score: semanticScore,
         });
