@@ -124,7 +124,7 @@ export default function Lightbox({
     (photo.mimeType?.startsWith("video/") && !/\.mov$/i.test(photo.filename));
 
   const fullImageUrl = photo.driveFileId
-    ? `https://lh3.googleusercontent.com/d/${photo.driveFileId}=w1600`
+    ? `https://lh3.googleusercontent.com/d/${photo.driveFileId}=w1200`
     : "";
 
   const videoUrl = photo.driveFileId
@@ -230,7 +230,8 @@ export default function Lightbox({
               src={fullImageUrl}
               alt={photo.filename}
               fill
-              unoptimized
+              sizes="100vw"
+              quality={80}
               className={`object-contain select-none lightbox-media lightbox-image ${imageLoaded ? 'loaded' : ''} ${swipeOffset ? 'swiping' : ''}`}
               style={swipeOffset ? { '--swipe-x': `${swipeOffset * 0.3}px` } as React.CSSProperties : undefined}
               draggable={false}
