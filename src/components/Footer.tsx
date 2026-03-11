@@ -17,21 +17,18 @@ export default function Footer() {
           </span>
         </a>
       </div>
-      <div className="mx-auto max-w-5xl px-4 flex items-center justify-center mt-2">
-        <div className="text-center">
-          <a
-            href="https://mask.thetechmargin.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
-          >
-            mask.thetechmargin.com
-          </a>
-          <br />
-          <span className="text-xs text-gray-500">
-            • Questions/Ideas/Collaborations: <a href="mailto:sonia@thetechmargin.com" className="hover:text-gray-300">sonia@thetechmargin.com</a>
-          </span>
-        </div>
+      <div className="mx-auto max-w-5xl px-4 flex flex-col md:flex-row items-center justify-center mt-2 gap-0.5 md:gap-0">
+        <a
+          href="https://mask.thetechmargin.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[10px] md:text-xs text-gray-500 hover:text-gray-300 transition-colors"
+        >
+          mask.thetechmargin.com
+        </a>
+        <span className="text-[10px] md:text-xs text-gray-500">
+          <span className="hidden md:inline">&nbsp;•&nbsp;</span>Questions/Ideas/Collaborations: <a href="mailto:sonia@thetechmargin.com" className="hover:text-gray-300 transition-colors">sonia@thetechmargin.com</a>
+        </span>
       </div>
       <div className="mx-auto max-w-5xl px-4 flex items-center justify-center mt-3 group/pii relative">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff00ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-60 cursor-help">
