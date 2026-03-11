@@ -304,7 +304,24 @@ class SupabaseStore:
         self.client: Client = create_client(url, key)
 
     def upsert_photo(self, photo: dict):
-        self.client.table("photos").upsert(photo, on_conflict="drive_file_id", ignore_duplicates=True).execute()
+        """Insert new photo or update filename/folder/drive_url/mime_type for existing.
+
+        Uses two calls: an insert that skips duplicates (to set status=pending
+        only for genuinely new rows), then an update that refreshes metadata
+        fields without clobbering status or description data.
+        """
+        # Insert only if new — sets status='pending' for fresh discoveries
+        self.client.table("photos").upsert(
+            photo, on_conflict="drive_file_id", ignore_duplicates=True
+        ).execute()
+
+        # Always refresh mutable metadata (handles renames/moves)
+        self.client.table("photos").update({
+            "filename": photo["filename"],
+            "folder": photo["folder"],
+            "drive_url": photo["drive_url"],
+            "mime_type": photo["mime_type"],
+        }).eq("drive_file_id", photo["drive_file_id"]).execute()
 
     def get_all_photos(self) -> list[dict]:
         rows = []
