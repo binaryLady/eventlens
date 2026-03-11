@@ -1271,8 +1271,8 @@ function PhotoCard({
             src={photo.thumbnailUrl}
             alt={photo.filename}
             fill
-            unoptimized
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            {...(index < 8 ? { priority: true } : {})}
             className={`object-cover transition-opacity duration-300 ${
               !imgLoaded ? "opacity-0" : selected ? "opacity-70" : "opacity-100"
             }`}
@@ -1282,8 +1282,8 @@ function PhotoCard({
         </>
       )}
 
-      {(/\.(mp4|webm|avi)$/i.test(photo.filename) ||
-        (photo.mimeType?.startsWith("video/") && !/\.mov$/i.test(photo.filename))) && (
+      {(/\.(mp4|mov|webm|avi)$/i.test(photo.filename) ||
+        photo.mimeType?.startsWith("video/")) && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[5]">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(0,0,0,0.6)] border border-[var(--el-green-77)]">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--el-green)" stroke="none">

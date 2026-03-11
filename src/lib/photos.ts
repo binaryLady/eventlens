@@ -22,7 +22,7 @@ export function rowToPhoto(row: PhotoRow): PhotoRecord {
     mimeType: row.mime_type || "",
     processedAt: row.processed_at || row.created_at || "",
     thumbnailUrl: row.drive_file_id
-      ? `https://lh3.googleusercontent.com/d/${row.drive_file_id}=w400`
+      ? `https://lh3.googleusercontent.com/d/${row.drive_file_id}=w250`
       : "",
     downloadUrl: row.drive_file_id
       ? `https://drive.google.com/uc?export=download&id=${row.drive_file_id}`
@@ -43,7 +43,7 @@ function driveFilesToPhotos(files: DriveFile[], folder: string): PhotoRecord[] {
     faceCount: 0,
     mimeType: f.mimeType || "",
     processedAt: f.modifiedTime || "",
-    thumbnailUrl: `https://lh3.googleusercontent.com/d/${f.id}=w400`,
+    thumbnailUrl: `https://lh3.googleusercontent.com/d/${f.id}=w250`,
     downloadUrl: `https://drive.google.com/uc?export=download&id=${f.id}`,
   }));
 }
@@ -189,7 +189,7 @@ export async function fetchPhotos(): Promise<PhotoRecord[]> {
         faceCount: parseInt(String(cells[6]?.v ?? "0"), 10) || 0,
         mimeType: "",
         processedAt: String(cells[7]?.v ?? ""),
-        thumbnailUrl: driveFileId ? `https://lh3.googleusercontent.com/d/${driveFileId}=w400` : "",
+        thumbnailUrl: driveFileId ? `https://lh3.googleusercontent.com/d/${driveFileId}=w250` : "",
         downloadUrl: driveFileId ? `https://drive.google.com/uc?export=download&id=${driveFileId}` : "",
       };
     })
