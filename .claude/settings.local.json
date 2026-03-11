@@ -55,7 +55,12 @@
       "Bash(curl -s -X POST \"http://localhost:3000/api/auth/login\" -H \"Content-Type: application/json\" -d \"{\"\"password\"\": \"\"$APP_PASSWORD\"\"}\" -c -)",
       "Bash(curl -s -X POST \"http://localhost:3000/api/auth/login\" -H \"Content-Type: application/json\" -d '{\"\"password\"\":\"\"hardMode26\"\"}' -v)",
       "Bash(xargs ls:*)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://face-api-production-6b2e.up.railway.app/embed)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://face-api-production-6b2e.up.railway.app/embed)",
+      "Bash(grep -E \"\\\\.\\(sql|json\\)$\")",
+      "Bash(find /Users/soniacookbroen/Development/eventlens -maxdepth 2 -type f -name *.md)",
+      "Bash(find /Users/soniacookbroen/Development/eventlens/src -name \"*.ts\" -exec grep -l \"photos\\\\|face_embeddings\" {})",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''scripts/process_photos.py''\\).read\\(\\)\\); print\\(''Syntax OK''\\)\")",
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\(''scripts/process_photos.py''\\).read\\(\\)\\); print\\(''Syntax OK''\\)\")"
     ]
   }
 }

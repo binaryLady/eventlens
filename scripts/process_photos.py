@@ -134,6 +134,16 @@ class DriveClient:
                 break
         return files
 
+    def get_file_metadata(self, file_id: str) -> dict | None:
+        """Fetch current name and parents for a single file. Returns None if deleted/inaccessible."""
+        url = f"{DRIVE_API}/{file_id}"
+        params = {"fields": "name,parents,trashed", "key": self.api_key}
+        r = requests.get(url, params=params, timeout=15)
+        if r.status_code == 404:
+            return None
+        r.raise_for_status()
+        return r.json()
+
     def download_media_base64(self, file_id: str, width: int = 1200) -> tuple[str, str] | None:
         # Try lh3 CDN first (fast, no auth needed)
         try:
@@ -398,11 +408,104 @@ class SupabaseStore:
             offset += 1000
         return ids
 
+    def null_description_embedding(self, drive_file_id: str):
+        """Clear description embedding so it gets regenerated with updated metadata."""
+        self.client.table("photos").update(
+            {"description_embedding": None}
+        ).eq("drive_file_id", drive_file_id).execute()
+
+    def update_face_embedding_metadata(self, drive_file_id: str, metadata: dict):
+        """Update filename/folder on face_embeddings rows for a given drive_file_id."""
+        self.client.table("face_embeddings").update(
+            metadata
+        ).eq("drive_file_id", drive_file_id).execute()
+
     def upsert_face_embedding(self, row: dict):
         self.client.table("face_embeddings").upsert(row, on_conflict="drive_file_id,face_index").execute()
 
 
 # ── Pipeline Phases ────────────────────────────────────────────────
+
+
+def phase_sync(
+    drive: DriveClient,
+    store: SupabaseStore,
+    config: Config,
+    folder_filter: str | None,
+) -> int:
+    """Detect renames/moves in Google Drive and update stale metadata.
+
+    Compares stored filename/folder against current Drive state.
+    Nulls description_embedding for changed files so they get re-embedded
+    with corrected metadata on the next --only-embeddings run.
+    """
+    log.info("─── PHASE 0: SYNC ───")
+
+    # Build folder-ID → name map
+    subfolders = drive.list_subfolders(config.drive_folder_id)
+    folder_id_to_name: dict[str, str] = {f["id"]: f["name"] for f in subfolders}
+    folder_id_to_name[config.drive_folder_id] = ""  # root = empty string
+
+    # Fetch all tracked photos
+    all_photos = store.get_all_photos()
+    if folder_filter:
+        all_photos = [p for p in all_photos if p["folder"] == folder_filter]
+
+    if not all_photos:
+        log.info("No tracked photos to sync")
+        return 0
+
+    log.info("Checking %d tracked photos against Drive", len(all_photos))
+    limiter = RateLimiter(600)  # Drive read quota is generous
+    updated = 0
+    missing = 0
+
+    for photo in tqdm(all_photos, desc="Syncing metadata"):
+        fid = photo["drive_file_id"]
+        limiter.wait()
+
+        try:
+            meta = drive.get_file_metadata(fid)
+        except requests.HTTPError as e:
+            log.warning("  Drive API error for %s: %s", fid, e)
+            continue
+
+        if meta is None or meta.get("trashed"):
+            log.warning("  Missing/trashed in Drive: %s (%s)", photo["filename"], fid)
+            missing += 1
+            continue
+
+        current_name = meta.get("name", "")
+        parents = meta.get("parents", [])
+        current_folder = folder_id_to_name.get(parents[0], "") if parents else ""
+
+        stored_name = photo.get("filename", "")
+        stored_folder = photo.get("folder", "")
+
+        changes: dict[str, str] = {}
+        if current_name and current_name != stored_name:
+            changes["filename"] = current_name
+        if current_folder != stored_folder:
+            changes["folder"] = current_folder
+
+        if changes:
+            log.info(
+                "  STALE: %s → %s (folder: %s → %s)",
+                stored_name,
+                changes.get("filename", stored_name),
+                stored_folder or "(root)",
+                changes.get("folder", stored_folder) or "(root)",
+            )
+            # Update photos row
+            store.update_photo_metadata(fid, changes)
+            # Null out description embedding (re-embeds with correct filename/folder)
+            store.null_description_embedding(fid)
+            # Update face_embeddings rows too
+            store.update_face_embedding_metadata(fid, changes)
+            updated += 1
+
+    log.info("Sync complete: %d updated, %d missing/trashed", updated, missing)
+    return updated
 
 
 def phase_scan(drive: DriveClient, store: SupabaseStore, config: Config, folder_filter: str | None) -> int:
@@ -652,6 +755,7 @@ def parse_args() -> argparse.Namespace:
     phase.add_argument("--only-describe", action="store_true", help="Run only describe + text embedding phase")
     phase.add_argument("--only-embeddings", action="store_true", help="Run only text embedding sub-phase")
     phase.add_argument("--only-face-embed", action="store_true", help="Run only face embedding phase")
+    phase.add_argument("--only-sync", action="store_true", help="Detect renames/moves in Drive and update stale metadata")
 
     proc = p.add_argument_group("Processing options")
     proc.add_argument("--retry-errors", action="store_true", help="Re-process photos with error status")
@@ -685,10 +789,12 @@ def main():
         config.face_api_url = args.face_api_url
 
     # Determine which phases to run
-    only_flags = [args.only_scan, args.only_describe, args.only_embeddings, args.only_face_embed]
+    only_flags = [args.only_scan, args.only_describe, args.only_embeddings, args.only_face_embed, args.only_sync]
     run_all = not any(only_flags)
 
     phases = []
+    if run_all or args.only_sync:
+        phases.append("sync")
     if run_all or args.only_scan:
         phases.append("scan")
     if (run_all and not args.skip_describe) or args.only_describe:
@@ -715,6 +821,9 @@ def main():
     results = {}
 
     try:
+        if "sync" in phases:
+            results["sync"] = phase_sync(drive, store, config, args.folder)
+
         if "scan" in phases:
             results["scan"] = phase_scan(drive, store, config, args.folder)
 
