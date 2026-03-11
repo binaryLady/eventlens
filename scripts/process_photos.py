@@ -858,6 +858,15 @@ def main():
     if args.dry_run:
         log.info("[DRY RUN MODE]")
 
+    # Re-queue errored photos so they get picked up by describe/face phases
+    if args.retry_errors:
+        errored = store.get_photos_by_status(["error"])
+        if args.folder:
+            errored = [p for p in errored if p["folder"] == args.folder]
+        for p in errored:
+            store.update_photo_metadata(p["drive_file_id"], {"status": "pending", "error_message": None})
+        log.info("Re-queued %d errored photos for retry", len(errored))
+
     results = {}
 
     try:
