@@ -59,6 +59,7 @@ function PhotoCardInner({
             src={photo.thumbnailUrl}
             alt={photo.filename}
             fill
+            unoptimized
             loading={index < 8 ? "eager" : "lazy"}
             {...(index < 8 ? { priority: true } : {})}
             className={`object-cover transition-opacity duration-300 ${

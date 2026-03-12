@@ -340,6 +340,7 @@ export default function Lightbox({
               src={fullImageUrl}
               alt={photo.filename}
               fill
+              unoptimized
               className={`object-contain select-none lightbox-media lightbox-image ${imageLoaded ? 'loaded' : ''}`}
               draggable={false}
               onLoad={handleImageLoaded}

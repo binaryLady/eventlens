@@ -57,6 +57,7 @@ export default function AlbumGrid({
                         src={previews[i].thumbnailUrl}
                         alt=""
                         fill
+                        unoptimized
                         sizes="80px"
                         className="object-cover opacity-50 group-hover:opacity-70 transition-opacity"
                       />
