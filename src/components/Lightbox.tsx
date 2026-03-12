@@ -224,7 +224,7 @@ export default function Lightbox({
     ? `/api/video?id=${photo.driveFileId}`
     : "";
 
-  const hasMeta = !!(photo.folder || photo.visibleText || photo.peopleDescriptions || photo.sceneDescription || photo.faceCount > 0);
+  const hasMeta = !!(photo.ownerName || photo.cameraInfo || photo.visibleText || photo.peopleDescriptions || photo.sceneDescription || photo.faceCount > 0);
 
   return (
     <div
@@ -429,13 +429,23 @@ export default function Lightbox({
 
           {/* Expandable meta section */}
           <div className={`overflow-y-auto transition-all duration-200 ${showMeta ? "max-h-40 opacity-100 mt-2" : "md:max-h-60 md:opacity-100 md:mt-3 max-h-0 opacity-0"}`}>
-            {photo.folder && (
+            {photo.ownerName && (
               <div className="mb-2">
                 <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-66)]">
                   {"// PHOTOGRAPHER"}
                 </span>
                 <p className="mt-0.5 font-mono text-xs text-[var(--el-flame-99)]">
-                  {photo.folder}
+                  {photo.ownerName}
+                </p>
+              </div>
+            )}
+            {photo.cameraInfo && (
+              <div className="mb-2">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-66)]">
+                  {"// CAMERA"}
+                </span>
+                <p className="mt-0.5 font-mono text-xs text-[var(--el-green-77)]">
+                  {photo.cameraInfo}
                 </p>
               </div>
             )}

@@ -28,7 +28,18 @@ export function rowToPhoto(row: PhotoRow): PhotoRecord {
       ? `https://drive.google.com/uc?export=download&id=${row.drive_file_id}`
       : "",
     autoTag: row.auto_tag || null,
+    ownerName: "",
+    cameraInfo: "",
   };
+}
+
+function buildCameraInfo(f: DriveFile): string {
+  const make = f.imageMediaMetadata?.cameraMake || "";
+  const model = f.imageMediaMetadata?.cameraModel || "";
+  if (make && model) {
+    return model.toLowerCase().startsWith(make.toLowerCase()) ? model : `${make} ${model}`;
+  }
+  return make || model;
 }
 
 function driveFilesToPhotos(files: DriveFile[], folder: string): PhotoRecord[] {
@@ -47,6 +58,8 @@ function driveFilesToPhotos(files: DriveFile[], folder: string): PhotoRecord[] {
     thumbnailUrl: `https://lh3.googleusercontent.com/d/${f.id}=w250`,
     downloadUrl: `https://drive.google.com/uc?export=download&id=${f.id}`,
     autoTag: null,
+    ownerName: f.owners?.[0]?.displayName || "",
+    cameraInfo: buildCameraInfo(f),
   }));
 }
 
@@ -196,6 +209,8 @@ export async function fetchPhotos(): Promise<PhotoRecord[]> {
         thumbnailUrl: driveFileId ? `https://lh3.googleusercontent.com/d/${driveFileId}=w250` : "",
         downloadUrl: driveFileId ? `https://drive.google.com/uc?export=download&id=${driveFileId}` : "",
         autoTag: null as string | null,
+        ownerName: "",
+        cameraInfo: "",
       };
     })
     .filter((p): p is PhotoRecord => p !== null);

@@ -14,6 +14,8 @@ export interface PhotoRecord {
   thumbnailUrl: string;
   downloadUrl: string;
   autoTag: string | null;
+  ownerName: string;
+  cameraInfo: string;
 }
 
 export interface PhotosResponse {
