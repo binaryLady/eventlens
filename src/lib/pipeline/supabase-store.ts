@@ -15,9 +15,8 @@ export class SupabaseStore {
 
   // ── Pagination helper ──
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private async paginate<T>(
-    queryFn: (offset: number, limit: number) => PromiseLike<{ data: T[] | null; error: any }>,
+    queryFn: (offset: number, limit: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
   ): Promise<T[]> {
     const rows: T[] = [];
     let offset = 0;

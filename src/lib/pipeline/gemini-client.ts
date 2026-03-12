@@ -23,7 +23,7 @@ const ANALYZE_PROMPT =
  */
 function parseGeminiJson(text: string): GeminiAnalysis {
   // Strip markdown fences
-  let cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+  const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
 
   // Attempt 1: direct parse
   try {
