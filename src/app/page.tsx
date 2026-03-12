@@ -19,6 +19,9 @@ import Toast from "@/components/Toast";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import PhotoUpload from "@/components/PhotoUpload";
 import FloatingActionBar from "@/components/FloatingActionBar";
+import type { CollageRatio } from "@/components/FloatingActionBar";
+import CollagePreview from "@/components/CollagePreview";
+import CollageRatioModal from "@/components/CollageRatioModal";
 
 
 function timeAgo(dateStr: string): string {
@@ -161,6 +164,8 @@ function PhotoGrid() {
     searchParams.get("q") || "",
   );
   const [serverResults, setServerResults] = useState<PhotoRecord[] | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
+  const [activeTag, setActiveTag] = useState<string | null>(null);
   const [activeFolder, setActiveFolderRaw] = useState(() => {
     const fromUrl = searchParams.get("folder");
     if (fromUrl) return fromUrl;
@@ -176,14 +181,18 @@ function PhotoGrid() {
   const [matchDescription, setMatchDescription] = useState("");
   const [, setMatchTier] = useState<MatchTier>("text");
   const [activeType, setActiveType] = useState<"all" | "photo" | "video">("all");
+  const [minFaces, setMinFaces] = useState(0);
   const [shuffledPhotos, setShuffledPhotos] = useState<PhotoRecord[]>([]);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [downloading, setDownloading] = useState(false);
-  const [sortOrder, setSortOrderRaw] = useState<"shuffle" | "newest" | "oldest" | "name-asc" | "name-desc">(() => {
+  const [collagePending, setCollagePending] = useState(false);
+  const [collagePreviewUrl, setCollagePreviewUrl] = useState<string | null>(null);
+  const [showRatioModal, setShowRatioModal] = useState(false);
+  const [sortOrder, setSortOrderRaw] = useState<"shuffle" | "name-asc" | "name-desc">(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("eventlens:sortOrder");
-      if (saved === "shuffle" || saved === "newest" || saved === "oldest" || saved === "name-asc" || saved === "name-desc") {
+      if (saved === "shuffle" || saved === "name-asc" || saved === "name-desc") {
         return saved;
       }
     }
@@ -201,10 +210,21 @@ function PhotoGrid() {
     try { localStorage.setItem("eventlens:activeFolder", folder); } catch {}
   }, []);
 
-  const setSortOrder = useCallback((order: "shuffle" | "newest" | "oldest" | "name-asc" | "name-desc") => {
+  const setSortOrder = useCallback((order: "shuffle" | "name-asc" | "name-desc") => {
     setSortOrderRaw(order);
     try { localStorage.setItem("eventlens:sortOrder", order); } catch {}
-    if (order !== "shuffle") setBrowseAll(true);
+    if (order === "shuffle") {
+      setShuffledPhotos((prev) => {
+        const reshuffled = [...prev];
+        for (let i = reshuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [reshuffled[i], reshuffled[j]] = [reshuffled[j], reshuffled[i]];
+        }
+        return reshuffled;
+      });
+    } else {
+      setBrowseAll(true);
+    }
   }, []);
 
   const fetchData = useCallback(async () => {
@@ -224,6 +244,7 @@ function PhotoGrid() {
       if (data) {
         setAllPhotos(data.photos);
         setFolders(data.folders);
+        setTags(data.tags || []);
         const shuffled = [...data.photos];
         for (let i = shuffled.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -259,9 +280,11 @@ function PhotoGrid() {
           count: diff,
         });
         setFolders(data.folders);
+        setTags(data.tags || []);
         setLastUpdated(data.lastUpdated);
       } else if (data) {
         setFolders(data.folders);
+        setTags(data.tags || []);
         setLastUpdated(data.lastUpdated);
       }
     }, 30000);
@@ -343,6 +366,7 @@ function PhotoGrid() {
       setMatchTier(data.tier || "text");
       setRecommendations(data.recommendations || []);
       setActiveFolder("");
+      setActiveTag(null);
     },
     [setActiveFolder],
   );
@@ -383,18 +407,12 @@ function PhotoGrid() {
     }
     return false;
   });
-  const isSearchActive = debouncedQuery !== "" || activeFolder !== "" || matchResults !== null || browseAll || activeType !== "all";
+  const isSearchActive = debouncedQuery !== "" || activeFolder !== "" || activeTag !== null || matchResults !== null || browseAll || activeType !== "all" || minFaces > 0;
 
   const applySorting = useCallback((photos: PhotoRecord[]): PhotoRecord[] => {
     if (sortOrder === "shuffle") return photos;
     const sorted = [...photos];
     switch (sortOrder) {
-      case "newest":
-        sorted.sort((a, b) => (b.processedAt || b.filename).localeCompare(a.processedAt || a.filename));
-        break;
-      case "oldest":
-        sorted.sort((a, b) => (a.processedAt || a.filename).localeCompare(b.processedAt || b.filename));
-        break;
       case "name-asc":
         sorted.sort((a, b) => a.filename.localeCompare(b.filename));
         break;
@@ -409,10 +427,16 @@ function PhotoGrid() {
     p.mimeType?.startsWith("video/") || /\.(mp4|mov|webm|avi)$/i.test(p.filename), []);
 
   const applyTypeFilter = useCallback((photos: PhotoRecord[]) => {
-    if (activeType === "video") return photos.filter(isVideoFile);
-    if (activeType === "photo") return photos.filter((p) => !isVideoFile(p));
-    return photos;
-  }, [activeType, isVideoFile]);
+    let result = photos;
+    if (activeType === "video") result = result.filter(isVideoFile);
+    else if (activeType === "photo") result = result.filter((p) => !isVideoFile(p));
+    if (minFaces > 0) {
+      result = result.filter((p) => p.faceCount >= minFaces);
+      // Sort by face count: ascending from threshold so closest matches appear first
+      result = [...result].sort((a, b) => a.faceCount - b.faceCount);
+    }
+    return result;
+  }, [activeType, isVideoFile, minFaces]);
 
   const filteredPhotos = useMemo(() => {
     let result: PhotoRecord[];
@@ -436,8 +460,11 @@ function PhotoGrid() {
     } else {
       result = sortOrder === "shuffle" ? shuffledPhotos : applySorting(allPhotos);
     }
+    if (activeTag) {
+      result = result.filter((p) => p.autoTag === activeTag);
+    }
     return applyTypeFilter(result);
-  }, [allPhotos, shuffledPhotos, activeFolder, debouncedQuery, matchResults, serverResults, applySorting, sortOrder, applyTypeFilter]);
+  }, [allPhotos, shuffledPhotos, activeFolder, activeTag, debouncedQuery, matchResults, serverResults, applySorting, sortOrder, applyTypeFilter]);
 
   const folderPreviews = useMemo(() => {
     const previews: Record<string, PhotoRecord[]> = {};
@@ -466,6 +493,14 @@ function PhotoGrid() {
     const counts: Record<string, number> = {};
     for (const p of allPhotos) {
       counts[p.folder] = (counts[p.folder] || 0) + 1;
+    }
+    return counts;
+  }, [allPhotos]);
+
+  const tagCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const p of allPhotos) {
+      if (p.autoTag) counts[p.autoTag] = (counts[p.autoTag] || 0) + 1;
     }
     return counts;
   }, [allPhotos]);
@@ -509,6 +544,57 @@ function PhotoGrid() {
       setDownloading(false);
     }
   }, [selectedIds, filteredPhotos, clearSelection]);
+
+  const handleMakeCollage = useCallback(() => {
+    if (selectedIds.size === 0) return;
+    setShowRatioModal(true);
+  }, [selectedIds]);
+
+  const handleRatioSelect = useCallback(async (ratio: CollageRatio) => {
+    setShowRatioModal(false);
+    setCollagePending(true);
+    try {
+      const files = filteredPhotos
+        .filter((p) => selectedIds.has(p.id))
+        .map((p) => ({ fileId: p.driveFileId, filename: p.filename }));
+
+      const res = await fetch("/api/collage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ files, hero: files.length > 4, ratio }),
+      });
+
+      if (!res.ok) throw new Error("Collage generation failed");
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setCollagePreviewUrl(url);
+    } catch {
+      setToast({ message: "COLLAGE GENERATION FAILED — RETRY", count: 0 });
+    } finally {
+      setCollagePending(false);
+    }
+  }, [selectedIds, filteredPhotos]);
+
+  const handleCollageDownload = useCallback(() => {
+    if (!collagePreviewUrl) return;
+    const a = document.createElement("a");
+    a.href = collagePreviewUrl;
+    a.download = "eventlens-collage.jpg";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(collagePreviewUrl);
+    setCollagePreviewUrl(null);
+    clearSelection();
+  }, [collagePreviewUrl, clearSelection]);
+
+  const handleCollageDismiss = useCallback(() => {
+    if (collagePreviewUrl) {
+      URL.revokeObjectURL(collagePreviewUrl);
+    }
+    setCollagePreviewUrl(null);
+  }, [collagePreviewUrl]);
 
   // Escape key exits select mode
   useEffect(() => {
@@ -618,13 +704,13 @@ function PhotoGrid() {
               )}
             </div>
 
-            {(activeFolder || activeType !== "all") && (
+            {(activeFolder || activeTag || activeType !== "all") && (
               <p className="mt-1.5 text-center text-[10px] font-mono uppercase tracking-wider text-[var(--el-amber)]">
-                {activeFolder && activeType !== "all"
-                  ? `Searching within "${activeFolder}" \u00b7 ${activeType}s only`
-                  : activeFolder
-                    ? `Searching within "${activeFolder}"`
-                    : `Searching ${activeType}s only`}
+                {[
+                  activeFolder ? `"${activeFolder}"` : "",
+                  activeTag ? `#${activeTag}` : "",
+                  activeType !== "all" ? `${activeType}s only` : "",
+                ].filter(Boolean).join(" \u00b7 ")}
               </p>
             )}
 
@@ -672,12 +758,35 @@ function PhotoGrid() {
             </div>
           )}
 
+          {tags.length > 0 && (
+            <div className="hidden md:block scrollbar-hide overflow-x-auto -mx-4 px-4">
+              <div className="flex items-center gap-1.5">
+                <span className="shrink-0 text-[10px] font-mono uppercase tracking-widest text-[var(--el-cyan)] opacity-60 mr-1">TAGS</span>
+                {tags.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                    className={`shrink-0 px-2.5 py-1.5 text-xs font-mono uppercase tracking-wider transition-all ${
+                      activeTag === tag
+                        ? "border border-[var(--el-cyan)] text-[var(--el-cyan)] bg-[rgba(0,255,255,0.1)] shadow-[0_0_8px_rgba(0,255,255,0.2)]"
+                        : "border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-cyan)] hover:text-[var(--el-cyan)]"
+                    }`}
+                  >
+                    {tag} [{tagCounts[tag] || 0}]
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-2">
             <FilterSortSheet
               sortOrder={sortOrder}
               onSortChange={setSortOrder}
               activeType={activeType}
               onTypeChange={setActiveType}
+              minFaces={minFaces}
+              onMinFacesChange={setMinFaces}
               folders={folders}
               folderCounts={folderCounts}
               activeFolder={activeFolder}
@@ -689,9 +798,11 @@ function PhotoGrid() {
               if (activeFolder) parts.push(activeFolder.replace(/_/g, " "));
               if (activeType !== "all") parts.push(activeType === "photo" ? "PHOTOS" : "VIDEOS");
               if (sortOrder !== "shuffle") {
-                const sortLabels: Record<string, string> = { newest: "NEWEST", oldest: "OLDEST", "name-asc": "A\u2192Z", "name-desc": "Z\u2192A" };
+                const sortLabels: Record<string, string> = { "name-asc": "A\u2192Z", "name-desc": "Z\u2192A" };
                 parts.push(sortLabels[sortOrder] || "");
               }
+              if (activeTag) parts.push(activeTag);
+              if (minFaces > 0) parts.push(`${minFaces}+ FACES`);
               if (parts.length === 0) return null;
               return (
                 <span
@@ -703,7 +814,9 @@ function PhotoGrid() {
                     onClick={(e) => {
                       e.stopPropagation();
                       setActiveFolder("");
+                      setActiveTag(null);
                       setActiveType("all");
+                      setMinFaces(0);
                       setSortOrder("shuffle");
                     }}
                     className="shrink-0 ml-0.5 w-4 h-4 flex items-center justify-center rounded-full border border-current opacity-60 hover:opacity-100 hover:bg-[var(--el-cyan-28)] transition-all"
@@ -877,7 +990,7 @@ function PhotoGrid() {
               <section>
                 <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-4">
                   <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">
-                    &#x2500;&#x2500; {sortOrder === "shuffle" ? "FEATURED" : sortOrder === "newest" ? "NEWEST" : sortOrder === "oldest" ? "OLDEST" : sortOrder === "name-asc" ? "NAME A\u2192Z" : "NAME Z\u2192A"}
+                    &#x2500;&#x2500; {sortOrder === "shuffle" ? "FEATURED" : sortOrder === "name-asc" ? "NAME A\u2192Z" : "NAME Z\u2192A"}
                   </span>
                   <span className="text-[9px] md:text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-d9)]">
                     [{allPhotos.length} TOTAL]
@@ -1023,13 +1136,44 @@ function PhotoGrid() {
         />
       )}
 
+      {showRatioModal && (
+        <CollageRatioModal
+          onSelect={handleRatioSelect}
+          onDismiss={() => setShowRatioModal(false)}
+          selectedCount={selectedIds.size}
+        />
+      )}
+
+      {collagePending && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4">
+            <div className="relative w-10 h-10">
+              <div className="absolute inset-0 border-2 border-[var(--el-green)] animate-crosshair-spin" />
+            </div>
+            <span className="text-xs font-mono uppercase tracking-widest text-[var(--el-green)]">
+              GENERATING COLLAGE...
+            </span>
+          </div>
+        </div>
+      )}
+
+      {collagePreviewUrl && (
+        <CollagePreview
+          blobUrl={collagePreviewUrl}
+          onDownload={handleCollageDownload}
+          onDismiss={handleCollageDismiss}
+        />
+      )}
+
       <FloatingActionBar
         selectedCount={selectedIds.size}
         totalCount={filteredPhotos.length}
         onSelectAll={selectAll}
         onClearSelection={clearSelection}
         onDownloadZip={handleDownloadZip}
+        onMakeCollage={handleMakeCollage}
         downloading={downloading}
+        collagePending={collagePending}
       />
     </div>
   );
@@ -1042,16 +1186,20 @@ function FilterSortSheet({
   onSortChange,
   activeType,
   onTypeChange,
+  minFaces,
+  onMinFacesChange,
   folders,
   folderCounts,
   activeFolder,
   onFolderChange,
   totalCount,
 }: {
-  sortOrder: "shuffle" | "newest" | "oldest" | "name-asc" | "name-desc";
-  onSortChange: (v: "shuffle" | "newest" | "oldest" | "name-asc" | "name-desc") => void;
+  sortOrder: "shuffle" | "name-asc" | "name-desc";
+  onSortChange: (v: "shuffle" | "name-asc" | "name-desc") => void;
   activeType: "all" | "photo" | "video";
   onTypeChange: (v: "all" | "photo" | "video") => void;
+  minFaces: number;
+  onMinFacesChange: (v: number) => void;
   folders?: string[];
   folderCounts?: Record<string, number>;
   activeFolder?: string;
@@ -1060,7 +1208,7 @@ function FilterSortSheet({
 }) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
-  const hasActiveFilter = activeType !== "all" || sortOrder !== "shuffle";
+  const hasActiveFilter = activeType !== "all" || sortOrder !== "shuffle" || minFaces > 0;
   const hasFolderFilter = !!activeFolder;
 
   useEffect(() => {
@@ -1087,8 +1235,6 @@ function FilterSortSheet({
 
   const sortOptions: { value: typeof sortOrder; label: string }[] = [
     { value: "shuffle", label: "SHUFFLE" },
-    { value: "newest", label: "NEWEST" },
-    { value: "oldest", label: "OLDEST" },
     { value: "name-asc", label: "NAME A\u2192Z" },
     { value: "name-desc", label: "NAME Z\u2192A" },
   ];
@@ -1099,9 +1245,18 @@ function FilterSortSheet({
     { value: "video", label: "VIDEOS" },
   ];
 
+  const faceOptions = [
+    { value: 0, label: "ANY" },
+    { value: 1, label: "1+" },
+    { value: 2, label: "2+" },
+    { value: 3, label: "3+" },
+    { value: 5, label: "5+" },
+  ];
+
   const sortLabel = sortOptions.find((o) => o.value === sortOrder)?.label || "SORT";
   const typeLabel = activeType === "all" ? "" : activeType === "photo" ? "PHOTO" : "VIDEO";
-  const chipLabel = [typeLabel, sortLabel].filter(Boolean).join(" / ") || "FILTER";
+  const faceLabel = minFaces > 0 ? `${minFaces}+ FACES` : "";
+  const chipLabel = [typeLabel, faceLabel, sortLabel].filter(Boolean).join(" / ") || "FILTER";
 
   const CheckIcon = () => (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="mr-2.5 shrink-0">
@@ -1129,6 +1284,13 @@ function FilterSortSheet({
       </div>
       {typeOptions.map((opt) => (
         <div key={opt.value}>{menuRow(activeType === opt.value, opt.label, () => onTypeChange(opt.value))}</div>
+      ))}
+      <div className="mx-4 my-1 border-t border-[var(--el-green-22)]" />
+      <div className="px-4 pb-1 pt-1">
+        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">FACES</span>
+      </div>
+      {faceOptions.map((opt) => (
+        <div key={opt.value}>{menuRow(minFaces === opt.value, opt.label, () => { onMinFacesChange(opt.value); setOpen(false); })}</div>
       ))}
       <div className="mx-4 my-1 border-t border-[var(--el-green-22)]" />
       <div className="px-4 pb-1 pt-1">
@@ -1161,6 +1323,15 @@ function FilterSortSheet({
       </div>
       {typeOptions.map((opt) => (
         <div key={opt.value}>{menuRow(activeType === opt.value, opt.label, () => { onTypeChange(opt.value); setOpen(false); })}</div>
+      ))}
+
+      <div className="mx-4 my-1 border-t border-[var(--el-green-22)]" />
+
+      <div className="px-4 pb-1 pt-1">
+        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">FACES</span>
+      </div>
+      {faceOptions.map((opt) => (
+        <div key={opt.value}>{menuRow(minFaces === opt.value, opt.label, () => { onMinFacesChange(opt.value); setOpen(false); })}</div>
       ))}
 
       <div className="mx-4 my-1 border-t border-[var(--el-green-22)]" />

@@ -27,7 +27,19 @@ export function rowToPhoto(row: PhotoRow): PhotoRecord {
     downloadUrl: row.drive_file_id
       ? `https://drive.google.com/uc?export=download&id=${row.drive_file_id}`
       : "",
+    autoTag: row.auto_tag || null,
+    ownerName: "",
+    cameraInfo: "",
   };
+}
+
+function buildCameraInfo(f: DriveFile): string {
+  const make = f.imageMediaMetadata?.cameraMake || "";
+  const model = f.imageMediaMetadata?.cameraModel || "";
+  if (make && model) {
+    return model.toLowerCase().startsWith(make.toLowerCase()) ? model : `${make} ${model}`;
+  }
+  return make || model;
 }
 
 function driveFilesToPhotos(files: DriveFile[], folder: string): PhotoRecord[] {
@@ -45,6 +57,9 @@ function driveFilesToPhotos(files: DriveFile[], folder: string): PhotoRecord[] {
     processedAt: f.modifiedTime || "",
     thumbnailUrl: `https://lh3.googleusercontent.com/d/${f.id}=w250`,
     downloadUrl: `https://drive.google.com/uc?export=download&id=${f.id}`,
+    autoTag: null,
+    ownerName: f.owners?.[0]?.displayName || "",
+    cameraInfo: buildCameraInfo(f),
   }));
 }
 
@@ -56,7 +71,8 @@ async function fetchSupabaseMetadata(): Promise<Map<string, PhotoRow>> {
     const { data, error } = await supabase
       .from("photos")
       .select("*")
-      .eq("status", "completed");
+      .eq("status", "completed")
+      .neq("hidden", true);
     if (error) return new Map();
     const map = new Map<string, PhotoRow>();
     for (const row of data as PhotoRow[]) map.set(row.drive_file_id, row);
@@ -83,6 +99,7 @@ export async function fetchPhotosWithMetadata(): Promise<PhotoRecord[]> {
       photo.faceCount = row.face_count || 0;
       if (row.mime_type) photo.mimeType = row.mime_type;
       if (row.processed_at) photo.processedAt = row.processed_at;
+      if (row.auto_tag) photo.autoTag = row.auto_tag;
     }
   }
 
@@ -191,6 +208,9 @@ export async function fetchPhotos(): Promise<PhotoRecord[]> {
         processedAt: String(cells[7]?.v ?? ""),
         thumbnailUrl: driveFileId ? `https://lh3.googleusercontent.com/d/${driveFileId}=w250` : "",
         downloadUrl: driveFileId ? `https://drive.google.com/uc?export=download&id=${driveFileId}` : "",
+        autoTag: null as string | null,
+        ownerName: "",
+        cameraInfo: "",
       };
     })
     .filter((p): p is PhotoRecord => p !== null);
@@ -243,6 +263,14 @@ export function getFolders(photos: PhotoRecord[]): string[] {
     if (photo.folder) folders.add(photo.folder);
   }
   return Array.from(folders).sort();
+}
+
+export function getTags(photos: PhotoRecord[]): string[] {
+  const tags = new Set<string>();
+  for (const photo of photos) {
+    if (photo.autoTag) tags.add(photo.autoTag);
+  }
+  return Array.from(tags).sort();
 }
 
 export async function fetchDriveFolders(): Promise<string[]> {

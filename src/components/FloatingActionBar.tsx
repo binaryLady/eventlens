@@ -1,13 +1,17 @@
 // @TheTechMargin 2026
 "use client";
 
+export type CollageRatio = "letterbox" | "portrait" | "square";
+
 interface FloatingActionBarProps {
   selectedCount: number;
   totalCount: number;
   onSelectAll: () => void;
   onClearSelection: () => void;
   onDownloadZip: () => void;
+  onMakeCollage: () => void;
   downloading: boolean;
+  collagePending: boolean;
 }
 
 export default function FloatingActionBar({
@@ -16,9 +20,13 @@ export default function FloatingActionBar({
   onSelectAll,
   onClearSelection,
   onDownloadZip,
+  onMakeCollage,
   downloading,
+  collagePending,
 }: FloatingActionBarProps) {
   if (selectedCount === 0) return null;
+
+  const busy = downloading || collagePending;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--el-green)] bg-[var(--el-bg)] animate-slide-up safe-bottom">
@@ -44,8 +52,44 @@ export default function FloatingActionBar({
             </button>
           )}
           <button
+            onClick={onMakeCollage}
+            disabled={busy || selectedCount > 20}
+            title={selectedCount > 20 ? "Max 20 photos" : undefined}
+            className="shrink-0 inline-flex items-center gap-1.5 md:gap-2 border border-[var(--el-green-99)] bg-[var(--el-green-11)] px-3 md:px-4 py-2 md:py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] active:bg-[var(--el-green-22)] transition-all disabled:border-[var(--el-amber)]/20 disabled:text-[var(--el-amber)]/40 disabled:bg-transparent disabled:cursor-not-allowed"
+          >
+            {collagePending ? (
+              <>
+                <div className="relative w-3 h-3">
+                  <div className="absolute inset-0 border border-[var(--el-green)] animate-crosshair-spin" />
+                </div>
+                <span className="hidden sm:inline">MAKING...</span>
+                <span className="sm:hidden">...</span>
+              </>
+            ) : (
+              <>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                </svg>
+                <span className="hidden sm:inline">COLLAGE</span>
+                <span className="sm:hidden">COL</span>
+              </>
+            )}
+          </button>
+          <button
             onClick={onDownloadZip}
-            disabled={downloading}
+            disabled={busy}
             className="shrink-0 inline-flex items-center gap-1.5 md:gap-2 border border-[var(--el-green-99)] bg-[var(--el-green-11)] px-3 md:px-4 py-2 md:py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] active:bg-[var(--el-green-22)] transition-all disabled:border-[var(--el-amber)]/20 disabled:text-[var(--el-amber)]/40 disabled:bg-transparent disabled:cursor-not-allowed"
           >
             {downloading ? (

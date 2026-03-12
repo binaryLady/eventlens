@@ -13,11 +13,15 @@ export interface PhotoRecord {
   processedAt: string;
   thumbnailUrl: string;
   downloadUrl: string;
+  autoTag: string | null;
+  ownerName: string;
+  cameraInfo: string;
 }
 
 export interface PhotosResponse {
   photos: PhotoRecord[];
   folders: string[];
+  tags: string[];
   lastUpdated: string;
 }
 
