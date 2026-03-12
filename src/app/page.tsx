@@ -212,7 +212,18 @@ function PhotoGrid() {
   const setSortOrder = useCallback((order: "shuffle" | "newest" | "oldest" | "name-asc" | "name-desc") => {
     setSortOrderRaw(order);
     try { localStorage.setItem("eventlens:sortOrder", order); } catch {}
-    if (order !== "shuffle") setBrowseAll(true);
+    if (order === "shuffle") {
+      setShuffledPhotos((prev) => {
+        const reshuffled = [...prev];
+        for (let i = reshuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [reshuffled[i], reshuffled[j]] = [reshuffled[j], reshuffled[i]];
+        }
+        return reshuffled;
+      });
+    } else {
+      setBrowseAll(true);
+    }
   }, []);
 
   const fetchData = useCallback(async () => {
