@@ -21,7 +21,7 @@ interface GridCell {
 type CollageRatio = "letterbox" | "portrait" | "square";
 
 const GAP = 4;
-const BORDER = 2;
+const BORDER = 4;
 
 /** Returns the cell aspect multiplier (height/width) for each ratio mode */
 function cellAspect(ratio: CollageRatio): number {
@@ -306,7 +306,7 @@ export async function POST(request: NextRequest) {
     const footerHeight = 48;
     const totalHeight = headerHeight + grid.canvasHeight + footerHeight;
 
-    // SVG header: event name + year in secondary color, 18pt sans-serif
+    // SVG header: event name + year in secondary color, 36pt sans-serif
     const headerSvg = Buffer.from(`
       <svg width="${canvasWidth}" height="${headerHeight}" xmlns="http://www.w3.org/2000/svg">
         <rect width="${canvasWidth}" height="${headerHeight}" fill="#1a1a1a"/>
