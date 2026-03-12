@@ -21,6 +21,7 @@ interface GridCell {
 type CollageRatio = "letterbox" | "portrait" | "square";
 
 const GAP = 4;
+const BORDER = 2;
 
 /** Returns the cell aspect multiplier (height/width) for each ratio mode */
 function cellAspect(ratio: CollageRatio): number {
@@ -273,13 +274,28 @@ export async function POST(request: NextRequest) {
       mappedHeroIndex,
     );
 
-    // Resize each image to fit its grid cell
+    const primaryColor = config.primaryColor || "#00ff41";
+    const secondaryColor = config.secondaryColor || "#ff00ff";
+    const eventName = (config.eventName || "EVENTLENS").toUpperCase();
+    const eventYear = config.eventYear || "2026";
+    const overlayText = `${eventName} ${eventYear}`;
+
+    // Resize each image to fit its grid cell with primary color border
     const compositeInputs = await Promise.all(
       validImages.map(async ({ buffer }, i) => {
         const pos = grid.positions[i];
+        const innerW = pos.w - BORDER * 2;
+        const innerH = pos.h - BORDER * 2;
         const resized = await sharp(buffer)
           .rotate() // auto-orient from EXIF
-          .resize(pos.w, pos.h, { fit: "cover", position: "centre" })
+          .resize(innerW, innerH, { fit: "cover", position: "centre" })
+          .extend({
+            top: BORDER,
+            bottom: BORDER,
+            left: BORDER,
+            right: BORDER,
+            background: primaryColor,
+          })
           .toBuffer();
         return { input: resized, left: pos.x, top: pos.y };
       }),
@@ -289,17 +305,15 @@ export async function POST(request: NextRequest) {
     const headerHeight = 80;
     const footerHeight = 48;
     const totalHeight = headerHeight + grid.canvasHeight + footerHeight;
-    const primaryColor = config.primaryColor || "#00ff41";
-    const eventName = (config.eventName || "EVENTLENS").toUpperCase();
 
-    // SVG header: event name centered
+    // SVG header: event name + year in secondary color, 18pt sans-serif
     const headerSvg = Buffer.from(`
       <svg width="${canvasWidth}" height="${headerHeight}" xmlns="http://www.w3.org/2000/svg">
         <rect width="${canvasWidth}" height="${headerHeight}" fill="#1a1a1a"/>
         <line x1="0" y1="${headerHeight - 1}" x2="${canvasWidth}" y2="${headerHeight - 1}" stroke="${primaryColor}" stroke-opacity="0.3" stroke-width="1"/>
         <text x="${canvasWidth / 2}" y="${headerHeight / 2 + 2}" text-anchor="middle" dominant-baseline="middle"
-          font-family="monospace, 'Courier New'" font-size="32" font-weight="bold"
-          letter-spacing="8" fill="${primaryColor}">${eventName}</text>
+          font-family="Arial, Helvetica, sans-serif" font-size="36" font-weight="bold"
+          letter-spacing="4" fill="${secondaryColor}">${overlayText}</text>
       </svg>
     `);
 
