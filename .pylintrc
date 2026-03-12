@@ -1,0 +1,2 @@
+[MASTER]
+init-hook='import sys; sys.path.insert(0, ".venv/lib/python3.13/site-packages")'

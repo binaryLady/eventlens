@@ -24,7 +24,7 @@ from dotenv import load_dotenv
 from PIL import Image  # pylint: disable=import-error
 from supabase import create_client, Client
 from tenacity import (
-    retry, stop_after_attempt, wait_exponential, retry_if_exception,
+    RetryError, retry, stop_after_attempt, wait_exponential, retry_if_exception,
 )
 from tqdm import tqdm
 
@@ -222,6 +222,8 @@ class GeminiClient:
             "generationConfig": {"temperature": 0.1, "maxOutputTokens": 8192},
         }
         r = self.session.post(url, json=body, timeout=120)
+        if not r.ok:
+            log.error("Gemini %d: %s", r.status_code, r.text[:500])
         r.raise_for_status()
         data = r.json()
         if "error" in data:
@@ -634,7 +636,7 @@ def phase_describe(
                 log.info("Interrupted — saving progress")
                 interrupted = True
                 break
-            except (IOError, ValueError, RuntimeError) as e:
+            except (IOError, ValueError, RuntimeError, RetryError) as e:
                 log.error("  Failed %s: %s", photo['filename'], e)
                 store.update_photo_metadata(fid, {"status": "error", "error_message": str(e)[:500]})
                 errors.append(photo["filename"])
