@@ -617,6 +617,7 @@ def phase_sync(
 
     # ── Reconnect missing/trashed files ───────────────────────────
     reconnected = 0
+    orphaned = 0
     if missing_photos:
         log.info("Attempting to reconnect %d missing files by scanning Drive...", len(missing_photos))
 
@@ -641,11 +642,13 @@ def phase_sync(
                 store.reconnect_photo(old_fid, match["id"], stored_name, match["folder"])
                 reconnected += 1
             else:
-                log.warning("  ORPHAN: %s (%s) — not found in Drive", stored_name, old_fid)
+                log.info("  ORPHAN REMOVED: %s (%s)", stored_name, old_fid)
+                store.delete_photo(old_fid)
+                orphaned += 1
 
     log.info(
-        "Sync complete: %d updated, %d reconnected, %d orphaned",
-        updated, reconnected, len(missing_photos) - reconnected,
+        "Sync complete: %d updated, %d reconnected, %d orphaned removed",
+        updated, reconnected, orphaned,
     )
     return updated + reconnected
 
