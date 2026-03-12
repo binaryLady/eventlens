@@ -979,7 +979,6 @@ function PhotoGrid() {
                                   src={previews[i].thumbnailUrl}
                                   alt=""
                                   fill
-                                  unoptimized
                                   sizes="80px"
                                   className="object-cover opacity-50 group-hover:opacity-70 transition-opacity"
                                 />
@@ -1482,7 +1481,6 @@ function PhotoCard({
             src={photo.thumbnailUrl}
             alt={photo.filename}
             fill
-            unoptimized
             loading={index < 8 ? "eager" : "lazy"}
             {...(index < 8 ? { priority: true } : {})}
             className={`object-cover transition-opacity duration-300 ${

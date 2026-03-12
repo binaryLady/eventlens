@@ -107,37 +107,56 @@ export default function AdminPage() {
   const runPipeline = async (phase: string, label: string, options?: { retryErrors?: boolean }) => {
     setLoading(label);
     addLog(`Starting: ${label}...`);
-    try {
-      const res = await fetch("/api/admin/pipeline", {
-        method: "POST",
-        headers: headers(),
-        body: JSON.stringify({ phase, ...options }),
-      });
-      const contentType = res.headers.get("content-type");
-      let data: ActionResult;
-      if (contentType && contentType.includes("application/json")) {
-        data = await res.json();
-      } else {
-        throw new Error("Unexpected response format");
-      }
-      if (!res.ok) {
-        addLog(`ERROR: ${data.error || res.statusText}`);
-        if (data.stderr) addLog(`STDERR: ${data.stderr.slice(0, 300)}`);
-        if (data.hint) addLog(`HINT: ${data.hint}`);
-      } else {
-        addLog(`Done: ${label}`);
-        if (data.output) {
-          const lines = data.output.trim().split("\n");
-          const lastLines = lines.slice(-5);
-          for (const line of lastLines) {
-            addLog(`  ${line}`);
+
+    let keepPolling = true;
+    let iteration = 0;
+    let reqOptions = { ...options };
+
+    while (keepPolling) {
+      try {
+        iteration++;
+        const res = await fetch("/api/admin/pipeline", {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify({ phase, ...reqOptions }),
+        });
+        const contentType = res.headers.get("content-type");
+        let data: ActionResult;
+        if (contentType && contentType.includes("application/json")) {
+          data = await res.json();
+        } else {
+          throw new Error("Unexpected response format");
+        }
+        if (!res.ok) {
+          addLog(`ERROR: ${data.error || res.statusText}`);
+          keepPolling = false;
+        } else {
+          const processed = (data.processed as number) || 0;
+          const remaining = (data.remaining as number) || 0;
+          const done = data.done as boolean;
+
+          addLog(`  [${iteration}] ${data.phase || phase}: ${processed} processed, ${remaining} remaining`);
+
+          if (data.errors && (data.errors as string[]).length > 0) {
+            addLog(`  Errors: ${(data.errors as string[]).slice(0, 5).join(", ")}`);
+          }
+
+          await fetchStatus();
+
+          if (done || remaining <= 0) {
+            addLog(`Done: ${label}`);
+            keepPolling = false;
+          } else {
+            // Only pass retryErrors on first iteration
+            reqOptions = { ...reqOptions, retryErrors: false };
           }
         }
+      } catch (error) {
+        addLog(`ERROR: ${error instanceof Error ? error.message : "Network error"}`);
+        keepPolling = false;
       }
-      await fetchStatus();
-    } catch (error) {
-      addLog(`ERROR: ${error instanceof Error ? error.message : "Network error"}`);
     }
+
     setLoading(null);
   };
 
@@ -326,15 +345,22 @@ export default function AdminPage() {
           <h2 className="text-sm tracking-wider mb-3 text-[var(--el-green-99)]">PIPELINE</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <ActionButton
+              label="SYNC METADATA"
+              description="Reconcile Drive renames/moves/deletions"
+              loading={loading === "sync"}
+              disabled={loading !== null}
+              onClick={() => runPipeline("sync", "sync")}
+            />
+            <ActionButton
               label="SCAN DRIVE"
               description="Discover new images from Drive folders"
               loading={loading === "scan"}
               disabled={loading !== null}
-              onClick={() => runAction("/api/admin/scan", "POST", "scan")}
+              onClick={() => runPipeline("scan", "scan")}
             />
             <ActionButton
               label="FULL PIPELINE"
-              description="Scan + describe + text embeddings"
+              description="Sync + scan + describe + embed + phash"
               loading={loading === "full"}
               disabled={loading !== null}
               onClick={() => runPipeline("full", "full")}
