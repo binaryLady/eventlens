@@ -83,8 +83,12 @@ class Config:
 DRIVE_API = "https://www.googleapis.com/drive/v3/files"
 
 
-def _is_rate_limited(exc: BaseException) -> bool:
-    return isinstance(exc, requests.HTTPError) and exc.response is not None and exc.response.status_code == 429
+def _is_retryable(exc: BaseException) -> bool:
+    if not isinstance(exc, requests.HTTPError):
+        return False
+    if exc.response is None:
+        return False
+    return exc.response.status_code in (429, 500, 502, 503)
 
 
 class DriveClient:
@@ -156,8 +160,11 @@ class DriveClient:
                 ct = r.headers.get("content-type", "")
                 if ct.startswith("image/") or ct.startswith("video/"):
                     return base64.b64encode(r.content).decode(), ct
-        except requests.RequestException:
-            pass
+                log.debug("CDN returned non-media content-type '%s' for %s", ct, file_id)
+            else:
+                log.debug("CDN returned %d for %s", r.status_code, file_id)
+        except requests.RequestException as e:
+            log.debug("CDN download failed for %s: %s", file_id, e)
 
         # Fallback: Drive API
         try:
@@ -167,12 +174,15 @@ class DriveClient:
                 timeout=30,
             )
             if not r.ok:
+                log.warning("Drive API returned %d for %s", r.status_code, file_id)
                 return None
             ct = r.headers.get("content-type", "")
             if not (ct.startswith("image/") or ct.startswith("video/")):
+                log.warning("Drive API returned non-media content-type '%s' for %s", ct, file_id)
                 return None
             return base64.b64encode(r.content).decode(), ct
-        except requests.RequestException:
+        except requests.RequestException as e:
+            log.warning("Drive API download failed for %s: %s", file_id, e)
             return None
 
 
@@ -229,7 +239,7 @@ class GeminiClient:
         self.session = requests.Session()
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=2, min=2, max=16),
-           retry=retry_if_exception(_is_rate_limited))
+           retry=retry_if_exception(_is_retryable))
     def analyze_photo(self, base64_data: str, mime_type: str) -> dict:
         self.limiter.wait()
         url = GEMINI_GENERATE.format(model="gemini-2.5-flash") + f"?key={self.api_key}"
@@ -244,14 +254,33 @@ class GeminiClient:
         r.raise_for_status()
         data = r.json()
         if "error" in data:
-            raise RuntimeError(f"Gemini error: {data['error'].get('message', data['error'])}")
-        text = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+            raise RuntimeError(
+                f"Gemini error: {data['error'].get('message', data['error'])}"
+            )
+        candidates = data.get("candidates", [])
+        if not candidates:
+            # Gemini blocked the content (safety filter) or returned no output
+            reason = data.get("promptFeedback", {}).get("blockReason", "unknown")
+            log.warning("Gemini returned no candidates (reason: %s)", reason)
+            return {
+                "visible_text": "",
+                "people_descriptions": "",
+                "scene_description": "",
+                "face_count": 0,
+            }
+        text = (
+            candidates[0]
+            .get("content", {})
+            .get("parts", [{}])[0]
+            .get("text", "")
+        )
         parsed = _parse_gemini_json(text)
+        fc = parsed.get("face_count", 0)
         return {
             "visible_text": str(parsed.get("visible_text", "")),
             "people_descriptions": str(parsed.get("people_descriptions", "")),
             "scene_description": str(parsed.get("scene_description", "")),
-            "face_count": int(parsed.get("face_count", 0)) if isinstance(parsed.get("face_count"), (int, float)) else 0,
+            "face_count": int(fc) if isinstance(fc, (int, float)) else 0,
         }
 
     def embed_texts_batch(self, texts: list[str], model: str = "gemini-embedding-001") -> list[list[float]]:
@@ -657,7 +686,7 @@ def phase_describe(
     log.info("─── PHASE 2: DESCRIBE ───")
     if not _check_embedding_column(store):
         return 0
-    photos = store.get_photos_by_status(["pending"])
+    photos = store.get_photos_by_status(["pending", "error"])
     if folder_filter:
         photos = [p for p in photos if p["folder"] == folder_filter]
 
@@ -665,7 +694,10 @@ def phase_describe(
         log.info("No photos to describe")
         return 0
 
-    log.info("%d photos to process", len(photos))
+    pending_count = sum(1 for p in photos if p["status"] == "pending")
+    error_count = len(photos) - pending_count
+    log.info("%d photos to process (%d pending, %d error retry)",
+             len(photos), pending_count, error_count)
     errors = []
     processed = 0
 
@@ -1019,10 +1051,13 @@ def main():
             total = sum(len(drive.list_images(f["id"])) for f in all_folders)
             log.info("  scan: %d photos would be discovered", total)
         if "describe" in phases:
-            pending = store.get_photos_by_status(["pending"])
+            pending = store.get_photos_by_status(["pending", "error"])
             if args.folder:
                 pending = [p for p in pending if p["folder"] == args.folder]
-            log.info("  describe: %d pending photos would be processed", len(pending))
+            pending_count = sum(1 for p in pending if p["status"] == "pending")
+            error_count = len(pending) - pending_count
+            log.info("  describe: %d photos would be processed (%d pending, %d error retry)",
+                     len(pending), pending_count, error_count)
         if "embeddings" in phases:
             missing = store.get_photos_missing_embedding()
             if args.folder:
