@@ -7,7 +7,7 @@ export const revalidate = 30;
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = Math.min(Number(searchParams.get("limit")) || 200, 1000);
+    const limit = Number(searchParams.get("limit")) || 0;
     const offset = Number(searchParams.get("offset")) || 0;
 
     const allPhotos = await fetchPhotosWithMetadata();
@@ -15,7 +15,10 @@ export async function GET(request: NextRequest) {
     const tags = getTags(allPhotos);
     const total = allPhotos.length;
 
-    const photos = allPhotos.slice(offset, offset + limit);
+    // If limit is specified, return a slice; otherwise return all photos.
+    // ISR cache (revalidate: 30) means the full fetch only runs every 30s.
+    // Progressive DOM rendering via IntersectionObserver handles the frontend perf.
+    const photos = limit > 0 ? allPhotos.slice(offset, offset + limit) : allPhotos;
 
     const lastUpdated =
       allPhotos.length > 0
@@ -31,7 +34,7 @@ export async function GET(request: NextRequest) {
       tags,
       lastUpdated,
       total,
-      hasMore: offset + limit < total,
+      hasMore: limit > 0 ? offset + limit < total : false,
     });
   } catch {
     return NextResponse.json(

@@ -230,9 +230,9 @@ function PhotoGrid() {
     }
   }, []);
 
-  const fetchData = useCallback(async (limit = 200, offset = 0) => {
+  const fetchData = useCallback(async () => {
     try {
-      const res = await fetch(`/api/photos?limit=${limit}&offset=${offset}`);
+      const res = await fetch("/api/photos");
       if (!res.ok) throw new Error("Failed to fetch");
       const data: PhotosResponse = await res.json();
       return data;
