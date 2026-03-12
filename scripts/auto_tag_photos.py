@@ -81,7 +81,7 @@ def name_cluster(descriptions: list[str], gemini_api_key: str) -> str:
     sampled = descriptions[:20]
     prompt = NAMING_PROMPT.format(descriptions="\n".join(f"- {d}" for d in sampled))
 
-    url = GEMINI_GENERATE.format(model="gemini-3.1-flash-lite-preview") + f"?key={gemini_api_key}"
+    url = GEMINI_GENERATE.format(model="gemini-2.5-flash-lite") + f"?key={gemini_api_key}"
     body = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"temperature": 0.2, "maxOutputTokens": 50},

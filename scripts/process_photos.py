@@ -213,7 +213,7 @@ class GeminiClient:
     def analyze_photo(self, base64_data: str, mime_type: str) -> dict:
         """Send a photo to Gemini and return structured description."""
         self.limiter.wait()
-        url = GEMINI_GENERATE.format(model="gemini-3.1-flash-lite-preview") + f"?key={self.api_key}"
+        url = GEMINI_GENERATE.format(model="gemini-2.5-flash-lite") + f"?key={self.api_key}"
         body = {
             "contents": [{"parts": [
                 {"text": ANALYZE_PROMPT},
