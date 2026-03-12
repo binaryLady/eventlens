@@ -202,6 +202,9 @@ function PhotoGrid() {
   const [hotPhotoIds, setHotPhotoIds] = useState<Set<string>>(new Set());
   const [operativesCount, setOperativesCount] = useState(0);
   const [recommendations, setRecommendations] = useState<string[]>([]);
+  const BATCH_SIZE = 40;
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const pendingPhotosRef = useRef<PhotoRecord[] | null>(null);
   const debounceRef = useRef<NodeJS.Timeout>(undefined);
 
@@ -227,9 +230,9 @@ function PhotoGrid() {
     }
   }, []);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (limit = 200, offset = 0) => {
     try {
-      const res = await fetch("/api/photos");
+      const res = await fetch(`/api/photos?limit=${limit}&offset=${offset}`);
       if (!res.ok) throw new Error("Failed to fetch");
       const data: PhotosResponse = await res.json();
       return data;
@@ -488,6 +491,27 @@ function PhotoGrid() {
     }
     return map;
   }, [matchResults]);
+
+  // Progressive rendering: load more cards as user scrolls
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisibleCount(prev => Math.min(prev + BATCH_SIZE, filteredPhotos.length));
+        }
+      },
+      { rootMargin: '400px' }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [filteredPhotos.length]);
+
+  // Reset visible count when filters change
+  useEffect(() => {
+    setVisibleCount(BATCH_SIZE);
+  }, [activeFolder, activeTag, debouncedQuery, sortOrder]);
 
   const folderCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -1052,26 +1076,31 @@ function PhotoGrid() {
             )}
 
             {filteredPhotos.length > 0 && (
-              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 md:gap-2 md:grid-cols-3 lg:grid-cols-4">
-                {filteredPhotos.map((photo, index) => (
-                  <PhotoCard
-                    key={photo.id}
-                    photo={photo}
-                    onClick={() => {
-                      if (selectMode) {
-                        togglePhotoSelection(photo.id);
-                      } else {
-                        setSelectedPhoto(photo);
-                      }
-                    }}
-                    matchInfo={matchInfoMap?.get(photo.id)}
-                    index={index}
-                    selectMode={selectMode}
-                    selected={selectedIds.has(photo.id)}
-                    isHot={hotPhotoIds.has(photo.driveFileId)}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 md:gap-2 md:grid-cols-3 lg:grid-cols-4">
+                  {filteredPhotos.slice(0, visibleCount).map((photo, index) => (
+                    <PhotoCard
+                      key={photo.id}
+                      photo={photo}
+                      onClick={() => {
+                        if (selectMode) {
+                          togglePhotoSelection(photo.id);
+                        } else {
+                          setSelectedPhoto(photo);
+                        }
+                      }}
+                      matchInfo={matchInfoMap?.get(photo.id)}
+                      index={index}
+                      selectMode={selectMode}
+                      selected={selectedIds.has(photo.id)}
+                      isHot={hotPhotoIds.has(photo.driveFileId)}
+                    />
+                  ))}
+                </div>
+                {visibleCount < filteredPhotos.length && (
+                  <div ref={sentinelRef} className="h-8 w-full" />
+                )}
+              </>
             )}
 
             {matchResults !== null && recommendations.length > 0 && (() => {
@@ -1431,14 +1460,14 @@ function PhotoCard({
   return (
     <button
       onClick={onClick}
-      className={`group relative aspect-[4/3] overflow-hidden border bg-[var(--el-bg)] cursor-pointer transition-all duration-200 motion-safe:hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,0,255,0.25)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] animate-grid-reveal ${
+      className={`group relative aspect-[4/3] overflow-hidden border bg-[var(--el-bg)] cursor-pointer transition-all duration-200 motion-safe:hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,0,255,0.25)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] ${index < 40 ? 'animate-grid-reveal' : ''} ${
         selected
           ? "border-[var(--el-green)] shadow-[0_0_15px_rgba(0,255,65,0.25)] ring-1 ring-[var(--el-green)]"
           : matchInfo && matchInfo.confidence >= 70
             ? "border-[var(--el-green)] shadow-[0_0_12px_rgba(0,255,65,0.2)]"
             : "border-[var(--el-green-22)] hover:border-[var(--el-magenta)]"
       }`}
-      style={{ '--delay': `${index * 0.03}s` } as React.CSSProperties}
+      style={index < 40 ? { '--delay': `${index * 0.03}s` } as React.CSSProperties : undefined}
     >
       {imgError || !photo.thumbnailUrl ? (
         <div className="flex h-full w-full items-center justify-center bg-[var(--el-surface)]">
@@ -1454,6 +1483,7 @@ function PhotoCard({
             alt={photo.filename}
             fill
             unoptimized
+            loading={index < 8 ? "eager" : "lazy"}
             {...(index < 8 ? { priority: true } : {})}
             className={`object-cover transition-opacity duration-300 ${
               !imgLoaded ? "opacity-0" : selected ? "opacity-70" : "opacity-100"

@@ -63,19 +63,21 @@ function driveFilesToPhotos(files: DriveFile[], folder: string): PhotoRecord[] {
   }));
 }
 
-async function fetchSupabaseMetadata(): Promise<Map<string, PhotoRow>> {
+type PhotoMetadata = Pick<PhotoRow, "drive_file_id" | "visible_text" | "people_descriptions" | "scene_description" | "face_count" | "mime_type" | "processed_at" | "auto_tag">;
+
+async function fetchSupabaseMetadata(): Promise<Map<string, PhotoMetadata>> {
   if (!supabaseAvailable()) return new Map();
   try {
     const { createServerClient } = await import("./supabase");
     const supabase = createServerClient();
     const { data, error } = await supabase
       .from("photos")
-      .select("*")
+      .select("drive_file_id, visible_text, people_descriptions, scene_description, face_count, mime_type, processed_at, auto_tag")
       .eq("status", "completed")
       .neq("hidden", true);
     if (error) return new Map();
-    const map = new Map<string, PhotoRow>();
-    for (const row of data as PhotoRow[]) map.set(row.drive_file_id, row);
+    const map = new Map<string, PhotoMetadata>();
+    for (const row of data as PhotoMetadata[]) map.set(row.drive_file_id, row);
     return map;
   } catch {
     return new Map();
