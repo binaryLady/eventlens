@@ -846,6 +846,19 @@ def phase_face_embed(
 
     for photo in tqdm(todo, desc="Face embeddings"):
         fid = photo["drive_file_id"]
+        stored_mime = photo.get("mime_type", "")
+        if stored_mime.startswith("video/"):
+            log.debug("  Skipping video %s", photo["filename"])
+            # Sentinel so this video is not re-checked on next run
+            store.upsert_face_embedding({
+                "drive_file_id": fid,
+                "filename": photo["filename"],
+                "folder": photo["folder"],
+                "face_index": -1,
+                "embedding": None,
+                "bbox_x1": 0, "bbox_y1": 0, "bbox_x2": 0, "bbox_y2": 0,
+            })
+            continue
         try:
             img = drive.download_media_base64(fid)
             if not img:
@@ -855,7 +868,7 @@ def phase_face_embed(
 
             b64, mime = img
             if mime.startswith('video/'):
-                log.info("  Skipping video %s for face embedding", photo['filename'])
+                log.debug("  Skipping video %s for face embedding", photo['filename'])
                 continue
 
             faces = face_api.get_embeddings(b64)
