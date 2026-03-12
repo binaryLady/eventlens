@@ -1,6 +1,6 @@
 // @TheTechMargin 2026
 import { NextResponse } from "next/server";
-import { fetchPhotosWithMetadata, getFolders } from "@/lib/photos";
+import { fetchPhotosWithMetadata, getFolders, getTags } from "@/lib/photos";
 
 export const revalidate = 30;
 
@@ -9,6 +9,7 @@ export async function GET() {
     const photos = await fetchPhotosWithMetadata();
 
     const folders = getFolders(photos);
+    const tags = getTags(photos);
 
     const lastUpdated =
       photos.length > 0
@@ -18,7 +19,7 @@ export async function GET() {
           }, photos[0].processedAt)
         : "";
 
-    return NextResponse.json({ photos, folders, lastUpdated });
+    return NextResponse.json({ photos, folders, tags, lastUpdated });
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch photos" },

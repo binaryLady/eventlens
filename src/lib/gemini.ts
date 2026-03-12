@@ -17,7 +17,7 @@ function parseGeminiJson(response: string): unknown {
   );
 }
 
-async function callGemini(parts: GeminiPart[], model = "gemini-2.5-flash"): Promise<string> {
+async function callGemini(parts: GeminiPart[], model = "gemini-2.5-flash-lite"): Promise<string> {
   const { geminiApiKey } = config;
   if (!geminiApiKey) throw new Error("Missing GEMINI_API_KEY");
 
@@ -147,6 +147,34 @@ Only include photos where confidence >= 35. If no matches, return [].
   } catch {
     return [];
   }
+}
+
+export async function pickHeroImage(
+  thumbnails: Array<{ base64: string; mimeType: string }>,
+): Promise<number> {
+  if (thumbnails.length <= 1) return 0;
+
+  const parts: GeminiPart[] = [
+    {
+      text: `You are selecting the best "hero" image for a photo collage from an event. Pick the ONE image that is most visually striking, best composed, and most representative of the event energy. Respond with ONLY the 1-based index number of that image, nothing else.`,
+    },
+  ];
+
+  for (let i = 0; i < thumbnails.length; i++) {
+    parts.push({ text: `\nImage ${i + 1}:` });
+    parts.push({
+      inline_data: {
+        mime_type: thumbnails[i].mimeType,
+        data: thumbnails[i].base64,
+      },
+    });
+  }
+
+  const response = await callGemini(parts);
+  const index = parseInt(response.trim(), 10);
+
+  if (isNaN(index) || index < 1 || index > thumbnails.length) return 0;
+  return index - 1; // Convert to 0-based
 }
 
 export async function analyzeEventPhoto(

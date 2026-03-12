@@ -1,0 +1,6 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.analysis.extraPaths": ["${workspaceFolder}/.venv/lib/python3.13/site-packages"],
+  "pylint.interpreter": ["${workspaceFolder}/.venv/bin/python"],
+  "pylint.args": ["--init-hook", "import sys; sys.path.insert(0, '.venv/lib/python3.13/site-packages')"]
+}

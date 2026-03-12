@@ -141,7 +141,8 @@ export async function getPhotosByDriveFileIds(
     .from("photos")
     .select("*")
     .in("drive_file_id", driveFileIds)
-    .eq("status", "completed");
+    .eq("status", "completed")
+    .neq("hidden", true);
   if (error) return [];
   return (data as PhotoRow[]) || [];
 }
@@ -248,4 +249,5 @@ export interface PhotoRow {
   created_at: string;
   status: "pending" | "processing" | "completed" | "error";
   error_message: string | null;
+  auto_tag: string | null;
 }
