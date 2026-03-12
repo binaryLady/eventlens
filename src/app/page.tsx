@@ -430,7 +430,11 @@ function PhotoGrid() {
     let result = photos;
     if (activeType === "video") result = result.filter(isVideoFile);
     else if (activeType === "photo") result = result.filter((p) => !isVideoFile(p));
-    if (minFaces > 0) result = result.filter((p) => p.faceCount >= minFaces);
+    if (minFaces > 0) {
+      result = result.filter((p) => p.faceCount >= minFaces);
+      // Sort by face count: ascending from threshold so closest matches appear first
+      result = [...result].sort((a, b) => a.faceCount - b.faceCount);
+    }
     return result;
   }, [activeType, isVideoFile, minFaces]);
 

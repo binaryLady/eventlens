@@ -528,18 +528,34 @@ def phase_sync(
 ) -> int:
     """Detect renames/moves in Google Drive and update stale metadata.
 
-    Compares stored filename/folder against current Drive state.
-    Nulls description_embedding for changed files so they get re-embedded
-    with corrected metadata on the next --only-embeddings run.
+    Scans all direct subfolders of root to build a complete file map, then
+    compares against stored Supabase records.  This avoids per-file
+    get_file_metadata calls (whose `parents` field is unreliable with
+    API-key auth) and handles renames, moves, reconnects, and orphan
+    cleanup in a single pass.
     """
     log.info("─── PHASE 0: SYNC ───")
 
-    # Build folder-ID → name map
+    # Build complete Drive file map by scanning root + all direct subfolders
     subfolders = drive.list_subfolders(config.drive_folder_id)
-    folder_id_to_name: dict[str, str] = {f["id"]: f["name"] for f in subfolders}
-    folder_id_to_name[config.drive_folder_id] = ""  # root = empty string
+    all_folders = [{"id": config.drive_folder_id, "name": ""}] + [
+        {"id": f["id"], "name": f["name"]} for f in subfolders
+    ]
+    log.info("Scanning %d folders: root + %s", len(all_folders),
+             ", ".join(f["name"] for f in subfolders) or "(none)")
 
-    # Fetch all tracked photos
+    # file_id → {name, folder}  and  filename → {id, folder}
+    drive_by_id: dict[str, dict] = {}
+    drive_by_name: dict[str, dict] = {}
+    for folder in tqdm(all_folders, desc="Scanning Drive"):
+        for f in drive.list_images(folder["id"]):
+            entry = {"name": f["name"], "folder": folder["name"], "id": f["id"]}
+            drive_by_id[f["id"]] = entry
+            drive_by_name[f["name"]] = entry
+
+    log.info("Drive contains %d files across %d folders", len(drive_by_id), len(all_folders))
+
+    # Fetch all tracked photos from Supabase
     all_photos = store.get_all_photos()
     if folder_filter:
         all_photos = [p for p in all_photos if p["folder"] == folder_filter]
@@ -549,101 +565,50 @@ def phase_sync(
         return 0
 
     log.info("Checking %d tracked photos against Drive", len(all_photos))
-    limiter = RateLimiter(600)  # Drive read quota is generous
     updated = 0
-    missing_photos: list[dict] = []
+    reconnected = 0
+    orphaned = 0
 
     for photo in tqdm(all_photos, desc="Syncing metadata"):
         fid = photo["drive_file_id"]
-        limiter.wait()
-
-        try:
-            meta = drive.get_file_metadata(fid)
-        except requests.HTTPError as e:
-            log.warning("  Drive API error for %s: %s", fid, e)
-            continue
-
-        if meta is None or meta.get("trashed"):
-            missing_photos.append(photo)
-            continue
-
-        current_name = meta.get("name", "")
-        parents = meta.get("parents", [])
-
-        # Resolve parent folder name — look up unknown IDs from Drive
-        current_folder = ""
-        if parents:
-            parent_id = parents[0]
-            if parent_id in folder_id_to_name:
-                current_folder = folder_id_to_name[parent_id]
-            else:
-                # Unknown parent — fetch its name and cache it
-                try:
-                    limiter.wait()
-                    parent_meta = drive.get_file_metadata(parent_id)
-                    if parent_meta:
-                        current_folder = parent_meta.get("name", "")
-                        folder_id_to_name[parent_id] = current_folder
-                except requests.HTTPError:
-                    pass
-
         stored_name = photo.get("filename", "")
         stored_folder = photo.get("folder", "")
 
-        changes: dict[str, str] = {}
-        if current_name and current_name != stored_name:
-            changes["filename"] = current_name
-        if current_folder != stored_folder:
-            changes["folder"] = current_folder
+        drive_entry = drive_by_id.get(fid)
 
-        if changes:
-            log.info(
-                "  STALE: %s → %s (folder: %s → %s)",
-                stored_name,
-                changes.get("filename", stored_name),
-                stored_folder or "(root)",
-                changes.get("folder", stored_folder) or "(root)",
-            )
-            # Update photos row — keep status as 'completed' since the image
-            # content hasn't changed (only name/folder moved).  Nulling the
-            # description_embedding below is enough to trigger re-embedding
-            # with the corrected filename/folder on the next --only-embeddings run.
-            store.update_photo_metadata(fid, changes)
-            # Null out description embedding (re-embeds with correct filename/folder)
-            store.null_description_embedding(fid)
-            # Update face_embeddings rows (filename/folder only — no status column there)
-            store.update_face_embedding_metadata(fid, changes)
-            updated += 1
+        if drive_entry:
+            # File still exists with same ID — check for name/folder changes
+            changes: dict[str, str] = {}
+            if drive_entry["name"] != stored_name:
+                changes["filename"] = drive_entry["name"]
+            if drive_entry["folder"] != stored_folder:
+                changes["folder"] = drive_entry["folder"]
 
-    # ── Reconnect missing/trashed files ───────────────────────────
-    reconnected = 0
-    orphaned = 0
-    if missing_photos:
-        log.info("Attempting to reconnect %d missing files by scanning Drive...", len(missing_photos))
-
-        # Build filename → new Drive file lookup across all subfolders
-        all_folders = [{"id": config.drive_folder_id, "name": ""}] + [
-            {"id": f["id"], "name": f["name"]} for f in subfolders
-        ]
-        drive_by_name: dict[str, dict] = {}  # filename → {id, folder_name}
-        for folder in tqdm(all_folders, desc="Scanning Drive for reconnect"):
-            for f in drive.list_images(folder["id"]):
-                drive_by_name[f["name"]] = {"id": f["id"], "folder": folder["name"]}
-
-        for photo in missing_photos:
-            old_fid = photo["drive_file_id"]
-            stored_name = photo.get("filename", "")
+            if changes:
+                log.info(
+                    "  STALE: %s → %s (folder: %s → %s)",
+                    stored_name,
+                    changes.get("filename", stored_name),
+                    stored_folder or "(root)",
+                    changes.get("folder", stored_folder) or "(root)",
+                )
+                store.update_photo_metadata(fid, changes)
+                store.null_description_embedding(fid)
+                store.update_face_embedding_metadata(fid, changes)
+                updated += 1
+        else:
+            # File ID gone — try reconnect by filename across all folders
             match = drive_by_name.get(stored_name)
-            if match and match["id"] != old_fid:
+            if match and match["id"] != fid:
                 log.info(
                     "  RECONNECT: %s — %s → %s (folder: %s)",
-                    stored_name, old_fid[:12], match["id"][:12], match["folder"] or "(root)",
+                    stored_name, fid[:12], match["id"][:12], match["folder"] or "(root)",
                 )
-                store.reconnect_photo(old_fid, match["id"], stored_name, match["folder"])
+                store.reconnect_photo(fid, match["id"], stored_name, match["folder"])
                 reconnected += 1
             else:
-                log.info("  ORPHAN REMOVED: %s (%s)", stored_name, old_fid)
-                store.delete_photo(old_fid)
+                log.info("  ORPHAN REMOVED: %s (%s)", stored_name, fid[:12])
+                store.delete_photo(fid)
                 orphaned += 1
 
     log.info(
