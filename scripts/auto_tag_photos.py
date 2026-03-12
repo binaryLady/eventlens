@@ -18,13 +18,13 @@ import os
 import sys
 from pathlib import Path
 
-import numpy as np
+import numpy as np  # pylint: disable=import-error
 import requests
 from dotenv import load_dotenv
-from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
-from supabase import create_client
+from sklearn.cluster import KMeans  # pylint: disable=import-error
+from sklearn.metrics import silhouette_score  # pylint: disable=import-error
 from tenacity import RetryError, retry, retry_if_exception, stop_after_attempt, wait_exponential
+from supabase import create_client
 
 log = logging.getLogger("eventlens-autotag")
 handler = logging.StreamHandler(sys.stderr)

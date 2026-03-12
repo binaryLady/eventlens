@@ -22,11 +22,11 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 from PIL import Image  # pylint: disable=import-error
-from supabase import create_client, Client
 from tenacity import (
-    RetryError, retry, stop_after_attempt, wait_exponential, retry_if_exception,
+    RetryError, retry, retry_if_exception, stop_after_attempt, wait_exponential,
 )
 from tqdm import tqdm
+from supabase import create_client, Client
 
 log = logging.getLogger("eventlens")
 handler = logging.StreamHandler(sys.stderr)
