@@ -13,10 +13,8 @@ Usage:
 """
 
 import argparse
-import json
 import logging
 import os
-import re
 import sys
 from pathlib import Path
 
@@ -26,6 +24,7 @@ from dotenv import load_dotenv
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from supabase import create_client
+from tenacity import RetryError, retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 log = logging.getLogger("eventlens-autotag")
 handler = logging.StreamHandler(sys.stderr)
@@ -35,13 +34,45 @@ log.setLevel(logging.INFO)
 
 GEMINI_GENERATE = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
-NAMING_PROMPT = """These are descriptions of event photos in one group. Give this group a short, descriptive album name (2-4 words).
-Examples: "Stage & Keynotes", "Networking", "Food & Drinks", "Outdoor Activities", "Group Photos", "Expo Booths", "Awards Ceremony", "Panel Discussions".
+NAMING_PROMPT = """\
+These are descriptions of event photos in one group.
+Give this group a short, descriptive album name (2-4 words).
+Examples: "Stage & Keynotes", "Networking", "Food & Drinks",
+"Outdoor Activities", "Group Photos", "Expo Booths".
 
 Descriptions:
 {descriptions}
 
 Respond with ONLY the album name, nothing else."""
+
+
+def _is_retryable(exc: BaseException) -> bool:
+    if not isinstance(exc, requests.HTTPError):
+        return False
+    if exc.response is None:
+        return False
+    return exc.response.status_code in (429, 500, 502, 503)
+
+
+@retry(
+    stop=stop_after_attempt(4),
+    wait=wait_exponential(multiplier=2, min=2, max=16),
+    retry=retry_if_exception(_is_retryable),
+)
+def _call_gemini(url: str, body: dict) -> str:
+    """POST to Gemini with retry on transient errors. Returns the text response."""
+    r = requests.post(url, json=body, timeout=30)
+    r.raise_for_status()
+    data = r.json()
+    candidates = data.get("candidates", [])
+    if not candidates:
+        return ""
+    return (
+        candidates[0]
+        .get("content", {})
+        .get("parts", [{}])[0]
+        .get("text", "")
+    )
 
 
 def name_cluster(descriptions: list[str], gemini_api_key: str) -> str:
@@ -50,20 +81,17 @@ def name_cluster(descriptions: list[str], gemini_api_key: str) -> str:
     sampled = descriptions[:20]
     prompt = NAMING_PROMPT.format(descriptions="\n".join(f"- {d}" for d in sampled))
 
-    url = GEMINI_GENERATE.format(model="gemini-2.5-flash") + f"?key={gemini_api_key}"
+    url = GEMINI_GENERATE.format(model="gemini-3.1-flash-lite-preview") + f"?key={gemini_api_key}"
     body = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"temperature": 0.2, "maxOutputTokens": 50},
     }
     try:
-        r = requests.post(url, json=body, timeout=30)
-        r.raise_for_status()
-        data = r.json()
-        text = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+        text = _call_gemini(url, body)
         # Clean up: strip quotes, newlines, extra whitespace
         name = text.strip().strip('"').strip("'").strip()
         return name if name else "Uncategorized"
-    except (requests.RequestException, KeyError, IndexError) as e:
+    except (requests.RequestException, RetryError) as e:
         log.warning("Gemini naming failed: %s — using fallback", e)
         return "Uncategorized"
 
@@ -72,7 +100,8 @@ def find_best_k(embeddings: np.ndarray, k_min: int = 5, k_max: int = 12) -> int:
     """Pick k with the best silhouette score."""
     n_samples = len(embeddings)
     k_max = min(k_max, n_samples - 1)
-    k_min = min(k_min, k_max)
+    k_min = max(2, min(k_min, k_max))
+    k_max = max(k_min, k_max)
 
     if k_min == k_max:
         return k_min
@@ -94,17 +123,39 @@ def find_best_k(embeddings: np.ndarray, k_min: int = 5, k_max: int = 12) -> int:
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Auto-tag photos by embedding clustering")
-    p.add_argument("--k", type=int, default=0, help="Force number of clusters (0 = auto via silhouette)")
-    p.add_argument("--k-min", type=int, default=5, help="Min k for auto selection (default: 5)")
-    p.add_argument("--k-max", type=int, default=12, help="Max k for auto selection (default: 12)")
-    p.add_argument("--dry-run", action="store_true", help="Preview clusters without updating DB")
-    p.add_argument("--env-file", type=str, help="Path to env file (default: .env.local)")
-    p.add_argument("--verbose", action="store_true", help="Debug logging")
+    """Parse command-line arguments."""
+    p = argparse.ArgumentParser(
+        description="Auto-tag photos by embedding clustering",
+    )
+    p.add_argument(
+        "--k", type=int, default=0,
+        help="Force number of clusters (0 = auto)",
+    )
+    p.add_argument(
+        "--k-min", type=int, default=5,
+        help="Min k for auto selection (default: 5)",
+    )
+    p.add_argument(
+        "--k-max", type=int, default=12,
+        help="Max k for auto selection (default: 12)",
+    )
+    p.add_argument(
+        "--dry-run", action="store_true",
+        help="Preview clusters without updating DB",
+    )
+    p.add_argument(
+        "--env-file", type=str,
+        help="Path to env file (default: .env.local)",
+    )
+    p.add_argument(
+        "--verbose", action="store_true",
+        help="Debug logging",
+    )
     return p.parse_args()
 
 
 def main():
+    """Cluster photos by embedding similarity and assign album tags."""
     args = parse_args()
     if args.verbose:
         log.setLevel(logging.DEBUG)
@@ -151,6 +202,10 @@ def main():
         log.info("No photos with embeddings found")
         return
 
+    if len(rows) < 3:
+        log.error("Need at least 3 photos with embeddings to cluster (got %d)", len(rows))
+        return
+
     log.info("Loaded %d photos with embeddings", len(rows))
 
     # Build embedding matrix
@@ -158,7 +213,7 @@ def main():
 
     # Determine k
     if args.k > 0:
-        k = min(args.k, len(rows) - 1)
+        k = max(2, min(args.k, len(rows) - 1))
         log.info("Using forced k=%d", k)
     else:
         log.info("Finding optimal k (range %d-%d)...", args.k_min, args.k_max)
