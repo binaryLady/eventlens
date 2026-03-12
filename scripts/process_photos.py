@@ -595,6 +595,7 @@ def phase_describe(
     photos = store.get_photos_by_status(["pending", "error"])
     if folder_filter:
         photos = [p for p in photos if p["folder"] == folder_filter]
+    photos = [p for p in photos if not p.get("mime_type", "").startswith("video/")]
 
     if not photos:
         log.info("No photos to describe")
@@ -626,6 +627,14 @@ def phase_describe(
                     continue
 
                 b64, mime = img
+                if mime.startswith("video/"):
+                    log.debug("  Skipping video %s for describe", photo['filename'])
+                    store.update_photo_metadata(fid, {
+                        "status": "completed",
+                        "error_message": "skipped: video",
+                    })
+                    processed += 1
+                    continue
                 result = gemini.analyze_photo(b64, mime)
                 result.update(status="completed", error_message=None,
                               processed_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
@@ -734,6 +743,7 @@ def phase_face_embed(
     if folder_filter:
         all_photos = [p for p in all_photos if p["folder"] == folder_filter]
 
+    all_photos = [p for p in all_photos if not p.get("mime_type", "").startswith("video/")]
     already_done = store.get_existing_face_file_ids()
     todo = [p for p in all_photos if p["drive_file_id"] not in already_done]
     log.info("Skipping %d photos already face-embedded", len(all_photos) - len(todo))
@@ -802,6 +812,7 @@ def phase_phash(
     photos = store.get_photos_missing_phash()
     if folder_filter:
         photos = [p for p in photos if p["folder"] == folder_filter]
+    photos = [p for p in photos if not p.get("mime_type", "").startswith("video/")]
 
     if not photos:
         log.info("All photos already have perceptual hashes")
