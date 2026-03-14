@@ -22,7 +22,7 @@ export function rowToPhoto(row: PhotoRow): PhotoRecord {
     mimeType: row.mime_type || "",
     processedAt: row.processed_at || row.created_at || "",
     thumbnailUrl: row.drive_file_id
-      ? `https://lh3.googleusercontent.com/d/${row.drive_file_id}=w250`
+      ? `https://lh3.googleusercontent.com/d/${row.drive_file_id}=w640`
       : "",
     downloadUrl: row.drive_file_id
       ? `https://drive.google.com/uc?export=download&id=${row.drive_file_id}`
@@ -55,7 +55,7 @@ function driveFilesToPhotos(files: DriveFile[], folder: string): PhotoRecord[] {
     faceCount: 0,
     mimeType: f.mimeType || "",
     processedAt: f.modifiedTime || "",
-    thumbnailUrl: `https://lh3.googleusercontent.com/d/${f.id}=w250`,
+    thumbnailUrl: `https://lh3.googleusercontent.com/d/${f.id}=w640`,
     downloadUrl: `https://drive.google.com/uc?export=download&id=${f.id}`,
     autoTag: null,
     ownerName: f.owners?.[0]?.displayName || "",
@@ -63,19 +63,21 @@ function driveFilesToPhotos(files: DriveFile[], folder: string): PhotoRecord[] {
   }));
 }
 
-async function fetchSupabaseMetadata(): Promise<Map<string, PhotoRow>> {
+type PhotoMetadata = Pick<PhotoRow, "drive_file_id" | "visible_text" | "people_descriptions" | "scene_description" | "face_count" | "mime_type" | "processed_at" | "auto_tag">;
+
+async function fetchSupabaseMetadata(): Promise<Map<string, PhotoMetadata>> {
   if (!supabaseAvailable()) return new Map();
   try {
     const { createServerClient } = await import("./supabase");
     const supabase = createServerClient();
     const { data, error } = await supabase
       .from("photos")
-      .select("*")
+      .select("drive_file_id, visible_text, people_descriptions, scene_description, face_count, mime_type, processed_at, auto_tag")
       .eq("status", "completed")
       .neq("hidden", true);
     if (error) return new Map();
-    const map = new Map<string, PhotoRow>();
-    for (const row of data as PhotoRow[]) map.set(row.drive_file_id, row);
+    const map = new Map<string, PhotoMetadata>();
+    for (const row of data as PhotoMetadata[]) map.set(row.drive_file_id, row);
     return map;
   } catch {
     return new Map();
@@ -206,7 +208,7 @@ export async function fetchPhotos(): Promise<PhotoRecord[]> {
         faceCount: parseInt(String(cells[6]?.v ?? "0"), 10) || 0,
         mimeType: "",
         processedAt: String(cells[7]?.v ?? ""),
-        thumbnailUrl: driveFileId ? `https://lh3.googleusercontent.com/d/${driveFileId}=w250` : "",
+        thumbnailUrl: driveFileId ? `https://lh3.googleusercontent.com/d/${driveFileId}=w640` : "",
         downloadUrl: driveFileId ? `https://drive.google.com/uc?export=download&id=${driveFileId}` : "",
         autoTag: null as string | null,
         ownerName: "",

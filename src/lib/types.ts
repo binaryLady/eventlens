@@ -23,6 +23,8 @@ export interface PhotosResponse {
   folders: string[];
   tags: string[];
   lastUpdated: string;
+  total?: number;
+  hasMore?: boolean;
 }
 
 export type MatchTier = "text" | "visual" | "vector" | "both";

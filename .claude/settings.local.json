@@ -63,7 +63,8 @@
       "Bash(python3 -c \"import ast; ast.parse\\(open\\(''scripts/process_photos.py''\\).read\\(\\)\\); print\\(''Syntax OK''\\)\")",
       "Bash(curl -s --max-time 10 \"$FACE_API_URL/health\")",
       "Bash(python3 -c \"import ast; ast.parse\\(open\\(''/Users/soniacookbroen/Development/eventlens/scripts/process_photos.py''\\).read\\(\\)\\); print\\(''OK''\\)\")",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
