@@ -201,7 +201,6 @@ export default function PhotoUpload({
                 src={preview}
                 alt="Your photo"
                 fill
-                unoptimized
                 className="object-cover"
               />
             </div>
