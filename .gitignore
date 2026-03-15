@@ -32,7 +32,19 @@ yarn-error.log*
 
 # python (face-api service)
 __pycache__/
+services/face-api/__pycache__/
 *.pyc
+
+# claude code config
+.claude/
+
+# planning / prompt artifacts
+CLAUDE-*.md
+PROMPT-*.md
+PERF-PROMPTS.md
+PLAN.md
+TEMPLATE-REVIEW.md
+EVENTLENS-MASTER-PLAN.md
 
 # vercel
 .vercel

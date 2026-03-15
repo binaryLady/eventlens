@@ -56,14 +56,14 @@ See **[ARCHITECTURE.md](./ARCHITECTURE.md)** for a full RFC-style design documen
 
 ## Development Process
 
-EventLens was built at the MIT HardMode hackathon in March 2026 using AI pair programming. The development workflow:
+EventLens was built at the MIT HardMode hackathon in March 2026. The development workflow:
 
-1. **Prototype fast** — get features working with AI-assisted code generation
+1. **Prototype fast** — get features working in a single component
 2. **Verify UX** — test interactions, iterate on behavior
 3. **Decompose** — identify extraction boundaries, split into hooks and components
 4. **Document decisions** — capture the "why" behind architectural choices
 
-The architect's role in AI-assisted development is knowing *where to cut* — which abstractions reflect real domain boundaries vs. arbitrary file splits. The 8 custom hooks and 15+ gallery components emerged from this process, not from upfront design.
+The architect's role is knowing *where to cut* — which abstractions reflect real domain boundaries vs. arbitrary file splits. The 8 custom hooks and 15+ gallery components emerged from this iterative process, not from upfront design.
 
 ---
 
