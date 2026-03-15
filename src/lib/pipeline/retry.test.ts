@@ -1,26 +1,21 @@
-// @TheTechMargin 2026
-// Tests for retry logic — exponential backoff, jitter, Retry-After, non-retryable errors.
+// Tests for exponential backoff retry wrapper.
 
-import { describe, it, expect, jest, beforeEach } from "@jest/globals";
 import { withRetry, RetryableError } from "./retry";
 
 // Speed up tests by using tiny delays
 const fastOptions = { baseDelay: 10, maxDelay: 100, maxAttempts: 3 };
 
 describe("withRetry", () => {
-  beforeEach(() => {
-    jest.restoreAllMocks();
-  });
-
-  it("returns immediately on success", async () => {
-    const fn = jest.fn<() => Promise<string>>().mockResolvedValue("ok");
+  it("returns the result on first success", async () => {
+    const fn = jest.fn().mockResolvedValue("ok");
     const result = await withRetry(fn, fastOptions);
     expect(result).toBe("ok");
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
-  it("retries on 429 (rate limit) and succeeds", async () => {
-    const fn = jest.fn<() => Promise<string>>()
+  it("retries on 429 and succeeds", async () => {
+    const fn = jest
+      .fn()
       .mockRejectedValueOnce(new RetryableError("rate limited", 429))
       .mockResolvedValue("ok");
 
@@ -29,10 +24,11 @@ describe("withRetry", () => {
     expect(fn).toHaveBeenCalledTimes(2);
   });
 
-  it("retries on 500 (server error) and succeeds", async () => {
-    const fn = jest.fn<() => Promise<string>>()
+  it("retries on 500/502 and succeeds", async () => {
+    const fn = jest
+      .fn()
       .mockRejectedValueOnce(new RetryableError("server error", 500))
-      .mockRejectedValueOnce(new RetryableError("server error", 502))
+      .mockRejectedValueOnce(new RetryableError("bad gateway", 502))
       .mockResolvedValue("ok");
 
     const result = await withRetry(fn, fastOptions);
@@ -40,51 +36,48 @@ describe("withRetry", () => {
     expect(fn).toHaveBeenCalledTimes(3);
   });
 
-  it("throws after exhausting all attempts", async () => {
-    const fn = jest.fn<() => Promise<string>>()
-      .mockRejectedValue(new RetryableError("always fails", 429));
+  it("throws after exhausting max attempts", async () => {
+    const fn = jest.fn().mockRejectedValue(new RetryableError("always fails", 429));
 
     await expect(withRetry(fn, fastOptions)).rejects.toThrow("always fails");
     expect(fn).toHaveBeenCalledTimes(3);
   });
 
-  it("does not retry non-retryable status codes", async () => {
-    const fn = jest.fn<() => Promise<string>>()
-      .mockRejectedValue(new RetryableError("bad request", 400));
+  it("throws immediately on non-retryable status codes (400, 404)", async () => {
+    const fn = jest.fn().mockRejectedValue(new RetryableError("not found", 404));
 
-    await expect(withRetry(fn, fastOptions)).rejects.toThrow("bad request");
+    await expect(withRetry(fn, fastOptions)).rejects.toThrow("not found");
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
-  it("does not retry non-retryable errors (plain Error)", async () => {
-    const fn = jest.fn<() => Promise<string>>()
-      .mockRejectedValue(new Error("type error"));
+  it("throws immediately on non-RetryableError", async () => {
+    const fn = jest.fn().mockRejectedValue(new Error("unexpected"));
 
-    await expect(withRetry(fn, fastOptions)).rejects.toThrow("type error");
+    await expect(withRetry(fn, fastOptions)).rejects.toThrow("unexpected");
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
-  it("respects Retry-After header when provided", async () => {
-    // Retry-After of 1 second → delay should be ~1000ms, not the calculated backoff
+  it("respects Retry-After header value", async () => {
     const start = Date.now();
-    const fn = jest.fn<() => Promise<string>>()
+    const fn = jest
+      .fn()
       .mockRejectedValueOnce(new RetryableError("rate limited", 429, 1))
       .mockResolvedValue("ok");
 
     await withRetry(fn, { ...fastOptions, baseDelay: 10 });
     const elapsed = Date.now() - start;
 
-    // Should have waited ~1000ms (Retry-After: 1 second), not 10ms (baseDelay)
+    // Should have waited ~1000ms (Retry-After: 1s), not 10ms (baseDelay)
     expect(elapsed).toBeGreaterThanOrEqual(900);
   });
 });
 
 describe("RetryableError", () => {
-  it("preserves status code and retryAfter", () => {
-    const err = new RetryableError("test", 429, 30);
+  it("stores status and retryAfter", () => {
+    const err = new RetryableError("test", 429, 10);
     expect(err.message).toBe("test");
     expect(err.status).toBe(429);
-    expect(err.retryAfter).toBe(30);
+    expect(err.retryAfter).toBe(10);
     expect(err.name).toBe("RetryableError");
   });
 
