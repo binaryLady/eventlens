@@ -75,7 +75,8 @@
       "Bash(gh search:*)",
       "Bash(npx jest:*)",
       "WebFetch(domain:api.github.com)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(npm test:*)"
     ]
   }
 }

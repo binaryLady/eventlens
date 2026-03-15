@@ -81,7 +81,7 @@ Search is genuinely sophisticated. Hybrid semantic (768-dim Gemini embeddings vi
 
 **Theming is hardcoded.** `globals.css` has ~50 CSS custom properties all based on `#00ff41` (matrix green) and `#ff00ff` (magenta). The layout injects `--color-primary` from env vars, but almost nothing in the CSS actually uses those variables.
 
-**Admin dashboard is a 626-line monolith.** Needs decomposition for both readability and interview presentation.
+**Admin dashboard** — ✅ Decomposed from 626-line monolith into 4 hooks + 8 components (93-line orchestrator).
 
 **Rate limiting is in-memory.** The `RateLimiter` class uses a `timestamps: number[]` array that dies with each serverless invocation. Adequate for single-event processing but not for concurrent use.
 
@@ -320,10 +320,13 @@ Leverage the Gemini Vision pipeline to bulk-generate Four Corners metadata for p
 ### Sprint 1: Foundation + Documentation (Weekend — before Monday)
 - ✅ Phase 1.1 (remove dead Google Sheets)
 - ✅ Phase 1.2 (clean .env.example)
-- ✅ Phase 3.1 (ARCHITECTURE.md)
+- ✅ Phase 1.3 (.gitignore verified — secrets excluded)
+- ✅ Phase 2.1 (admin decomposed: 4 hooks + 8 components)
+- ✅ Phase 3.1 (ARCHITECTURE.md — full 9-section RFC)
 - ✅ Phase 3.2 (README polish)
-- Phase 1.3 (.gitignore check) — Quick
-- Phase 2.1 (admin decomposition) — Priority
+- ✅ Pipeline tests (52 tests, 6 co-located test files, Jest)
+- ✅ GitHub Actions CI workflow (test → typecheck → lint → build)
+- ✅ Drive pagination verified (nextPageToken loop already in place)
 
 ### Sprint 2: Interview-Ready Code (Week 2)
 - Phase 2.2 (API response patterns) — 0.5 day
