@@ -97,47 +97,30 @@ Next.js 15 App (Vercel)
 
 ## Setup
 
-### Prerequisites
-
-- Node.js 18+
-- Google Cloud project with **Drive API** enabled + API key
-- Google Drive folder with event photos (shared as "Anyone with the link can view")
-- Supabase project with pgvector extension enabled
-- Gemini API key (from [aistudio.google.com](https://aistudio.google.com))
-- (Optional) InsightFace microservice deployed for face matching
-
-### 1. Clone and install
+### Quick Start
 
 ```bash
 git clone <repo-url>
 cd eventlens
-npm install
+./scripts/setup.sh
 ```
 
-### 2. Set up Supabase
+The setup script checks prerequisites, installs dependencies, creates your `.env` file, validates required keys, and prints next steps.
 
-Create a Supabase project, then run the 12 migrations in order via the SQL Editor:
+### Database
 
-```
-supabase/migrations/001_match_faces.sql
-supabase/migrations/002_search_photos.sql
-supabase/migrations/003_description_embeddings.sql
-supabase/migrations/004_match_sessions.sql
-supabase/migrations/005_add_face_embedding_unique_constraint.sql
-supabase/migrations/006_add_face_embedding_hnsw_index.sql
-supabase/migrations/007_match_session_analytics.sql
-supabase/migrations/008_drive_file_id_canonical.sql
-supabase/migrations/009_sentinel_face_embedding_guard.sql
-supabase/migrations/010_phash_dedup.sql
-supabase/migrations/011_auto_tags.sql
-supabase/migrations/012_allow_null_face_embedding.sql
+Create a [Supabase](https://supabase.com) project with the pgvector extension enabled, then run the bootstrap schema:
+
+```sql
+-- Paste into Supabase SQL Editor → Run
+-- File: supabase/schema.sql
 ```
 
-These create the `photos` and `face_embeddings` tables, pgvector indexes (HNSW for face embeddings), full-text search with tsvector, RPC functions for similarity search, and match session analytics.
+This single file creates all tables, indexes, and RPC functions. It's the consolidated equivalent of the 12 incremental migrations in `supabase/migrations/` — use those if you need to apply changes to an existing deployment.
 
-### 3. Deploy the face-api service (optional)
+### Face Matching (Optional)
 
-The InsightFace microservice lives in `services/face-api/`. It's a Flask app that accepts base64 images and returns face embeddings + bounding boxes. Deploy to Railway, Render, or Fly.io:
+The InsightFace microservice lives in `services/face-api/`. Deploy to Railway, Render, or Fly.io:
 
 ```bash
 cd services/face-api
@@ -145,12 +128,12 @@ docker build -t face-api .
 # Deploy to your platform of choice
 ```
 
-The service uses InsightFace's `buffalo_l` model (512-dim embeddings). It needs ~2GB RAM and takes 30-60s to cold start while downloading the model.
+Uses InsightFace's `buffalo_l` model (512-dim embeddings). Needs ~2GB RAM, 30-60s cold start for model download.
 
-### 4. Configure environment
+### Environment
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
 Fill in the values:
@@ -317,7 +300,11 @@ services/face-api/                       # InsightFace microservice (Flask + Doc
 │   ├── Dockerfile
 │   └── requirements.txt
 │
-supabase/migrations/                     # 12 SQL migrations
+scripts/setup.sh                         # Guided local setup
+│
+supabase/
+│   ├── schema.sql                       # Bootstrap: full schema in one file
+│   └── migrations/                      # 12 incremental migrations
 ```
 
 ---

@@ -270,6 +270,8 @@ The 12 migrations tell the story of iterative feature development, not a pre-pla
 
 **What this progression demonstrates:** The schema evolved with the product. Search started as text-only (002), added semantic vectors (003), then face vectors were accelerated with HNSW (006). Data integrity was tightened retroactively (005, 008) as pipeline re-runs exposed edge cases. The sentinel pattern (009, 012) was iterated and refined during testing. Each migration solves a specific problem encountered during development — not a theoretical schema design exercise.
 
+**Developer experience:** For new deployments, `supabase/schema.sql` consolidates all 12 migrations into a single file — one paste into the Supabase SQL Editor creates the full schema. The individual migrations remain for incremental updates on existing databases. A setup script (`scripts/setup.sh`) automates dependency installation, `.env` creation, and prerequisite validation.
+
 ## 5. Pipeline Design
 
 ### 5.1 Origin: Python to TypeScript
@@ -506,7 +508,7 @@ The goal is not multi-tenant SaaS but a **portable, customizable tool** that any
 
 ### 9.2 Minimal Changes for Portability
 
-1. **Setup wizard** — a first-run experience that collects Drive folder ID, API keys, and event branding. Currently these are environment variables; a wizard would write them to Vercel env vars or a config file.
+1. **Setup wizard** — a first-run experience that collects Drive folder ID, API keys, and event branding. The current `scripts/setup.sh` handles local setup; the next step is a web-based wizard that writes directly to Vercel env vars or a config file.
 2. **Auth improvement** — replace the prototype cookie with Supabase Auth or a simple hashed-password check. The organizer sets a password during setup.
 3. **Dynamic theming** — extract the current hardcoded color scheme (matrix green/magenta) into CSS custom properties or a theme config. The organizer picks colors during setup.
 4. **Face matching as optional** — already partially implemented (face-embed phase skips if `FACE_API_URL` is unset). The UI should gracefully hide face matching features when the service isn't configured.
