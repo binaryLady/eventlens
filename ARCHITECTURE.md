@@ -466,12 +466,12 @@ The gallery renders 13+ components, each responsible for a single visual concern
 
 This decomposition was not designed upfront on a whiteboard. The process was:
 
-1. **Prototype fast** — get the feature working in a single component with AI pair programming
+1. **Prototype fast** — get the feature working in a single component
 2. **Verify the UX** — test interactions, iterate on behavior
 3. **Recognize extraction points** — a component has multiple `useState` calls that don't interact, or the JSX has sections separated by comments. These are signals that abstractions want to exist.
 4. **Extract and define interfaces** — pull the state into a hook, the JSX into a component, and define the props/return types that connect them
 
-The architect's value in AI-assisted development is step 3: knowing where to cut and why. AI can generate a 600-line component or split it into 15 files — it doesn't know which decomposition reflects the actual domain boundaries without the human directing it.
+The architect's value is step 3: knowing where to cut and why. Any tool can generate a 600-line component or split it into 15 files — but it takes domain understanding to know which decomposition reflects actual boundaries.
 
 ## 8. Tradeoffs and Open Questions
 
