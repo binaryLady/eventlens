@@ -85,9 +85,7 @@ async function fetchSupabaseMetadata(): Promise<Map<string, PhotoMetadata>> {
 }
 
 export async function fetchPhotosWithMetadata(): Promise<PhotoRecord[]> {
-  const drivePhotos = config.driveFolderId
-    ? await fetchPhotosFromDriveFolder()
-    : await fetchPhotos();
+  const drivePhotos = await fetchPhotosFromDriveFolder();
 
   const metadata = await fetchSupabaseMetadata();
   if (metadata.size === 0) return drivePhotos;
@@ -148,80 +146,6 @@ export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
   } catch {
     return [];
   }
-}
-
-export async function fetchPhotos(): Promise<PhotoRecord[]> {
-  const { sheetId } = config;
-  if (!sheetId) return [];
-
-  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
-  const res = await fetch(url, {
-    next: { revalidate: 30 },
-    headers: { "X-DataSource-Auth": "true" },
-  } as RequestInit);
-
-  if (!res.ok) return [];
-
-  const text = await res.text();
-
-  let jsonStr: string | null = null;
-  const jsonpMatch = text.match(/google\.visualization\.Query\.setResponse\(({[\s\S]*})\)/);
-  if (jsonpMatch) jsonStr = jsonpMatch[1];
-  if (!jsonStr) {
-    const xssiMatch = text.match(/^\)\]\}'\s*\n?([\s\S]+)/);
-    if (xssiMatch) jsonStr = xssiMatch[1].trim();
-  }
-  if (!jsonStr) {
-    const braceStart = text.indexOf("{");
-    if (braceStart !== -1) jsonStr = text.slice(braceStart);
-  }
-  if (!jsonStr) return [];
-
-  let data: {
-    table?: { rows?: Array<{ c: Array<{ v?: string | number | null } | null> }> };
-  };
-  try {
-    data = JSON.parse(jsonStr);
-  } catch {
-    return [];
-  }
-
-  const rows = data.table?.rows || [];
-  const photos: PhotoRecord[] = rows
-    .map((row, index) => {
-      const cells = row.c || [];
-      const filename = String(cells[0]?.v ?? "");
-      if (!filename) return null;
-
-      const driveUrl = String(cells[1]?.v ?? "");
-      const driveFileId = extractDriveFileId(driveUrl);
-
-      return {
-        id: String(index + 2),
-        filename,
-        driveUrl,
-        driveFileId,
-        folder: String(cells[2]?.v ?? ""),
-        visibleText: String(cells[3]?.v ?? ""),
-        peopleDescriptions: String(cells[4]?.v ?? ""),
-        sceneDescription: String(cells[5]?.v ?? ""),
-        faceCount: parseInt(String(cells[6]?.v ?? "0"), 10) || 0,
-        mimeType: "",
-        processedAt: String(cells[7]?.v ?? ""),
-        thumbnailUrl: driveFileId ? `https://lh3.googleusercontent.com/d/${driveFileId}=w640` : "",
-        downloadUrl: driveFileId ? `https://drive.google.com/uc?export=download&id=${driveFileId}` : "",
-        autoTag: null as string | null,
-        ownerName: "",
-        cameraInfo: "",
-      };
-    })
-    .filter((p): p is PhotoRecord => p !== null);
-
-  photos.sort(
-    (a, b) => new Date(b.processedAt).getTime() - new Date(a.processedAt).getTime(),
-  );
-
-  return photos;
 }
 
 export function searchPhotos(query: string, photos: PhotoRecord[]): PhotoRecord[] {
