@@ -130,7 +130,7 @@ export default function PhotoUpload({
         <div className="flex items-center justify-center gap-2">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-1.5 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-3 py-1.5 text-[10px] md:text-xs md:px-4 md:py-2 font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)]"
+            className="inline-flex items-center gap-1.5 border border-[var(--el-primary-99)] bg-[rgba(26,26,26,0.6)] px-3 py-1.5 text-[10px] md:text-xs md:px-4 md:py-2 font-mono uppercase tracking-wider text-[var(--el-primary-99)] transition-all hover:border-[var(--el-accent)] hover:text-[var(--el-accent)] hover:shadow-[0_0_10px_var(--el-glow-accent-25)]"
           >
             <svg
               width="12"
@@ -155,7 +155,7 @@ export default function PhotoUpload({
 
           <button
             onClick={() => cameraInputRef.current?.click()}
-            className="inline-flex items-center gap-1.5 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] hover:shadow-[0_0_10px_rgba(255,0,255,0.25)] md:hidden"
+            className="inline-flex items-center gap-1.5 border border-[var(--el-primary-99)] bg-[rgba(26,26,26,0.6)] px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-primary-99)] transition-all hover:border-[var(--el-accent)] hover:text-[var(--el-accent)] hover:shadow-[0_0_10px_var(--el-glow-accent-25)] md:hidden"
           >
             <svg
               width="12"
@@ -196,7 +196,7 @@ export default function PhotoUpload({
       {(uploading || isActive) && (
         <div className="flex items-center justify-center gap-3">
           {preview && (
-            <div className="relative h-10 w-10 shrink-0 overflow-hidden border border-[var(--el-green)] animate-pulse-green">
+            <div className="relative h-10 w-10 shrink-0 overflow-hidden border border-[var(--el-primary)] animate-pulse-primary">
               <Image
                 src={preview}
                 alt="Your photo"
@@ -210,14 +210,14 @@ export default function PhotoUpload({
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--el-flame-dd)]">
                 <div className="relative w-4 h-4">
-                  <div className="absolute inset-0 border border-[var(--el-green)] animate-crosshair-spin" />
-                  <div className="absolute inset-1 bg-[var(--el-green)] animate-pulse" />
+                  <div className="absolute inset-0 border border-[var(--el-primary)] animate-crosshair-spin" />
+                  <div className="absolute inset-1 bg-[var(--el-primary)] animate-pulse" />
                 </div>
                 {statusText}
               </div>
               <button
                 onClick={handleCancel}
-                className="inline-flex items-center gap-1.5 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
+                className="inline-flex items-center gap-1.5 border border-[var(--el-primary-99)] bg-[rgba(26,26,26,0.6)] px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--el-primary-99)] transition-all hover:border-[var(--el-accent)] hover:text-[var(--el-accent)]"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18" />
@@ -229,7 +229,7 @@ export default function PhotoUpload({
           ) : (
             <button
               onClick={handleClear}
-              className="inline-flex items-center gap-1.5 border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)] px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] transition-all hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
+              className="inline-flex items-center gap-1.5 border border-[var(--el-primary-99)] bg-[rgba(26,26,26,0.6)] px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--el-primary-99)] transition-all hover:border-[var(--el-accent)] hover:text-[var(--el-accent)]"
             >
               <svg
                 width="12"

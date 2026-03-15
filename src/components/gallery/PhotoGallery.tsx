@@ -170,8 +170,8 @@ export default function PhotoGallery() {
               onClick={selection.toggleSelectMode}
               className={`shrink-0 px-2.5 py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider transition-all ${
                 selection.selectMode
-                  ? "border border-[var(--el-magenta)] text-[var(--el-magenta)] bg-[var(--el-magenta-28)] glow-border-magenta"
-                  : "border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
+                  ? "border border-[var(--el-accent)] text-[var(--el-accent)] bg-[var(--el-accent-28)] glow-border-accent"
+                  : "border border-[var(--el-primary-99)] text-[var(--el-primary-99)] hover:border-[var(--el-accent)] hover:text-[var(--el-accent)]"
               }`}
             >
               {selection.selectMode ? "EXIT" : "SELECT"}
@@ -262,8 +262,8 @@ export default function PhotoGallery() {
       </main>
 
       {!photos.loading && !photos.error && photos.allPhotos.length > 0 && (
-        <footer className="border-t border-[var(--el-green-22)] px-4 py-6 text-center">
-          <div className="flex items-center justify-center gap-4 text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-d9)]">
+        <footer className="border-t border-[var(--el-primary-22)] px-4 py-6 text-center">
+          <div className="flex items-center justify-center gap-4 text-[10px] font-mono uppercase tracking-widest text-[var(--el-primary-d9)]">
             <span>&#x2500;&#x2500;&#x253c;&#x2500;&#x2500;</span>
             <span>
               {photos.allPhotos.length} PHOTOS {"//"} {photos.folders.length} FOLDER{photos.folders.length !== 1 ? "S" : ""}
@@ -306,9 +306,9 @@ export default function PhotoGallery() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-4">
             <div className="relative w-10 h-10">
-              <div className="absolute inset-0 border-2 border-[var(--el-green)] animate-crosshair-spin" />
+              <div className="absolute inset-0 border-2 border-[var(--el-primary)] animate-crosshair-spin" />
             </div>
-            <span className="text-xs font-mono uppercase tracking-widest text-[var(--el-green)]">
+            <span className="text-xs font-mono uppercase tracking-widest text-[var(--el-primary)]">
               GENERATING COLLAGE...
             </span>
           </div>

@@ -520,3 +520,34 @@ The AI pipeline (Gemini Vision → structured metadata → embeddings) is not sp
 - **Portfolio tools** — photographer galleries with AI-generated alt text and search
 
 These are future explorations, not committed roadmap. The architecture is designed to make them possible without restructuring the core.
+
+## 10. Tests and CI
+
+### 10.1 Test Strategy
+
+Tests are co-located with source files following the `[module].test.ts` convention (matching MIT Open Learning's pattern). Tests focus on the embedding pipeline — the most technically complex and externally-dependent part of the codebase.
+
+| Test file | What it covers |
+|-----------|---------------|
+| `gemini-client.test.ts` | 3-level JSON parser (clean, truncated, regex fallback), markdown fence stripping, type normalization, batch embedding chunking |
+| `face-api-client.test.ts` | Health check retry logic (cold start recovery), embedding extraction, auth header handling, graceful failure on missing faces |
+| `retry.test.ts` | Exponential backoff, jitter, Retry-After header respect, retryable vs non-retryable status codes, attempt exhaustion |
+| `rate-limiter.test.ts` | Sliding window throttling, timestamp pruning, independent instance isolation |
+| `face-embed.test.ts` | Phase orchestration, wall-clock guard, sentinel creation for faceless photos, per-photo error handling |
+| `embed.test.ts` | Embedding backfill phase, batch processing, skip-already-embedded logic |
+
+All tests use mocked `fetch` and module mocks — no external APIs, databases, or secrets required. Tests run in ~2 seconds.
+
+### 10.2 CI Pipeline
+
+GitHub Actions runs on every push and PR to `main`:
+
+```
+npm ci → jest (52 tests) → tsc --noEmit → eslint → next build
+```
+
+If any step fails, the build fails and Slack is notified via incoming webhook (configurable via `SLACK_WEBHOOK_URL` repository secret). The notification includes the branch, commit message, and a direct link to the failed run. When the webhook secret is not configured, the notification step is silently skipped.
+
+### 10.3 Why These Tests
+
+The pipeline is where EventLens interacts with external AI services (Gemini, InsightFace) that return non-deterministic output. The defensive JSON parser, retry logic, and rate limiter are the code most likely to regress when dependencies change. Testing these in isolation — with mocked API responses that reproduce real failure modes (truncated JSON, 429 rate limits, cold start timeouts) — gives confidence without requiring live API keys in CI.

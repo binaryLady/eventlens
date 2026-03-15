@@ -16,7 +16,7 @@ export default function EmptyState({ type, query, onRetry }: EmptyStateProps) {
         {onRetry && (
           <button
             onClick={onRetry}
-            className="mt-4 border border-[var(--el-green-99)] px-6 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] hover:bg-[var(--el-magenta-28)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] transition-all"
+            className="mt-4 border border-[var(--el-primary-99)] px-6 py-2 text-xs font-mono uppercase tracking-wider text-[var(--el-primary-99)] hover:bg-[var(--el-accent-28)] hover:border-[var(--el-accent)] hover:text-[var(--el-accent)] transition-all"
           >
             [RETRY CONNECTION]
           </button>
@@ -27,9 +27,9 @@ export default function EmptyState({ type, query, onRetry }: EmptyStateProps) {
 
   if (type === "no-assets") {
     return (
-      <div className="flex flex-col items-center py-20 text-center border border-[var(--el-green-99)] p-8">
-        <div className="text-4xl text-[var(--el-green-d9)] mb-4">+</div>
-        <p className="text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)]">
+      <div className="flex flex-col items-center py-20 text-center border border-[var(--el-primary-99)] p-8">
+        <div className="text-4xl text-[var(--el-primary-d9)] mb-4">+</div>
+        <p className="text-xs font-mono uppercase tracking-wider text-[var(--el-primary-99)]">
           {"NO ASSETS DETECTED // UPLOAD PHOTO TO BEGIN FACIAL SCAN"}
         </p>
       </div>
@@ -38,9 +38,9 @@ export default function EmptyState({ type, query, onRetry }: EmptyStateProps) {
 
   if (type === "no-match") {
     return (
-      <div className="flex flex-col items-center py-20 text-center border border-[var(--el-green-99)] p-8">
-        <div className="text-4xl text-[var(--el-green-d9)] mb-4 animate-crosshair-spin">&#x2295;</div>
-        <p className="text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)]">
+      <div className="flex flex-col items-center py-20 text-center border border-[var(--el-primary-99)] p-8">
+        <div className="text-4xl text-[var(--el-primary-d9)] mb-4 animate-crosshair-spin">&#x2295;</div>
+        <p className="text-xs font-mono uppercase tracking-wider text-[var(--el-primary-99)]">
           {"NO FACIAL MATCH DETECTED // TRY HIGHER RESOLUTION INPUT"}
         </p>
       </div>
@@ -48,8 +48,8 @@ export default function EmptyState({ type, query, onRetry }: EmptyStateProps) {
   }
 
   return (
-    <div className="flex flex-col items-center py-20 text-center border border-[var(--el-green-99)] p-8">
-      <p className="text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)]">
+    <div className="flex flex-col items-center py-20 text-center border border-[var(--el-primary-99)] p-8">
+      <p className="text-xs font-mono uppercase tracking-wider text-[var(--el-primary-99)]">
         NO MATCHES FOR &quot;{query?.toUpperCase()}&quot; {"//"} TRY ALTERNATE QUERY
       </p>
     </div>

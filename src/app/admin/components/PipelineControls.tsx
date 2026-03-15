@@ -19,7 +19,7 @@ export function PipelineControls({
   return (
     <>
       <div className="mb-8">
-        <h2 className="text-sm tracking-wider mb-3 text-[var(--el-green-99)]">PIPELINE</h2>
+        <h2 className="text-sm tracking-wider mb-3 text-[var(--el-primary-99)]">PIPELINE</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <ActionButton
             label="SYNC METADATA"
@@ -81,7 +81,7 @@ export function PipelineControls({
       </div>
 
       <div className="mb-8">
-        <h2 className="text-sm tracking-wider mb-3 text-[var(--el-green-99)]">UTILITIES</h2>
+        <h2 className="text-sm tracking-wider mb-3 text-[var(--el-primary-99)]">UTILITIES</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <ActionButton
             label="REFRESH STATUS"

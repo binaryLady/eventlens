@@ -77,19 +77,19 @@ export default function CollageRatioModal({
       onClick={onDismiss}
     >
       <div
-        className="relative border border-[var(--el-green-44)] bg-[var(--el-bg)] p-5 md:p-6 max-w-sm w-[90vw]"
+        className="relative border border-[var(--el-primary-44)] bg-[var(--el-bg)] p-5 md:p-6 max-w-sm w-[90vw]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[var(--el-green)] -translate-x-px -translate-y-px" />
-        <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[var(--el-green)] translate-x-px -translate-y-px" />
-        <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[var(--el-green)] -translate-x-px translate-y-px" />
-        <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[var(--el-green)] translate-x-px translate-y-px" />
+        <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[var(--el-primary)] -translate-x-px -translate-y-px" />
+        <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[var(--el-primary)] translate-x-px -translate-y-px" />
+        <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[var(--el-primary)] -translate-x-px translate-y-px" />
+        <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[var(--el-primary)] translate-x-px translate-y-px" />
 
         <div className="text-center mb-5">
-          <h2 className="text-xs font-mono uppercase tracking-widest text-[var(--el-green)]">
+          <h2 className="text-xs font-mono uppercase tracking-widest text-[var(--el-primary)]">
             COLLAGE FORMAT
           </h2>
-          <p className="mt-1 text-[9px] font-mono uppercase tracking-wider text-[var(--el-green-d9)]">
+          <p className="mt-1 text-[9px] font-mono uppercase tracking-wider text-[var(--el-primary-d9)]">
             {selectedCount} PHOTO{selectedCount !== 1 ? "S" : ""} SELECTED
           </p>
         </div>
@@ -103,22 +103,22 @@ export default function CollageRatioModal({
                 onClick={() => setChosen(opt.value)}
                 className={`group flex items-center gap-4 border px-4 py-3 transition-all ${
                   active
-                    ? "border-[var(--el-green)] bg-[var(--el-green-11)] shadow-[0_0_12px_rgba(0,255,65,0.1)]"
-                    : "border-[var(--el-green-22)] hover:border-[var(--el-green)] hover:bg-[var(--el-green-11)] hover:shadow-[0_0_12px_rgba(0,255,65,0.1)]"
-                } active:bg-[var(--el-green-22)]`}
+                    ? "border-[var(--el-primary)] bg-[var(--el-primary-11)] shadow-[0_0_12px_var(--el-glow-primary-10)]"
+                    : "border-[var(--el-primary-22)] hover:border-[var(--el-primary)] hover:bg-[var(--el-primary-11)] hover:shadow-[0_0_12px_var(--el-glow-primary-10)]"
+                } active:bg-[var(--el-primary-22)]`}
               >
                 <div className={`shrink-0 w-12 h-12 flex items-center justify-center transition-colors ${
-                  active ? "text-[var(--el-green)]" : "text-[var(--el-green-99)] group-hover:text-[var(--el-green)]"
+                  active ? "text-[var(--el-primary)]" : "text-[var(--el-primary-99)] group-hover:text-[var(--el-primary)]"
                 }`}>
                   {opt.icon}
                 </div>
                 <div className="text-left">
                   <span className={`block text-sm font-mono font-bold tracking-wider transition-colors ${
-                    active ? "text-[var(--el-green)]" : "text-[var(--el-green-99)] group-hover:text-[var(--el-green)]"
+                    active ? "text-[var(--el-primary)]" : "text-[var(--el-primary-99)] group-hover:text-[var(--el-primary)]"
                   }`}>
                     {opt.label}
                   </span>
-                  <span className="block text-[9px] font-mono uppercase tracking-wider text-[var(--el-green-d9)]">
+                  <span className="block text-[9px] font-mono uppercase tracking-wider text-[var(--el-primary-d9)]">
                     {opt.description}
                   </span>
                 </div>
@@ -130,19 +130,19 @@ export default function CollageRatioModal({
         <button
           onClick={() => chosen && onSelect(chosen)}
           disabled={!chosen}
-          className="mt-4 w-full inline-flex items-center justify-center gap-2 border border-[var(--el-green)] bg-[var(--el-green-11)] px-3 py-2.5 text-[11px] font-mono uppercase tracking-widest text-[var(--el-green)] hover:bg-[var(--el-green-22)] hover:shadow-[0_0_16px_rgba(0,255,65,0.15)] transition-all disabled:border-[var(--el-green-22)] disabled:text-[var(--el-green-44)] disabled:bg-transparent disabled:shadow-none disabled:cursor-not-allowed"
+          className="mt-4 w-full inline-flex items-center justify-center gap-2 border border-[var(--el-primary)] bg-[var(--el-primary-11)] px-3 py-2.5 text-[11px] font-mono uppercase tracking-widest text-[var(--el-primary)] hover:bg-[var(--el-primary-22)] hover:shadow-[0_0_16px_var(--el-glow-primary-15)] transition-all disabled:border-[var(--el-primary-22)] disabled:text-[var(--el-primary-44)] disabled:bg-transparent disabled:shadow-none disabled:cursor-not-allowed"
         >
           CREATE COLLAGE
         </button>
 
         <button
           onClick={onDismiss}
-          className="mt-2 w-full px-3 py-1.5 text-[9px] font-mono uppercase tracking-wider text-[var(--el-green-44)] hover:text-[var(--el-green-99)] transition-colors"
+          className="mt-2 w-full px-3 py-1.5 text-[9px] font-mono uppercase tracking-wider text-[var(--el-primary-44)] hover:text-[var(--el-primary-99)] transition-colors"
         >
           CANCEL
         </button>
 
-        <p className="mt-3 text-center text-[9px] font-mono uppercase tracking-wider text-[var(--el-green-44)]">
+        <p className="mt-3 text-center text-[9px] font-mono uppercase tracking-wider text-[var(--el-primary-44)]">
           ESC TO CLOSE
         </p>
       </div>

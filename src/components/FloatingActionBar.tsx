@@ -29,16 +29,16 @@ export default function FloatingActionBar({
   const busy = downloading || collagePending;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--el-green)] bg-[var(--el-bg)] animate-slide-up safe-bottom">
+    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--el-primary)] bg-[var(--el-bg)] animate-slide-up safe-bottom">
       <div className="mx-auto max-w-5xl flex items-center justify-between px-3 py-2.5 md:px-4 md:py-3 gap-2 md:gap-3">
         <button
           onClick={onClearSelection}
-          className="shrink-0 border border-[var(--el-green-99)] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] active:bg-[var(--el-green-99)] transition-all"
+          className="shrink-0 border border-[var(--el-primary-99)] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-primary-99)] hover:border-[var(--el-accent)] hover:text-[var(--el-accent)] active:bg-[var(--el-primary-99)] transition-all"
         >
           CANCEL
         </button>
 
-        <span className="text-[10px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green)] whitespace-nowrap">
+        <span className="text-[10px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-primary)] whitespace-nowrap">
           {selectedCount} {"/"} {totalCount}
         </span>
 
@@ -46,7 +46,7 @@ export default function FloatingActionBar({
           {selectedCount < totalCount && (
             <button
               onClick={onSelectAll}
-              className="hidden sm:block shrink-0 border border-[var(--el-green-99)] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] active:bg-[var(--el-green-99)] transition-all"
+              className="hidden sm:block shrink-0 border border-[var(--el-primary-99)] px-3 py-2 md:py-1.5 text-[10px] font-mono uppercase tracking-wider text-[var(--el-primary-99)] hover:border-[var(--el-accent)] hover:text-[var(--el-accent)] active:bg-[var(--el-primary-99)] transition-all"
             >
               SELECT ALL
             </button>
@@ -55,12 +55,12 @@ export default function FloatingActionBar({
             onClick={onMakeCollage}
             disabled={busy || selectedCount > 20}
             title={selectedCount > 20 ? "Max 20 photos" : undefined}
-            className="shrink-0 inline-flex items-center gap-1.5 md:gap-2 border border-[var(--el-green-99)] bg-[var(--el-green-11)] px-3 md:px-4 py-2 md:py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] active:bg-[var(--el-green-22)] transition-all disabled:border-[var(--el-amber)]/20 disabled:text-[var(--el-amber)]/40 disabled:bg-transparent disabled:cursor-not-allowed"
+            className="shrink-0 inline-flex items-center gap-1.5 md:gap-2 border border-[var(--el-primary-99)] bg-[var(--el-primary-11)] px-3 md:px-4 py-2 md:py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-primary-99)] active:bg-[var(--el-primary-22)] transition-all disabled:border-[var(--el-amber)]/20 disabled:text-[var(--el-amber)]/40 disabled:bg-transparent disabled:cursor-not-allowed"
           >
             {collagePending ? (
               <>
                 <div className="relative w-3 h-3">
-                  <div className="absolute inset-0 border border-[var(--el-green)] animate-crosshair-spin" />
+                  <div className="absolute inset-0 border border-[var(--el-primary)] animate-crosshair-spin" />
                 </div>
                 <span className="hidden sm:inline">MAKING...</span>
                 <span className="sm:hidden">...</span>
@@ -90,12 +90,12 @@ export default function FloatingActionBar({
           <button
             onClick={onDownloadZip}
             disabled={busy}
-            className="shrink-0 inline-flex items-center gap-1.5 md:gap-2 border border-[var(--el-green-99)] bg-[var(--el-green-11)] px-3 md:px-4 py-2 md:py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-green-99)] active:bg-[var(--el-green-22)] transition-all disabled:border-[var(--el-amber)]/20 disabled:text-[var(--el-amber)]/40 disabled:bg-transparent disabled:cursor-not-allowed"
+            className="shrink-0 inline-flex items-center gap-1.5 md:gap-2 border border-[var(--el-primary-99)] bg-[var(--el-primary-11)] px-3 md:px-4 py-2 md:py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider text-[var(--el-primary-99)] active:bg-[var(--el-primary-22)] transition-all disabled:border-[var(--el-amber)]/20 disabled:text-[var(--el-amber)]/40 disabled:bg-transparent disabled:cursor-not-allowed"
           >
             {downloading ? (
               <>
                 <div className="relative w-3 h-3">
-                  <div className="absolute inset-0 border border-[var(--el-green)] animate-crosshair-spin" />
+                  <div className="absolute inset-0 border border-[var(--el-primary)] animate-crosshair-spin" />
                 </div>
                 <span className="hidden sm:inline">PACKAGING...</span>
                 <span className="sm:hidden">...</span>
