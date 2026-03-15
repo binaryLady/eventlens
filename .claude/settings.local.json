@@ -64,7 +64,19 @@
       "Bash(curl -s --max-time 10 \"$FACE_API_URL/health\")",
       "Bash(python3 -c \"import ast; ast.parse\\(open\\(''/Users/soniacookbroen/Development/eventlens/scripts/process_photos.py''\\).read\\(\\)\\); print\\(''OK''\\)\")",
       "Bash(npm install:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(git -C /Users/soniacookbroen/Development/eventlens log --oneline -20)",
+      "Bash(ls -la /Users/soniacookbroen/Development/eventlens/CLAUDE-*.md /Users/soniacookbroen/Development/eventlens/PLAN.md /Users/soniacookbroen/Development/eventlens/EVENTLENS-MASTER-PLAN.md /Users/soniacookbroen/Development/eventlens/TEMPLATE-REVIEW.md)",
+      "Bash(grep -iE '\\\\.env|credentials|secret|\\\\.key$|\\\\.pem$')",
+      "Bash(git rm:*)",
+      "WebFetch(domain:mitodl.github.io)",
+      "Bash(sort -t'\t' -k2 -rn)",
+      "Bash(gh api:*)",
+      "Bash(gh search:*)",
+      "Bash(npx jest:*)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(npm test:*)"
     ]
   }
 }

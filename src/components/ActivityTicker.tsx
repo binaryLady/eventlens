@@ -48,7 +48,7 @@ export default function ActivityTicker({ activity }: Props) {
       <span
         className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
         style={{
-          backgroundColor: activity.length > 0 ? "var(--el-cyan)" : "var(--el-green)",
+          backgroundColor: activity.length > 0 ? "var(--el-cyan)" : "var(--el-primary)",
           animation: activity.length > 0 ? "pulse 2s infinite" : "none",
         }}
       />

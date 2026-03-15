@@ -42,22 +42,22 @@ export default function LoginPage() {
       className="w-full min-h-screen bg-[var(--el-bg)] text-zinc-100 font-mono flex items-center justify-center p-4 scan-line-bg"
     >
       <div className="w-full max-w-sm">
-        <div className="border border-[var(--el-green-d9)] bg-[rgba(26,26,26,0.8)] p-6 backdrop-blur">
-          <div className="flex items-center gap-2 border-b border-[var(--el-green-99)] pb-3 mb-6">
-            <div className="h-2 w-2 rounded-full bg-[var(--el-green)]" />
-            <div className="h-2 w-2 rounded-full bg-[var(--el-green-d9)]" />
-            <div className="h-2 w-2 rounded-full bg-[var(--el-green-d9)]" />
-            <span className="ml-2 text-[10px] uppercase tracking-widest text-[var(--el-green-d9)]">
+        <div className="border border-[var(--el-primary-d9)] bg-[rgba(26,26,26,0.8)] p-6 backdrop-blur">
+          <div className="flex items-center gap-2 border-b border-[var(--el-primary-99)] pb-3 mb-6">
+            <div className="h-2 w-2 rounded-full bg-[var(--el-primary)]" />
+            <div className="h-2 w-2 rounded-full bg-[var(--el-primary-d9)]" />
+            <div className="h-2 w-2 rounded-full bg-[var(--el-primary-d9)]" />
+            <span className="ml-2 text-[10px] uppercase tracking-widest text-[var(--el-primary-d9)]">
               eventlens://auth
             </span>
           </div>
 
           <div className="space-y-6">
             <div>
-              <h1 className="text-lg font-bold text-[var(--el-green)] uppercase tracking-wider mb-2">
+              <h1 className="text-lg font-bold text-[var(--el-primary)] uppercase tracking-wider mb-2">
                 ACCESS REQUIRED
               </h1>
-              <p className="text-xs text-[var(--el-green-d9)] uppercase tracking-wider">
+              <p className="text-xs text-[var(--el-primary-d9)] uppercase tracking-wider">
                 Enter your access credential to continue
               </p>
             </div>
@@ -66,7 +66,7 @@ export default function LoginPage() {
               <div>
                 <label
                   htmlFor="password"
-                  className="block text-[10px] uppercase tracking-wider text-[var(--el-green-d9)] mb-2"
+                  className="block text-[10px] uppercase tracking-wider text-[var(--el-primary-d9)] mb-2"
                 >
                   PASSWORD
                 </label>
@@ -76,7 +76,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-[var(--el-bg)] border border-[var(--el-green-d9)] px-3 py-2 text-xs text-[var(--el-green)] placeholder-[var(--el-magenta)] focus:border-[var(--el-green)] focus:outline-none transition-colors"
+                  className="w-full bg-[var(--el-bg)] border border-[var(--el-primary-d9)] px-3 py-2 text-xs text-[var(--el-primary)] placeholder-[var(--el-accent)] focus:border-[var(--el-primary)] focus:outline-none transition-colors"
                   disabled={loading}
                   autoFocus
                 />
@@ -91,7 +91,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full border border-[var(--el-green-99)] bg-[var(--el-green-11)] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[var(--el-green-99)] hover:bg-[var(--el-magenta-28)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)] focus:outline-none focus:ring-1 focus:ring-[var(--el-green)] disabled:border-[var(--el-amber)]/20 disabled:text-[var(--el-amber)]/40 disabled:bg-transparent disabled:cursor-not-allowed transition-all"
+                className="w-full border border-[var(--el-primary-99)] bg-[var(--el-primary-11)] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[var(--el-primary-99)] hover:bg-[var(--el-accent-28)] hover:border-[var(--el-accent)] hover:text-[var(--el-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--el-primary)] disabled:border-[var(--el-amber)]/20 disabled:text-[var(--el-amber)]/40 disabled:bg-transparent disabled:cursor-not-allowed transition-all"
               >
                 {loading ? "VERIFYING..." : "AUTHENTICATE"}
               </button>

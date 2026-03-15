@@ -93,8 +93,8 @@ export default function FilterSortSheet({
   const menuRow = (active: boolean, label: string, onClick: () => void) => (
     <button
       onClick={onClick}
-      className={`flex items-center w-full text-left px-4 py-2.5 md:py-2 text-sm md:text-xs font-mono uppercase tracking-wider transition-all active:bg-[var(--el-green-11)] hover:bg-[var(--el-green-11)] ${
-        active ? "text-[var(--el-magenta)]" : "text-[var(--el-green-99)]"
+      className={`flex items-center w-full text-left px-4 py-2.5 md:py-2 text-sm md:text-xs font-mono uppercase tracking-wider transition-all active:bg-[var(--el-primary-11)] hover:bg-[var(--el-primary-11)] ${
+        active ? "text-[var(--el-accent)]" : "text-[var(--el-primary-99)]"
       }`}
     >
       {active ? <CheckIcon /> : <Spacer />}
@@ -105,21 +105,21 @@ export default function FilterSortSheet({
   const desktopContent = (
     <>
       <div className="px-4 pb-1 pt-1">
-        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">TYPE</span>
+        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-primary-99)]">TYPE</span>
       </div>
       {typeOptions.map((opt) => (
         <div key={opt.value}>{menuRow(activeType === opt.value, opt.label, () => onTypeChange(opt.value))}</div>
       ))}
-      <div className="mx-4 my-1 border-t border-[var(--el-green-22)]" />
+      <div className="mx-4 my-1 border-t border-[var(--el-primary-22)]" />
       <div className="px-4 pb-1 pt-1">
-        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">FACES</span>
+        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-primary-99)]">FACES</span>
       </div>
       {faceOptions.map((opt) => (
         <div key={opt.value}>{menuRow(minFaces === opt.value, opt.label, () => { onMinFacesChange(opt.value); setOpen(false); })}</div>
       ))}
-      <div className="mx-4 my-1 border-t border-[var(--el-green-22)]" />
+      <div className="mx-4 my-1 border-t border-[var(--el-primary-22)]" />
       <div className="px-4 pb-1 pt-1">
-        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">SORT BY</span>
+        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-primary-99)]">SORT BY</span>
       </div>
       {sortOptions.map((opt) => (
         <div key={opt.value}>{menuRow(sortOrder === opt.value, opt.label, () => { onSortChange(opt.value); setOpen(false); })}</div>
@@ -133,36 +133,36 @@ export default function FilterSortSheet({
       {folders && folders.length > 0 && onFolderChange && (
         <>
           <div className="px-4 pb-1 pt-1">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">FOLDER</span>
+            <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-primary-99)]">FOLDER</span>
           </div>
           {menuRow(activeFolder === "" || !activeFolder, `ALL [${totalCount || 0}]`, () => { onFolderChange(""); setOpen(false); })}
           {folders.map((folder) =>
             <div key={folder}>{menuRow(activeFolder === folder, `${folder} [${folderCounts?.[folder] || 0}]`, () => { onFolderChange(activeFolder === folder ? "" : folder); setOpen(false); })}</div>
           )}
-          <div className="mx-4 my-1 border-t border-[var(--el-green-22)]" />
+          <div className="mx-4 my-1 border-t border-[var(--el-primary-22)]" />
         </>
       )}
 
       <div className="px-4 pb-1 pt-1">
-        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">TYPE</span>
+        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-primary-99)]">TYPE</span>
       </div>
       {typeOptions.map((opt) => (
         <div key={opt.value}>{menuRow(activeType === opt.value, opt.label, () => { onTypeChange(opt.value); setOpen(false); })}</div>
       ))}
 
-      <div className="mx-4 my-1 border-t border-[var(--el-green-22)]" />
+      <div className="mx-4 my-1 border-t border-[var(--el-primary-22)]" />
 
       <div className="px-4 pb-1 pt-1">
-        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">FACES</span>
+        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-primary-99)]">FACES</span>
       </div>
       {faceOptions.map((opt) => (
         <div key={opt.value}>{menuRow(minFaces === opt.value, opt.label, () => { onMinFacesChange(opt.value); setOpen(false); })}</div>
       ))}
 
-      <div className="mx-4 my-1 border-t border-[var(--el-green-22)]" />
+      <div className="mx-4 my-1 border-t border-[var(--el-primary-22)]" />
 
       <div className="px-4 pb-1 pt-1">
-        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">SORT BY</span>
+        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-primary-99)]">SORT BY</span>
       </div>
       {sortOptions.map((opt) => (
         <div key={opt.value}>{menuRow(sortOrder === opt.value, opt.label, () => { onSortChange(opt.value); setOpen(false); })}</div>
@@ -182,8 +182,8 @@ export default function FilterSortSheet({
         onClick={() => setOpen((v) => !v)}
         className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] md:text-xs font-mono uppercase tracking-wider transition-all ${
           hasActiveFilter || hasFolderFilter
-            ? "border border-[var(--el-magenta)] text-[var(--el-magenta)] bg-[var(--el-magenta-28)]"
-            : "border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
+            ? "border border-[var(--el-accent)] text-[var(--el-accent)] bg-[var(--el-accent-28)]"
+            : "border border-[var(--el-primary-99)] text-[var(--el-primary-99)] hover:border-[var(--el-accent)] hover:text-[var(--el-accent)]"
         }`}
       >
         {sortOrder === "shuffle" ? (
@@ -198,14 +198,14 @@ export default function FilterSortSheet({
         <span className="md:hidden">{mobileLabel}</span>
         <span className="hidden md:inline">{chipLabel}</span>
         {(hasActiveFilter || hasFolderFilter) && (
-          <span className="h-1.5 w-1.5 rounded-full bg-[var(--el-magenta)]" />
+          <span className="h-1.5 w-1.5 rounded-full bg-[var(--el-accent)]" />
         )}
       </button>
 
       {open && (
         <div
           id="filter-popover"
-          className="hidden md:block absolute top-full left-0 mt-1 z-50 min-w-[200px] border border-[var(--el-green-44)] bg-[var(--el-bg)] shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
+          className="hidden md:block absolute top-full left-0 mt-1 z-50 min-w-[200px] border border-[var(--el-primary-44)] bg-[var(--el-bg)] shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
         >
           {desktopContent}
         </div>
@@ -214,9 +214,9 @@ export default function FilterSortSheet({
       {open && (
         <div className="md:hidden fixed inset-0 z-50">
           <div className="absolute inset-0 bg-[rgba(26,26,26,0.8)] backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div id="filter-mobile-sheet" className="absolute bottom-0 left-0 right-0 max-h-[75vh] overflow-y-auto border-t border-[var(--el-green-99)] bg-[var(--el-bg)] animate-slide-up safe-bottom">
+          <div id="filter-mobile-sheet" className="absolute bottom-0 left-0 right-0 max-h-[75vh] overflow-y-auto border-t border-[var(--el-primary-99)] bg-[var(--el-bg)] animate-slide-up safe-bottom">
             <div className="flex justify-center pt-3 pb-1 sticky top-0 bg-[var(--el-bg)]">
-              <div className="w-8 h-1 rounded-full bg-[var(--el-green-99)]" />
+              <div className="w-8 h-1 rounded-full bg-[var(--el-primary-99)]" />
             </div>
             {mobileContent}
           </div>

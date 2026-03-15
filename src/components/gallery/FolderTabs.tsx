@@ -25,8 +25,8 @@ export default function FolderTabs({
           onClick={() => onSelect("")}
           className={`shrink-0 px-2.5 py-1.5 text-xs font-mono uppercase tracking-wider transition-all ${
             active === ""
-              ? "border border-[var(--el-magenta)] text-[var(--el-magenta)] bg-[var(--el-magenta-28)] glow-border-magenta"
-              : "border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
+              ? "border border-[var(--el-accent)] text-[var(--el-accent)] bg-[var(--el-accent-28)] glow-border-accent"
+              : "border border-[var(--el-primary-99)] text-[var(--el-primary-99)] hover:border-[var(--el-accent)] hover:text-[var(--el-accent)]"
           }`}
         >
           ALL [{totalCount}]
@@ -37,8 +37,8 @@ export default function FolderTabs({
             onClick={() => onSelect(active === folder ? "" : folder)}
             className={`shrink-0 px-2.5 py-1.5 text-xs font-mono uppercase tracking-wider transition-all ${
               active === folder
-                ? "border border-[var(--el-magenta)] text-[var(--el-magenta)] bg-[var(--el-magenta-28)] glow-border-magenta"
-                : "border border-[var(--el-green-99)] text-[var(--el-green-99)] hover:border-[var(--el-magenta)] hover:text-[var(--el-magenta)]"
+                ? "border border-[var(--el-accent)] text-[var(--el-accent)] bg-[var(--el-accent-28)] glow-border-accent"
+                : "border border-[var(--el-primary-99)] text-[var(--el-primary-99)] hover:border-[var(--el-accent)] hover:text-[var(--el-accent)]"
             }`}
           >
             {folder} [{folderCounts[folder] || 0}]

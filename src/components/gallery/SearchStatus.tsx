@@ -20,7 +20,7 @@ export default function SearchStatus({
 }: SearchStatusProps) {
   return (
     <div className="mx-auto max-w-5xl px-3 md:px-4 pb-2 md:pb-3">
-      <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">
+      <p className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-primary-99)]">
         {matchResults !== null ? (
           <>
             {debouncedQuery ? (
@@ -36,13 +36,13 @@ export default function SearchStatus({
               if (tiers.has("vector")) parts.push("VECTOR");
               if (tiers.has("both")) { parts.length = 0; parts.push("TEXT", "VISUAL"); }
               return (
-                <span className="text-[var(--el-green)]">
+                <span className="text-[var(--el-primary)]">
                   {" // "}{parts.join(" + ")} SCAN
                 </span>
               );
             })()}
             {matchDescription && (
-              <span className="text-[var(--el-green-d9)]">
+              <span className="text-[var(--el-primary-d9)]">
                 {" // "}
                 {matchDescription}
               </span>

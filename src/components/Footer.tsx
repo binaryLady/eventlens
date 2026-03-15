@@ -1,7 +1,7 @@
 // @TheTechMargin 2026
 export default function Footer() {
   return (
-    <footer className="w-full py-6 border-t border-[var(--el-green-22)] bg-[rgba(26,26,26,0.5)]">
+    <footer className="w-full py-6 border-t border-[var(--el-primary-22)] bg-[rgba(26,26,26,0.5)]">
       <div className="mx-auto max-w-5xl px-4 flex items-center justify-center">
         <a
           href="https://www.thetechmargin.com"
@@ -36,7 +36,7 @@ export default function Footer() {
           <line x1="12" y1="16" x2="12" y2="12" />
           <line x1="12" y1="8" x2="12.01" y2="8" />
         </svg>
-        <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1.5 text-[10px] tracking-wider border border-[var(--el-magenta)] bg-[var(--el-bg)] opacity-0 pointer-events-none group-hover/pii:opacity-100 transition-opacity" style={{ color: "rgba(255, 0, 255, 0.7)" }}>
+        <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1.5 text-[10px] tracking-wider border border-[var(--el-accent)] bg-[var(--el-bg)] opacity-0 pointer-events-none group-hover/pii:opacity-100 transition-opacity" style={{ color: "var(--el-accent-cc)" }}>
           No PII is retained, photo face matching data is not persisted.
         </span>
       </div>

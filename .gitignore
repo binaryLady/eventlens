@@ -30,6 +30,10 @@ yarn-error.log*
 .env.*
 !.env.example
 
+# python (face-api service)
+__pycache__/
+*.pyc
+
 # vercel
 .vercel
 

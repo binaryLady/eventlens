@@ -32,10 +32,10 @@ export default function AlbumGrid({
   return (
     <section className="mb-4 md:mb-8">
       <div className="flex items-center gap-2 mb-2 md:gap-3 md:mb-4">
-        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">
+        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-primary-99)]">
           &#x2500;&#x2500; ALBUMS
         </span>
-        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-green-d9)]">
+        <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--el-primary-d9)]">
           [{folders.length}]
         </span>
       </div>
@@ -47,9 +47,9 @@ export default function AlbumGrid({
             <button
               key={folder}
               onClick={() => onSelect(folder)}
-              className="group relative aspect-[4/3] overflow-hidden border border-[var(--el-green-22)] bg-[var(--el-bg)] cursor-pointer transition-all duration-200 hover:border-[var(--el-magenta)] hover:shadow-[0_0_20px_rgba(255,0,255,0.25)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)]"
+              className="group relative aspect-[4/3] overflow-hidden border border-[var(--el-primary-22)] bg-[var(--el-bg)] cursor-pointer transition-all duration-200 hover:border-[var(--el-accent)] hover:shadow-[0_0_20px_var(--el-glow-accent-25)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-primary)]"
             >
-              <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-px bg-[var(--el-green-11)]">
+              <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-px bg-[var(--el-primary-11)]">
                 {[0, 1, 2, 3].map((i) => (
                   <div key={i} className="relative overflow-hidden bg-[var(--el-bg)]">
                     {previews[i]?.thumbnailUrl ? (
@@ -63,7 +63,7 @@ export default function AlbumGrid({
                       />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center">
-                        <span className="text-[var(--el-green-11)] text-lg">+</span>
+                        <span className="text-[var(--el-primary-11)] text-lg">+</span>
                       </div>
                     )}
                   </div>
@@ -71,16 +71,16 @@ export default function AlbumGrid({
               </div>
 
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent flex flex-col items-center justify-end pb-3 md:pb-4">
-                <span className="text-[11px] md:text-xs font-mono font-bold uppercase tracking-wider text-[var(--el-green)] group-hover:glow-text-magenta transition-all">
+                <span className="text-[11px] md:text-xs font-mono font-bold uppercase tracking-wider text-[var(--el-primary)] group-hover:glow-text-accent transition-all">
                   {folder}
                 </span>
-                <span className="mt-0.5 md:mt-1 text-[9px] font-mono uppercase tracking-widest text-[var(--el-green-99)]">
+                <span className="mt-0.5 md:mt-1 text-[9px] font-mono uppercase tracking-widest text-[var(--el-primary-99)]">
                   {count} PHOTO{count !== 1 ? "S" : ""}
                 </span>
               </div>
 
-              <div className="absolute top-1 left-1 w-2.5 h-2.5 border-t border-l border-[var(--el-green-44)] opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="absolute bottom-1 right-1 w-2.5 h-2.5 border-b border-r border-[var(--el-green-44)] opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute top-1 left-1 w-2.5 h-2.5 border-t border-l border-[var(--el-primary-44)] opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute bottom-1 right-1 w-2.5 h-2.5 border-b border-r border-[var(--el-primary-44)] opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
           );
         })}

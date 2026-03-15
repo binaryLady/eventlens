@@ -46,9 +46,9 @@ export default function RootLayout({
 }>) {
   const hexColor = /^#[0-9A-Fa-f]{6}$/;
   const rawPrimary = process.env.NEXT_PUBLIC_PRIMARY_COLOR || "#00ff41";
-  const rawAccent = process.env.NEXT_PUBLIC_ACCENT_COLOR || "#00ff41";
+  const rawAccent = process.env.NEXT_PUBLIC_ACCENT_COLOR || "#ff00ff";
   const primaryColor = hexColor.test(rawPrimary) ? rawPrimary : "#00ff41";
-  const accentColor = hexColor.test(rawAccent) ? rawAccent : "#00ff41";
+  const accentColor = hexColor.test(rawAccent) ? rawAccent : "#ff00ff";
 
   return (
     <html lang="en" className="dark">
@@ -61,7 +61,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://lh3.googleusercontent.com" />
         <style
           dangerouslySetInnerHTML={{
-            __html: `:root { --color-primary: ${primaryColor}; --color-accent: ${accentColor}; }`,
+            __html: `:root { --el-primary: ${primaryColor}; --el-accent: ${accentColor}; }`,
           }}
         />
       </head>

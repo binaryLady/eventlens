@@ -37,18 +37,18 @@ function PhotoCardInner({
   return (
     <button
       onClick={onClick}
-      className={`group relative aspect-[4/3] overflow-hidden border bg-[var(--el-bg)] cursor-pointer transition-all duration-200 motion-safe:hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,0,255,0.25)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)] ${index < 40 ? 'animate-grid-reveal' : ''} ${
+      className={`group relative aspect-[4/3] overflow-hidden border bg-[var(--el-bg)] cursor-pointer transition-all duration-200 motion-safe:hover:scale-[1.02] hover:shadow-[0_0_20px_var(--el-glow-accent-25)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-primary)] ${index < 40 ? 'animate-grid-reveal' : ''} ${
         selected
-          ? "border-[var(--el-green)] shadow-[0_0_15px_rgba(0,255,65,0.25)] ring-1 ring-[var(--el-green)]"
+          ? "border-[var(--el-primary)] shadow-[0_0_15px_var(--el-glow-primary-25)] ring-1 ring-[var(--el-primary)]"
           : matchInfo && matchInfo.confidence >= 70
-            ? "border-[var(--el-green)] shadow-[0_0_12px_rgba(0,255,65,0.2)]"
-            : "border-[var(--el-green-22)] hover:border-[var(--el-magenta)]"
+            ? "border-[var(--el-primary)] shadow-[0_0_12px_var(--el-glow-primary-20)]"
+            : "border-[var(--el-primary-22)] hover:border-[var(--el-accent)]"
       }`}
       style={index < 40 ? { '--delay': `${index * 0.03}s` } as React.CSSProperties : undefined}
     >
       {imgError || !photo.thumbnailUrl ? (
         <div className="flex h-full w-full items-center justify-center bg-[var(--el-surface)]">
-          <span className="text-[var(--el-green-22)] text-2xl">+</span>
+          <span className="text-[var(--el-primary-22)] text-2xl">+</span>
         </div>
       ) : (
         <>
@@ -74,8 +74,8 @@ function PhotoCardInner({
       {(/\.(mp4|mov|webm|avi)$/i.test(photo.filename) ||
         photo.mimeType?.startsWith("video/")) && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[5]">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(0,0,0,0.6)] border border-[var(--el-green-77)]">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--el-green)" stroke="none">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(0,0,0,0.6)] border border-[var(--el-primary-77)]">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--el-primary)" stroke="none">
               <polygon points="6,3 20,12 6,21" />
             </svg>
           </div>
@@ -87,8 +87,8 @@ function PhotoCardInner({
           <div
             className={`flex h-5 w-5 items-center justify-center border transition-all ${
               selected
-                ? "border-[var(--el-green)] bg-[var(--el-green)]"
-                : "border-[var(--el-green-99)] bg-[rgba(26,26,26,0.6)]"
+                ? "border-[var(--el-primary)] bg-[var(--el-primary)]"
+                : "border-[var(--el-primary-99)] bg-[rgba(26,26,26,0.6)]"
             }`}
           >
             {selected && (
@@ -114,9 +114,9 @@ function PhotoCardInner({
           <span
             className="px-1.5 py-0.5 text-[8px] font-mono font-bold uppercase tracking-wider border"
             style={{
-              borderColor: "var(--el-green)",
+              borderColor: "var(--el-primary)",
               backgroundColor: "rgba(26,26,26,0.8)",
-              color: "var(--el-green)",
+              color: "var(--el-primary)",
             }}
           >
             POPULAR
@@ -125,22 +125,22 @@ function PhotoCardInner({
       )}
 
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent px-2 pb-2 pt-6 group-hover:opacity-0 transition-opacity">
-        <span className="inline-block border border-[var(--el-green-d9)] bg-[rgba(26,26,26,0.8)] px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-[var(--el-green-d9)]">
+        <span className="inline-block border border-[var(--el-primary-d9)] bg-[rgba(26,26,26,0.8)] px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wider text-[var(--el-primary-d9)]">
           {photo.folder}
         </span>
       </div>
 
       <div className="absolute inset-0 pointer-events-none z-[2] group-hover:opacity-0 transition-opacity duration-300 scan-line-bg" />
 
-      <div className="absolute top-1 left-1 w-2.5 h-2.5 border-t border-l border-[var(--el-green-44)] opacity-0 group-hover:opacity-100 transition-opacity" />
-      <div className="absolute bottom-1 right-1 w-2.5 h-2.5 border-b border-r border-[var(--el-green-44)] opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute top-1 left-1 w-2.5 h-2.5 border-t border-l border-[var(--el-primary-44)] opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute bottom-1 right-1 w-2.5 h-2.5 border-b border-r border-[var(--el-primary-44)] opacity-0 group-hover:opacity-100 transition-opacity" />
 
       {!selectMode && matchInfo ? (
         <div className="absolute right-1.5 top-1.5 flex items-center gap-0.5">
           <span
             className={`px-1 py-0.5 text-[8px] font-mono font-bold uppercase tracking-wider border ${
               matchInfo.tier === "both"
-                ? "border-[var(--el-green)] bg-[rgba(26,26,26,0.8)] text-[var(--el-green)]"
+                ? "border-[var(--el-primary)] bg-[rgba(26,26,26,0.8)] text-[var(--el-primary)]"
                 : matchInfo.tier === "visual" || matchInfo.tier === "vector"
                   ? "border-[var(--el-cyan-88)] bg-[rgba(26,26,26,0.8)] text-[var(--el-cyan)]"
                   : "border-[var(--el-amber-88)] bg-[rgba(26,26,26,0.8)] text-[var(--el-amber)]"
@@ -151,10 +151,10 @@ function PhotoCardInner({
           <span
             className={`px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider ${
               matchInfo.confidence >= 70
-                ? "bg-[var(--el-green)] text-black"
+                ? "bg-[var(--el-primary)] text-black"
                 : matchInfo.confidence >= 50
-                  ? "bg-[var(--el-green-88)] text-black"
-                  : "border border-[var(--el-green-99)] bg-[rgba(26,26,26,0.8)] text-[var(--el-green-d9)]"
+                  ? "bg-[var(--el-primary-88)] text-black"
+                  : "border border-[var(--el-primary-99)] bg-[rgba(26,26,26,0.8)] text-[var(--el-primary-d9)]"
             }`}
           >
             {matchInfo.confidence}%
@@ -163,7 +163,7 @@ function PhotoCardInner({
       ) : (
         !selectMode &&
         photo.faceCount > 0 && (
-          <div className="absolute right-1.5 top-1.5 flex items-center justify-center bg-[var(--el-green)] px-1.5 py-0.5 text-[9px] font-mono font-bold text-black">
+          <div className="absolute right-1.5 top-1.5 flex items-center justify-center bg-[var(--el-primary)] px-1.5 py-0.5 text-[9px] font-mono font-bold text-black">
             {photo.faceCount} {photo.faceCount === 1 ? "FACE" : "FACES"}
           </div>
         )

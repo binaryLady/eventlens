@@ -12,7 +12,7 @@ EventLens turns a Google Drive folder of event photos into a fully interactive g
 
 ### Attendee Features
 
-- **Face matching** — Upload a selfie to find every photo you appear in. Uses InsightFace 512-dim face embeddings with pgvector cosine similarity, tiered by confidence (strong/good/possible match).
+- **Face matching** — Upload a selfie to find every photo you appear in. Uses InsightFace 512-dim face embeddings with pgvector cosine similarity, tiered by confidence.
 - **Semantic search** — Natural language queries like "people near the stage" or "outdoor group photo." Powered by Gemini 768-dim text embeddings with vector similarity search.
 - **Text search** — Search visible text (banners, badges, slides), people descriptions, scene descriptions, filenames, and folders. Full-text + trigram matching with ranked results.
 - **Browse by folder** — Filter tabs for each Drive subfolder (day, session, photographer, etc.) with album preview cards on the home view.
@@ -38,6 +38,32 @@ EventLens turns a Google Drive folder of event photos into a fully interactive g
 - **Error retry** — Re-process failed photos without redoing successful ones.
 - **Duplicate detection** — Find near-duplicate photos using Hamming distance on perceptual hashes.
 - **Auto-tagging** — Batch-apply AI-generated tags to all photos.
+
+---
+
+## Design Decisions
+
+See **[ARCHITECTURE.md](./ARCHITECTURE.md)** for a full RFC-style design document covering:
+
+- Why Google Drive is the storage layer (not S3, not a database)
+- Why pgvector over a dedicated vector database (Pinecone, Weaviate)
+- Why face and text embeddings use separate vector spaces
+- How the pipeline handles Vercel's 300s serverless timeout
+- How hybrid search merges vector, full-text, and trigram results
+- Tradeoffs acknowledged and what we'd improve
+
+---
+
+## Development Process
+
+EventLens was built at the MIT HardMode hackathon in March 2026 using AI pair programming. The development workflow:
+
+1. **Prototype fast** — get features working with AI-assisted code generation
+2. **Verify UX** — test interactions, iterate on behavior
+3. **Decompose** — identify extraction boundaries, split into hooks and components
+4. **Document decisions** — capture the "why" behind architectural choices
+
+The architect's role in AI-assisted development is knowing *where to cut* — which abstractions reflect real domain boundaries vs. arbitrary file splits. The 8 custom hooks and 15+ gallery components emerged from this process, not from upfront design.
 
 ---
 
@@ -138,7 +164,6 @@ Fill in the values:
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes | Supabase service role key (server-side only) |
 | `ADMIN_API_SECRET` | Yes | Bearer token for admin API endpoints |
-| `GOOGLE_SHEET_ID` | No | Legacy Google Sheet photo source (fallback) |
 | `FACE_API_URL` | No | URL of deployed InsightFace microservice |
 | `FACE_API_SECRET` | No | Bearer token for face-api authentication |
 | `NEXT_PUBLIC_EVENT_NAME` | No | Event title displayed in the gallery header |
@@ -293,7 +318,6 @@ services/face-api/                       # InsightFace microservice (Flask + Doc
 │   └── requirements.txt
 │
 supabase/migrations/                     # 12 SQL migrations
-scripts/process_photos.py                # Legacy Python pipeline (deprecated)
 ```
 
 ---
@@ -333,6 +357,26 @@ All endpoints except auth require the gallery password cookie. Admin endpoints r
 | `/api/admin/autotag` | POST | Batch auto-tag all photos |
 | `/api/admin/duplicates` | GET | Find duplicate photos by phash |
 | `/api/admin/photos/hide` | POST | Hide/unhide photos |
+
+---
+
+## Tests and CI
+
+52 tests covering the embedding pipeline — the most complex and externally-dependent part of the codebase. Tests are co-located with source files (`gemini-client.ts` → `gemini-client.test.ts`).
+
+```bash
+# Run tests
+npm test
+
+# Run in watch mode
+npm run test:watch
+```
+
+**What's tested:** Gemini JSON parser (3-level recovery for truncated AI output), InsightFace client (health check retries, auth), exponential backoff with jitter, sliding-window rate limiter, face-embed and embed phase orchestration.
+
+**CI:** GitHub Actions runs tests, type checking, linting, and build on every push/PR to `main`. Slack notifications on failure via `SLACK_WEBHOOK_URL` repository secret (optional — CI works without it).
+
+All tests use mocked `fetch` — no API keys, databases, or external services needed.
 
 ---
 
