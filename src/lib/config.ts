@@ -6,7 +6,6 @@ export interface EventLensConfig {
   primaryColor: string;
   secondaryColor: string;
   accentColor: string;
-  sheetId: string;
   geminiApiKey: string;
   googleApiKey: string;
   driveFolderId: string;
@@ -21,7 +20,6 @@ export const config: EventLensConfig = {
   primaryColor: process.env.NEXT_PUBLIC_PRIMARY_COLOR || "#00ff41",
   secondaryColor: process.env.NEXT_PUBLIC_SECONDARY_COLOR || "#ff00ff",
   accentColor: process.env.NEXT_PUBLIC_ACCENT_COLOR || "#00ff41",
-  sheetId: process.env.GOOGLE_SHEET_ID || "",
   geminiApiKey: process.env.GEMINI_API_KEY || "",
   googleApiKey: process.env.GOOGLE_API_KEY || "",
   driveFolderId: process.env.GOOGLE_DRIVE_FOLDER_ID || "",
