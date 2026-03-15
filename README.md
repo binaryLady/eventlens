@@ -360,6 +360,26 @@ All endpoints except auth require the gallery password cookie. Admin endpoints r
 
 ---
 
+## Tests and CI
+
+52 tests covering the embedding pipeline — the most complex and externally-dependent part of the codebase. Tests are co-located with source files (`gemini-client.ts` → `gemini-client.test.ts`).
+
+```bash
+# Run tests
+npm test
+
+# Run in watch mode
+npm run test:watch
+```
+
+**What's tested:** Gemini JSON parser (3-level recovery for truncated AI output), InsightFace client (health check retries, auth), exponential backoff with jitter, sliding-window rate limiter, face-embed and embed phase orchestration.
+
+**CI:** GitHub Actions runs tests, type checking, linting, and build on every push/PR to `main`. Slack notifications on failure via `SLACK_WEBHOOK_URL` repository secret (optional — CI works without it).
+
+All tests use mocked `fetch` — no API keys, databases, or external services needed.
+
+---
+
 ## License
 
 MIT
