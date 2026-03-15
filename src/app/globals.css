@@ -4,29 +4,29 @@
 
 :root {
   /* ── Base hues ── */
-  --el-green: #00ff41;
-  --el-magenta: #ff00ff;
+  --el-primary: #00ff41;
+  --el-accent: #ff00ff;
   --el-flame: #ff9d00;
   --el-red: #ff4444;
 
-  /* ── Green palette (primary) ── */
-  --el-green-08: #00ff4108;
-  --el-green-11: #00ff4111;
-  --el-green-15: #00ff4115;
-  --el-green-22: #00ff4122;
-  --el-green-33: #00ff4133;
-  --el-green-44: #00ff4144;
-  --el-green-55: #00ff4155;
-  --el-green-66: #00ff4166;
-  --el-green-77: #00ff40af;
-  --el-green-88: #00ff40bb;
-  --el-green-99: #00ff40cf;
-  --el-green-d9: #00ff40; /* primary dimmed 15% */
+  /* ── Primary palette (opacity variants) ── */
+  --el-primary-08: #00ff4108;
+  --el-primary-11: #00ff4111;
+  --el-primary-15: #00ff4115;
+  --el-primary-22: #00ff4122;
+  --el-primary-33: #00ff4133;
+  --el-primary-44: #00ff4144;
+  --el-primary-55: #00ff4155;
+  --el-primary-66: #00ff4166;
+  --el-primary-77: #00ff40af;
+  --el-primary-88: #00ff40bb;
+  --el-primary-99: #00ff40cf;
+  --el-primary-d9: #00ff40;
 
-  /* ── Magenta palette (accent — use for highlights & intermediate states only) ── */
-  --el-magenta-28: #ff00ff28;
-  --el-magenta-bb: #ff00ff;
-  --el-magenta-cc: #ff00ffcc;
+  /* ── Accent palette (highlights & interactive states) ── */
+  --el-accent-28: #ff00ff28;
+  --el-accent-bb: #ff00ff;
+  --el-accent-cc: #ff00ffcc;
   --el-flame-dd: #e1ff00;
   --el-flame-99: #ff9d00cf;
 
@@ -54,12 +54,31 @@
   /* ── Surfaces ── */
   --el-bg: #1a1a1a;
   --el-surface: #222222;
+
+  /* ── Glow effects (used in shadows and effects — themeable) ── */
+  --el-glow-primary-50: rgba(0, 255, 65, 0.5);
+  --el-glow-primary-30: rgba(0, 255, 65, 0.3);
+  --el-glow-primary-25: rgba(0, 255, 65, 0.25);
+  --el-glow-primary-20: rgba(0, 255, 65, 0.2);
+  --el-glow-primary-15: rgba(0, 255, 65, 0.15);
+  --el-glow-primary-10: rgba(0, 255, 65, 0.1);
+  --el-glow-primary-05: rgba(0, 255, 65, 0.05);
+  --el-glow-primary-03: rgba(0, 255, 65, 0.03);
+  --el-glow-primary-02: rgba(0, 255, 65, 0.02);
+  --el-glow-primary-015: rgba(0, 255, 65, 0.015);
+  --el-glow-accent-50: rgba(255, 0, 255, 0.5);
+  --el-glow-accent-30: rgba(255, 0, 255, 0.3);
+  --el-glow-accent-25: rgba(255, 0, 255, 0.25);
+  --el-glow-accent-20: rgba(255, 0, 255, 0.2);
+  --el-glow-accent-10: rgba(255, 0, 255, 0.1);
+  --el-glow-accent-06: rgba(255, 0, 255, 0.06);
 }
 
 body {
   color: #e0e0e0;
   background: var(--el-bg);
   font-family: var(--font-mono), "JetBrains Mono", "Fira Code", monospace;
+  /* NOTE: cursor SVG cannot use CSS vars — hardcoded accent color */
   --el-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='28' viewBox='0 0 24 28'%3E%3Cpath d='M2 1L2 23L7 18L12 26L16 24L11 16L18 16Z' fill='%23ff00ff' stroke='%23000' stroke-width='1.5' stroke-linejoin='round'/%3E%3Cpath d='M4 5L4 19L7.5 15.5' fill='none' stroke='%23ff77ff' stroke-width='0.8' opacity='0.6'/%3E%3Cline x1='6' y1='3' x2='6' y2='4' stroke='%23ff00ff' stroke-width='0.5' opacity='0.4'/%3E%3Cline x1='1' y1='8' x2='2' y2='8' stroke='%23ff00ff' stroke-width='0.5' opacity='0.3'/%3E%3C/svg%3E") 2 1;
   cursor: var(--el-cursor), auto;
 }
@@ -84,34 +103,34 @@ a, button, [role="button"], input[type="submit"], select, label[for], .cursor-po
     0deg,
     transparent,
     transparent 2px,
-    rgba(0, 255, 65, 0.015) 2px,
-    rgba(0, 255, 65, 0.015) 4px
+    var(--el-glow-primary-015) 2px,
+    var(--el-glow-primary-015) 4px
   );
 }
 
 /* ═══════════════════════════════════════════
-   TERMINAL GLOW EFFECT
+   TERMINAL GLOW EFFECTS
    ═══════════════════════════════════════════ */
 .glow-text {
-  text-shadow: 0 0 10px rgba(0, 255, 65, 0.5), 0 0 20px rgba(0, 255, 65, 0.3),
-    0 0 40px rgba(0, 255, 65, 0.1);
+  text-shadow: 0 0 10px var(--el-glow-primary-50), 0 0 20px var(--el-glow-primary-30),
+    0 0 40px var(--el-glow-primary-10);
 }
 
 .glow-text-subtle {
-  text-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+  text-shadow: 0 0 8px var(--el-glow-primary-30);
 }
 
 .glow-border {
-  box-shadow: 0 0 8px rgba(0, 255, 65, 0.15), inset 0 0 8px rgba(0, 255, 65, 0.05);
+  box-shadow: 0 0 8px var(--el-glow-primary-15), inset 0 0 8px var(--el-glow-primary-05);
 }
 
-.glow-border-magenta {
-  box-shadow: 0 0 8px rgba(255, 0, 255, 0.2), inset 0 0 8px rgba(255, 0, 255, 0.06);
+.glow-border-accent {
+  box-shadow: 0 0 8px var(--el-glow-accent-20), inset 0 0 8px var(--el-glow-accent-06);
 }
 
-.glow-text-magenta {
-  text-shadow: 0 0 10px rgba(255, 0, 255, 0.5), 0 0 20px rgba(255, 0, 255, 0.3),
-    0 0 40px rgba(255, 0, 255, 0.1);
+.glow-text-accent {
+  text-shadow: 0 0 10px var(--el-glow-accent-50), 0 0 20px var(--el-glow-accent-30),
+    0 0 40px var(--el-glow-accent-10);
 }
 
 /* ═══════════════════════════════════════════
@@ -155,9 +174,9 @@ a, button, [role="button"], input[type="submit"], select, label[for], .cursor-po
   97% { opacity: 1; }
 }
 
-@keyframes pulse-green {
-  0%, 100% { box-shadow: 0 0 4px rgba(0, 255, 65, 0.3); }
-  50% { box-shadow: 0 0 16px rgba(0, 255, 65, 0.6), 0 0 32px rgba(0, 255, 65, 0.2); }
+@keyframes pulse-primary {
+  0%, 100% { box-shadow: 0 0 4px var(--el-glow-primary-30); }
+  50% { box-shadow: 0 0 16px var(--el-glow-primary-50), 0 0 32px var(--el-glow-primary-20); }
 }
 
 @keyframes matrix-drop {
@@ -205,8 +224,8 @@ a, button, [role="button"], input[type="submit"], select, label[for], .cursor-po
   animation: flicker 4s ease-in-out infinite;
 }
 
-.animate-pulse-green {
-  animation: pulse-green 2s ease-in-out infinite;
+.animate-pulse-primary {
+  animation: pulse-primary 2s ease-in-out infinite;
 }
 
 .animate-grid-reveal {
@@ -243,7 +262,7 @@ a, button, [role="button"], input[type="submit"], select, label[for], .cursor-po
 .crosshair-corner::after {
   content: "";
   position: absolute;
-  border-color: var(--el-green);
+  border-color: var(--el-primary);
   opacity: 0.3;
 }
 .crosshair-corner::before {
@@ -268,8 +287,8 @@ a, button, [role="button"], input[type="submit"], select, label[for], .cursor-po
    ═══════════════════════════════════════════ */
 .grid-bg {
   background-image:
-    linear-gradient(rgba(0, 255, 65, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 255, 65, 0.03) 1px, transparent 1px);
+    linear-gradient(var(--el-glow-primary-03) 1px, transparent 1px),
+    linear-gradient(90deg, var(--el-glow-primary-03) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
@@ -289,7 +308,7 @@ a, button, [role="button"], input[type="submit"], select, label[for], .cursor-po
   }
 }
 
-/* Custom scrollbar for terminal aesthetic */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -298,16 +317,16 @@ a, button, [role="button"], input[type="submit"], select, label[for], .cursor-po
   background: var(--el-bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--el-green-33);
+  background: var(--el-primary-33);
   border-radius: 0;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--el-green-66);
+  background: var(--el-primary-66);
 }
 
-/* Input/focus overrides for green theme */
+/* Input/focus overrides */
 input::placeholder {
-  color: var(--el-green-44);
+  color: var(--el-primary-44);
 }
 
 input:focus {
@@ -316,8 +335,8 @@ input:focus {
 
 /* Selection color */
 ::selection {
-  background: rgba(0, 255, 65, 0.25);
-  color: var(--el-green);
+  background: var(--el-glow-primary-25);
+  color: var(--el-primary);
 }
 
 /* ═══════════════════════════════════════════
@@ -344,7 +363,7 @@ input:focus {
 /* Tap highlight for mobile */
 @media (hover: none) {
   button, a {
-    -webkit-tap-highlight-color: rgba(0, 255, 65, 0.1);
+    -webkit-tap-highlight-color: var(--el-glow-primary-10);
   }
 }
 
@@ -381,8 +400,8 @@ html {
     0deg,
     transparent,
     transparent 2px,
-    rgba(0, 255, 65, 0.02) 2px,
-    rgba(0, 255, 65, 0.02) 4px
+    var(--el-glow-primary-02) 2px,
+    var(--el-glow-primary-02) 4px
   );
 }
 
@@ -411,7 +430,7 @@ html {
 
 .lightbox-media.loaded {
   opacity: 1;
-  box-shadow: 0 0 30px rgba(0, 255, 65, 0.1);
+  box-shadow: 0 0 30px var(--el-glow-primary-10);
 }
 
 .lightbox-image {

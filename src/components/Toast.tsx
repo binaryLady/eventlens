@@ -35,15 +35,15 @@ export default function Toast({
           : "translate-y-4 opacity-0"
       }`}
     >
-      <div className="flex items-center justify-between gap-2 sm:gap-3 border border-[var(--el-green-44)] bg-[var(--el-bg)] px-3 py-2.5 sm:px-4 sm:py-3 shadow-[0_0_20px_rgba(0,255,65,0.1)]">
-        <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--el-green)] min-w-0 truncate">
+      <div className="flex items-center justify-between gap-2 sm:gap-3 border border-[var(--el-primary-44)] bg-[var(--el-bg)] px-3 py-2.5 sm:px-4 sm:py-3 shadow-[0_0_20px_var(--el-glow-primary-10)]">
+        <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--el-primary)] min-w-0 truncate">
           &#9679; {message.toUpperCase()}
         </span>
         <div className="flex items-center gap-2 shrink-0">
           {action && (
             <button
               onClick={action.onClick}
-              className="border border-[var(--el-green-99)] px-3 py-1.5 sm:py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--el-green-99)] active:bg-[var(--el-green-11)] transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-green)]"
+              className="border border-[var(--el-primary-99)] px-3 py-1.5 sm:py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--el-primary-99)] active:bg-[var(--el-primary-11)] transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--el-primary)]"
             >
               [{action.label}]
             </button>
@@ -53,7 +53,7 @@ export default function Toast({
               setVisible(false);
               setTimeout(onDismiss, 300);
             }}
-            className="p-1 text-[var(--el-flame-99)] hover:text-[var(--el-magenta)] active:text-[var(--el-green)] transition-colors"
+            className="p-1 text-[var(--el-flame-99)] hover:text-[var(--el-accent)] active:text-[var(--el-primary)] transition-colors"
             aria-label="Dismiss"
           >
             <svg

@@ -10,12 +10,12 @@ export function FolderBreakdown({ folders }: FolderBreakdownProps) {
 
   return (
     <div className="mb-6">
-      <h2 className="text-xs tracking-wider mb-2 text-[var(--el-green-99)]">FOLDERS</h2>
+      <h2 className="text-xs tracking-wider mb-2 text-[var(--el-primary-99)]">FOLDERS</h2>
       <div className="flex flex-wrap gap-2">
         {folders.map((f) => (
           <span
             key={f.name}
-            className="border border-[var(--el-green-33)] px-2 py-1 text-[10px] tracking-wider text-[var(--el-green-99)]"
+            className="border border-[var(--el-primary-33)] px-2 py-1 text-[10px] tracking-wider text-[var(--el-primary-99)]"
           >
             {f.name || "ROOT"} [{f.count}]
           </span>

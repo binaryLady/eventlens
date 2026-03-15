@@ -54,9 +54,9 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--el-bg)] text-[var(--el-green)] font-mono p-4 md:p-8">
+    <div className="min-h-screen bg-[var(--el-bg)] text-[var(--el-primary)] font-mono p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-xl tracking-wider mb-8 border-b border-[var(--el-green-33)] pb-4">
+        <h1 className="text-xl tracking-wider mb-8 border-b border-[var(--el-primary-33)] pb-4">
           PHOTO PIPELINE CONTROL
         </h1>
 

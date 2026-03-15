@@ -47,7 +47,7 @@ export function DuplicateManager({
       )}
 
       {duplicates && duplicates.clusters.length === 0 && (
-        <div className="text-xs text-[var(--el-green-44)] border border-[var(--el-green-33)] p-4">
+        <div className="text-xs text-[var(--el-primary-44)] border border-[var(--el-primary-33)] p-4">
           No duplicate clusters found at threshold {duplicates.threshold}.
         </div>
       )}
@@ -70,14 +70,14 @@ function ClusterRow({
         <span className="text-[10px] tracking-wider text-[var(--el-flame)]">
           CLUSTER #{cluster.groupId}
         </span>
-        <span className="text-[10px] text-[var(--el-green-44)]">{cluster.photos.length} photos</span>
+        <span className="text-[10px] text-[var(--el-primary-44)]">{cluster.photos.length} photos</span>
       </div>
       <div className="flex gap-3 overflow-x-auto pb-2">
         {cluster.photos.map((photo) => (
           <div
             key={photo.id}
             className={`flex-shrink-0 border p-2 ${
-              photo.hidden ? "border-[var(--el-red-33)] opacity-50" : "border-[var(--el-green-33)]"
+              photo.hidden ? "border-[var(--el-red-33)] opacity-50" : "border-[var(--el-primary-33)]"
             }`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -88,19 +88,19 @@ function ClusterRow({
               loading="lazy"
             />
             <div
-              className="text-[9px] text-[var(--el-green-99)] truncate max-w-[128px]"
+              className="text-[9px] text-[var(--el-primary-99)] truncate max-w-[128px]"
               title={photo.filename}
             >
               {photo.filename}
             </div>
-            <div className="text-[9px] text-[var(--el-green-44)]">
+            <div className="text-[9px] text-[var(--el-primary-44)]">
               {photo.folder || "ROOT"} / d={photo.hammingDistance}
             </div>
             <div className="mt-1">
               {photo.hidden ? (
                 <button
                   onClick={() => onUnhide([photo.id])}
-                  className="text-[9px] tracking-wider border border-[var(--el-green-33)] px-2 py-0.5 text-[var(--el-green-44)] hover:border-[var(--el-green)] hover:text-[var(--el-green)] transition-colors"
+                  className="text-[9px] tracking-wider border border-[var(--el-primary-33)] px-2 py-0.5 text-[var(--el-primary-44)] hover:border-[var(--el-primary)] hover:text-[var(--el-primary)] transition-colors"
                 >
                   UNHIDE
                 </button>

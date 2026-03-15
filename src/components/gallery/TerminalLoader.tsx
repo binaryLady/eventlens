@@ -40,12 +40,12 @@ export default function TerminalLoader() {
   return (
     <div className="min-h-screen bg-[var(--el-bg)] grid-bg flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
-        <div className="border border-[var(--el-green-d9)] bg-[rgba(26,26,26,0.8)] p-6">
-          <div className="flex items-center gap-2 border-b border-[var(--el-green-99)] pb-3 mb-4">
-            <div className="h-2 w-2 rounded-full bg-[var(--el-green)]" />
-            <div className="h-2 w-2 rounded-full bg-[var(--el-green-d9)]" />
-            <div className="h-2 w-2 rounded-full bg-[var(--el-green-d9)]" />
-            <span className="ml-2 text-[10px] uppercase tracking-widest text-[var(--el-green-d9)]">
+        <div className="border border-[var(--el-primary-d9)] bg-[rgba(26,26,26,0.8)] p-6">
+          <div className="flex items-center gap-2 border-b border-[var(--el-primary-99)] pb-3 mb-4">
+            <div className="h-2 w-2 rounded-full bg-[var(--el-primary)]" />
+            <div className="h-2 w-2 rounded-full bg-[var(--el-primary-d9)]" />
+            <div className="h-2 w-2 rounded-full bg-[var(--el-primary-d9)]" />
+            <span className="ml-2 text-[10px] uppercase tracking-widest text-[var(--el-primary-d9)]">
               eventlens://boot
             </span>
           </div>
@@ -54,26 +54,26 @@ export default function TerminalLoader() {
             {lines.map((line, i) => (
               <div
                 key={i}
-                className="animate-boot-line text-[var(--el-green)] opacity-0"
+                className="animate-boot-line text-[var(--el-primary)] opacity-0"
                 style={{ '--delay': `${i * 0.1}s` } as React.CSSProperties}
               >
                 {line}
                 {i < 2 && (
-                  <span className="ml-2 text-[var(--el-green-d9)]">[OK]</span>
+                  <span className="ml-2 text-[var(--el-primary-d9)]">[OK]</span>
                 )}
               </div>
             ))}
             {showCursor && (
-              <span className="inline-block w-2 h-4 bg-[var(--el-green)] ml-1" />
+              <span className="inline-block w-2 h-4 bg-[var(--el-primary)] ml-1" />
             )}
           </div>
 
-          <div className="mt-6 h-1 w-full overflow-hidden bg-[var(--el-green-11)]">
-            <div className="h-full w-1/3 bg-gradient-to-r from-transparent via-[var(--el-green)] to-transparent animate-[skeleton-scan_1.5s_linear_infinite]" />
+          <div className="mt-6 h-1 w-full overflow-hidden bg-[var(--el-primary-11)]">
+            <div className="h-full w-1/3 bg-gradient-to-r from-transparent via-[var(--el-primary)] to-transparent animate-[skeleton-scan_1.5s_linear_infinite]" />
           </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-center gap-2 text-[10px] text-[var(--el-green-99)] uppercase tracking-widest">
+        <div className="mt-4 flex items-center justify-center gap-2 text-[10px] text-[var(--el-primary-99)] uppercase tracking-widest">
           <span>&#x2500;&#x2500;&#x253c;&#x2500;&#x2500;</span>
           <span>LOADING</span>
           <span>&#x2500;&#x2500;&#x253c;&#x2500;&#x2500;</span>
