@@ -72,8 +72,6 @@ function calculateGrid(
 
   const cellWidth = Math.floor((canvasWidth - GAP * (cols - 1)) / cols);
   const cellHeight = Math.floor(cellWidth * cellAspect(ratio));
-  const canvasHeight = rows * cellHeight + GAP * (rows - 1);
-
   // If hero mode and we have room for a 2x2 hero cell
   if (heroIndex !== undefined && count > 4 && cols >= 3 && rows >= 2) {
     const positions: GridCell[] = [];

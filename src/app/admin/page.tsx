@@ -160,34 +160,6 @@ export default function AdminPage() {
     setLoading(null);
   };
 
-  const runAction = async (endpoint: string, method: string, label: string, body?: object) => {
-    setLoading(label);
-    addLog(`Starting: ${label}...`);
-    try {
-      const res = await fetch(endpoint, {
-        method,
-        headers: headers(),
-        body: body ? JSON.stringify(body) : undefined,
-      });
-      const contentType = res.headers.get("content-type");
-      let data: ActionResult;
-      if (contentType && contentType.includes("application/json")) {
-        data = await res.json();
-      } else {
-        throw new Error("Unexpected response format");
-      }
-      if (!res.ok) {
-        addLog(`ERROR: ${data.error || res.statusText}`);
-      } else {
-        addLog(`Done: ${JSON.stringify(data)}`);
-      }
-      await fetchStatus();
-    } catch (error) {
-      addLog(`ERROR: ${error instanceof Error ? error.message : "Network error"}`);
-    }
-    setLoading(null);
-  };
-
   const fetchDuplicates = async (threshold = 10) => {
     setDupsLoading(true);
     try {
