@@ -27,19 +27,18 @@ describe("RateLimiter", () => {
     await limiter.waitIfNeeded(); // request 2
 
     // Request 3 should block until the oldest timestamp ages out of the 60s window.
-    // We can't wait 60s in a test, so we verify the limiter's internal behavior
-    // by checking that it tracks timestamps correctly.
-    // Instead, test the boundary: 2 requests should be instant, 3rd should wait.
+    // We can't wait 60s in a test, so we race against a short timeout to prove it blocks.
     const start = Date.now();
-    // This will sleep until request 1's timestamp is >60s old
-    // We'll set a short timeout to prove it blocks
     const raceResult = await Promise.race([
       limiter.waitIfNeeded().then(() => "completed"),
       new Promise<string>((resolve) => setTimeout(() => resolve("timeout"), 200)),
     ]);
+    const elapsed = Date.now() - start;
 
     // The limiter should still be waiting (60s window), so timeout wins
     expect(raceResult).toBe("timeout");
+    // Verify it actually waited the full timeout duration, not returning instantly
+    expect(elapsed).toBeGreaterThanOrEqual(180);
   });
 
   it("creates independent instances", async () => {
