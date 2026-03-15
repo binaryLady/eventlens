@@ -73,7 +73,9 @@
       "Bash(sort -t'\t' -k2 -rn)",
       "Bash(gh api:*)",
       "Bash(gh search:*)",
-      "Bash(npx jest:*)"
+      "Bash(npx jest:*)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }
