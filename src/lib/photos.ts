@@ -3,6 +3,11 @@ import { PhotoRecord } from "./types";
 import { config } from "./config";
 import { PhotoRow } from "./supabase";
 import { DriveFile, listDriveImages, listDriveSubfolders } from "./drive";
+import {
+  isServiceAccountConfigured,
+  listDriveImagesWithServiceAccount,
+  listDriveSubfoldersWithServiceAccount,
+} from "./drive-sa";
 
 function supabaseAvailable(): boolean {
   return !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -116,21 +121,39 @@ export function extractDriveFileId(driveUrl: string): string {
 
 export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
   const { driveFolderId, googleApiKey } = config;
-  if (!driveFolderId || !googleApiKey) return [];
+  const useServiceAccount = isServiceAccountConfigured();
+
+  if (!driveFolderId) {
+    return [];
+  }
+
+  // Must have either Service Account or API Key configured
+  if (!useServiceAccount && !googleApiKey) {
+    return [];
+  }
 
   try {
     const opts = { revalidate: 30 };
-    const [rootFiles, subfolders] = await Promise.all([
-      listDriveImages(driveFolderId, googleApiKey, opts),
-      listDriveSubfolders(driveFolderId, googleApiKey, opts),
-    ]);
+
+    // Use Service Account if configured, otherwise fall back to API Key
+    const [rootFiles, subfolders] = useServiceAccount
+      ? await Promise.all([
+          listDriveImagesWithServiceAccount(driveFolderId),
+          listDriveSubfoldersWithServiceAccount(driveFolderId),
+        ])
+      : await Promise.all([
+          listDriveImages(driveFolderId, googleApiKey, opts),
+          listDriveSubfolders(driveFolderId, googleApiKey, opts),
+        ]);
 
     const allPhotos = driveFilesToPhotos(rootFiles, "Root");
 
     if (subfolders.length > 0) {
       const subResults = await Promise.all(
         subfolders.map(async (sf) => {
-          const files = await listDriveImages(sf.id, googleApiKey, opts);
+          const files = useServiceAccount
+            ? await listDriveImagesWithServiceAccount(sf.id)
+            : await listDriveImages(sf.id, googleApiKey, opts);
           return driveFilesToPhotos(files, sf.name);
         }),
       );
@@ -201,9 +224,15 @@ export function getTags(photos: PhotoRecord[]): string[] {
 
 export async function fetchDriveFolders(): Promise<string[]> {
   const { driveFolderId, googleApiKey } = config;
-  if (!driveFolderId || !googleApiKey) return [];
+  const useServiceAccount = isServiceAccountConfigured();
+
+  if (!driveFolderId) return [];
+  if (!useServiceAccount && !googleApiKey) return [];
+
   try {
-    const folders = await listDriveSubfolders(driveFolderId, googleApiKey, { revalidate: 30 });
+    const folders = useServiceAccount
+      ? await listDriveSubfoldersWithServiceAccount(driveFolderId)
+      : await listDriveSubfolders(driveFolderId, googleApiKey, { revalidate: 30 });
     return folders.map((f) => f.name).sort();
   } catch {
     return [];
