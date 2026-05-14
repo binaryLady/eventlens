@@ -99,13 +99,18 @@ async function getAccessToken(): Promise<string> {
 }
 
 export function isServiceAccountConfigured(): boolean {
-  return !!(process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY);
+  const hasEmail = !!process.env.GOOGLE_CLIENT_EMAIL;
+  const hasKey = !!process.env.GOOGLE_PRIVATE_KEY;
+  console.log("[v0] isServiceAccountConfigured - email:", hasEmail, "key:", hasKey);
+  return hasEmail && hasKey;
 }
 
 export async function listDriveImagesWithServiceAccount(
   folderId: string
 ): Promise<DriveFile[]> {
+  console.log("[v0] listDriveImagesWithServiceAccount - folderId:", folderId);
   const accessToken = await getAccessToken();
+  console.log("[v0] Got access token:", accessToken ? "YES" : "NO");
   const files: DriveFile[] = [];
   let pageToken: string | undefined;
 
@@ -129,10 +134,12 @@ export async function listDriveImagesWithServiceAccount(
 
     const data: { files?: DriveFile[]; nextPageToken?: string } =
       await res.json();
+    console.log("[v0] Drive API returned", data.files?.length || 0, "files");
     if (data.files) files.push(...data.files);
     pageToken = data.nextPageToken;
   } while (pageToken);
 
+  console.log("[v0] Total files from Service Account:", files.length);
   return files;
 }
 
