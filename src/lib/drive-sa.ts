@@ -70,10 +70,13 @@ let cachedToken: { token: string; expiry: number } | null = null;
 async function getAccessToken(): Promise<string> {
   // Return cached token if still valid (with 5 min buffer)
   if (cachedToken && cachedToken.expiry > Date.now() + 5 * 60 * 1000) {
+    console.log("[v0] Using cached access token");
     return cachedToken.token;
   }
 
+  console.log("[v0] Creating new JWT for token exchange...");
   const jwt = await createJWT();
+  console.log("[v0] JWT created, exchanging for access token...");
 
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -86,10 +89,12 @@ async function getAccessToken(): Promise<string> {
 
   if (!res.ok) {
     const error = await res.text();
+    console.error("[v0] Token exchange FAILED:", res.status, error);
     throw new Error(`Failed to get access token: ${error}`);
   }
 
   const data = await res.json();
+  console.log("[v0] Token exchange SUCCESS, expires in", data.expires_in, "seconds");
   cachedToken = {
     token: data.access_token,
     expiry: Date.now() + data.expires_in * 1000,
