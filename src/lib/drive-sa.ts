@@ -1,6 +1,7 @@
 // @TheTechMargin 2026
 // Google Drive Service Account Authentication
 // Uses raw HTTP requests with JWT (no googleapis dependency)
+// Env vars: GOOGLE_CLIENT_EMAIL, GOOGLE_PRIVATE_KEY
 
 import type { DriveFile } from "./drive";
 
