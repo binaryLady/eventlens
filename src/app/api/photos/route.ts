@@ -6,6 +6,10 @@ export const revalidate = 30;
 
 export async function GET(request: NextRequest) {
   console.log("[v0] /api/photos GET request received");
+  console.log("[v0] ENV CHECK - GOOGLE_CLIENT_EMAIL:", process.env.GOOGLE_CLIENT_EMAIL ? `SET (${process.env.GOOGLE_CLIENT_EMAIL.length} chars)` : "MISSING");
+  console.log("[v0] ENV CHECK - GOOGLE_PRIVATE_KEY:", process.env.GOOGLE_PRIVATE_KEY ? `SET (${process.env.GOOGLE_PRIVATE_KEY.length} chars)` : "MISSING");
+  console.log("[v0] ENV CHECK - GOOGLE_API_KEY:", process.env.GOOGLE_API_KEY ? `SET (${process.env.GOOGLE_API_KEY.length} chars)` : "MISSING");
+  console.log("[v0] ENV CHECK - GOOGLE_DRIVE_FOLDER_ID:", process.env.GOOGLE_DRIVE_FOLDER_ID || "MISSING");
   try {
     const { searchParams } = new URL(request.url);
     const limit = Number(searchParams.get("limit")) || 0;
