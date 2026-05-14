@@ -116,7 +116,12 @@ export function extractDriveFileId(driveUrl: string): string {
 
 export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
   const { driveFolderId, googleApiKey } = config;
-  if (!driveFolderId || !googleApiKey) return [];
+  console.log("[v0] fetchPhotosFromDriveFolder - driveFolderId:", driveFolderId ? "SET" : "MISSING");
+  console.log("[v0] fetchPhotosFromDriveFolder - googleApiKey:", googleApiKey ? "SET" : "MISSING");
+  if (!driveFolderId || !googleApiKey) {
+    console.log("[v0] Missing config, returning empty array");
+    return [];
+  }
 
   try {
     const opts = { revalidate: 30 };
