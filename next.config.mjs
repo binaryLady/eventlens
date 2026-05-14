@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+// Force cache invalidation
 const nextConfig = {
   images: {
     remotePatterns: [

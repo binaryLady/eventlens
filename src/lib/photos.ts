@@ -7,7 +7,7 @@ import {
   isServiceAccountConfigured,
   listDriveImagesWithServiceAccount,
   listDriveSubfoldersWithServiceAccount,
-} from "./drive-service-account";
+} from "./drive-sa";
 
 function supabaseAvailable(): boolean {
   return !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
