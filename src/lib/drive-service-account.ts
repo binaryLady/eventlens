@@ -1,82 +1,136 @@
 // @TheTechMargin 2026
 // Google Drive Service Account Authentication
-// Use this for accessing private/restricted folders
+// Uses raw HTTP requests with JWT (no googleapis dependency)
 
-import { google } from "googleapis";
 import type { DriveFile } from "./drive";
 
-let driveClient: ReturnType<typeof google.drive> | null = null;
-
-function getServiceAccountCredentials() {
+// Simple JWT creation for Google OAuth2
+async function createJWT(): Promise<string> {
   const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
   const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n");
 
   if (!clientEmail || !privateKey) {
-    return null;
-  }
-
-  return { clientEmail, privateKey };
-}
-
-function getDriveClient() {
-  if (driveClient) return driveClient;
-
-  const credentials = getServiceAccountCredentials();
-  if (!credentials) {
     throw new Error("Service Account credentials not configured");
   }
 
-  const auth = new google.auth.GoogleAuth({
-    credentials: {
-      client_email: credentials.clientEmail,
-      private_key: credentials.privateKey,
-    },
-    scopes: ["https://www.googleapis.com/auth/drive.readonly"],
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: "RS256", typ: "JWT" };
+  const payload = {
+    iss: clientEmail,
+    scope: "https://www.googleapis.com/auth/drive.readonly",
+    aud: "https://oauth2.googleapis.com/token",
+    iat: now,
+    exp: now + 3600,
+  };
+
+  const encoder = new TextEncoder();
+  const headerB64 = btoa(JSON.stringify(header))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+  const payloadB64 = btoa(JSON.stringify(payload))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+  const unsignedToken = `${headerB64}.${payloadB64}`;
+
+  // Import the private key and sign
+  const pemHeader = "-----BEGIN PRIVATE KEY-----";
+  const pemFooter = "-----END PRIVATE KEY-----";
+  const pemContents = privateKey
+    .replace(pemHeader, "")
+    .replace(pemFooter, "")
+    .replace(/\s/g, "");
+  const binaryDer = Uint8Array.from(atob(pemContents), (c) => c.charCodeAt(0));
+
+  const cryptoKey = await crypto.subtle.importKey(
+    "pkcs8",
+    binaryDer,
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+
+  const signature = await crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5",
+    cryptoKey,
+    encoder.encode(unsignedToken)
+  );
+
+  const signatureB64 = btoa(String.fromCharCode(...new Uint8Array(signature)))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+
+  return `${unsignedToken}.${signatureB64}`;
+}
+
+let cachedToken: { token: string; expiry: number } | null = null;
+
+async function getAccessToken(): Promise<string> {
+  // Return cached token if still valid (with 5 min buffer)
+  if (cachedToken && cachedToken.expiry > Date.now() + 5 * 60 * 1000) {
+    return cachedToken.token;
+  }
+
+  const jwt = await createJWT();
+
+  const res = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion: jwt,
+    }),
   });
 
-  driveClient = google.drive({ version: "v3", auth });
-  return driveClient;
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error(`Failed to get access token: ${error}`);
+  }
+
+  const data = await res.json();
+  cachedToken = {
+    token: data.access_token,
+    expiry: Date.now() + data.expires_in * 1000,
+  };
+
+  return cachedToken.token;
 }
 
 export function isServiceAccountConfigured(): boolean {
-  return getServiceAccountCredentials() !== null;
+  return !!(process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY);
 }
 
 export async function listDriveImagesWithServiceAccount(
   folderId: string
 ): Promise<DriveFile[]> {
-  const drive = getDriveClient();
+  const accessToken = await getAccessToken();
   const files: DriveFile[] = [];
   let pageToken: string | undefined;
 
   do {
-    const response = await drive.files.list({
-      q: `'${folderId}' in parents and (mimeType contains 'image/' or mimeType contains 'video/') and trashed = false`,
-      fields:
-        "files(id,name,mimeType,modifiedTime,owners(displayName),imageMediaMetadata(cameraMake,cameraModel)),nextPageToken",
-      orderBy: "modifiedTime desc",
-      pageSize: 1000,
-      pageToken,
+    const q = encodeURIComponent(
+      `'${folderId}' in parents and (mimeType contains 'image/' or mimeType contains 'video/') and trashed = false`
+    );
+    const pt = pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : "";
+    const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,modifiedTime,owners(displayName),imageMediaMetadata(cameraMake,cameraModel)),nextPageToken&orderBy=modifiedTime%20desc&pageSize=1000${pt}`;
+
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      next: { revalidate: 30 },
     });
 
-    if (response.data.files) {
-      files.push(
-        ...response.data.files.map((f) => ({
-          id: f.id || "",
-          name: f.name || "",
-          mimeType: f.mimeType || "",
-          modifiedTime: f.modifiedTime || undefined,
-          owners: f.owners?.map((o) => ({ displayName: o.displayName || "" })),
-          imageMediaMetadata: f.imageMediaMetadata
-            ? {
-                cameraMake: f.imageMediaMetadata.cameraMake || undefined,
-                cameraModel: f.imageMediaMetadata.cameraModel || undefined,
-              }
-            : undefined,
-        }))
-      );
+    if (!res.ok) {
+      const error = await res.text();
+      console.error("[drive-sa] API error:", res.status, error);
+      break;
     }
-    pageToken = response.data.nextPageToken || undefined;
+
+    const data: { files?: DriveFile[]; nextPageToken?: string } =
+      await res.json();
+    if (data.files) files.push(...data.files);
+    pageToken = data.nextPageToken;
   } while (pageToken);
 
   return files;
@@ -85,28 +139,30 @@ export async function listDriveImagesWithServiceAccount(
 export async function listDriveSubfoldersWithServiceAccount(
   parentId: string
 ): Promise<Array<{ id: string; name: string }>> {
-  const drive = getDriveClient();
+  const accessToken = await getAccessToken();
   const folders: Array<{ id: string; name: string }> = [];
   let pageToken: string | undefined;
 
   do {
-    const response = await drive.files.list({
-      q: `'${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-      fields: "files(id,name),nextPageToken",
-      orderBy: "name",
-      pageSize: 200,
-      pageToken,
+    const q = encodeURIComponent(
+      `'${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`
+    );
+    const pt = pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : "";
+    const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name),nextPageToken&orderBy=name&pageSize=200${pt}`;
+
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      next: { revalidate: 30 },
     });
 
-    if (response.data.files) {
-      folders.push(
-        ...response.data.files.map((f) => ({
-          id: f.id || "",
-          name: f.name || "",
-        }))
-      );
-    }
-    pageToken = response.data.nextPageToken || undefined;
+    if (!res.ok) break;
+
+    const data: {
+      files?: Array<{ id: string; name: string }>;
+      nextPageToken?: string;
+    } = await res.json();
+    if (data.files) folders.push(...data.files);
+    pageToken = data.nextPageToken;
   } while (pageToken);
 
   return folders;
@@ -132,18 +188,20 @@ export async function fetchDriveImageWithServiceAccount(
 
   // Fall back to Drive API with service account auth
   try {
-    const drive = getDriveClient();
-    const response = await drive.files.get(
-      { fileId, alt: "media" },
-      { responseType: "arraybuffer" }
+    const accessToken = await getAccessToken();
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
+    if (!res.ok) return null;
+
     const mimeType =
-      response.headers["content-type"] || "application/octet-stream";
+      res.headers.get("content-type") || "application/octet-stream";
     if (!mimeType.startsWith("image/")) return null;
 
-    const base64 = Buffer.from(response.data as ArrayBuffer).toString("base64");
-    return { base64, mimeType };
+    const buf = await res.arrayBuffer();
+    return { base64: Buffer.from(buf).toString("base64"), mimeType };
   } catch {
     return null;
   }
