@@ -71,13 +71,13 @@ let cachedToken: { token: string; expiry: number } | null = null;
 async function getAccessToken(): Promise<string> {
   // Return cached token if still valid (with 5 min buffer)
   if (cachedToken && cachedToken.expiry > Date.now() + 5 * 60 * 1000) {
-    console.log("[v0] Using cached access token");
+    console.log("[v0] GATE T1: using cached token");
     return cachedToken.token;
   }
 
-  console.log("[v0] Creating new JWT for token exchange...");
+  console.log("[v0] GATE T2: creating JWT");
   const jwt = await createJWT();
-  console.log("[v0] JWT created, exchanging for access token...");
+  console.log("[v0] GATE T3: exchanging for token");
 
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -90,12 +90,12 @@ async function getAccessToken(): Promise<string> {
 
   if (!res.ok) {
     const error = await res.text();
-    console.error("[v0] Token exchange FAILED:", res.status, error);
+    console.error("[v0] GATE T4: token FAILED", res.status);
     throw new Error(`Failed to get access token: ${error}`);
   }
 
   const data = await res.json();
-  console.log("[v0] Token exchange SUCCESS, expires in", data.expires_in, "seconds");
+  console.log("[v0] GATE T5: token SUCCESS");
   cachedToken = {
     token: data.access_token,
     expiry: Date.now() + data.expires_in * 1000,
@@ -105,18 +105,17 @@ async function getAccessToken(): Promise<string> {
 }
 
 export function isServiceAccountConfigured(): boolean {
-  const hasEmail = !!process.env.GOOGLE_CLIENT_EMAIL;
-  const hasKey = !!process.env.GOOGLE_PRIVATE_KEY;
-  console.log("[v0] isServiceAccountConfigured - email:", hasEmail, "key:", hasKey);
-  return hasEmail && hasKey;
+  const configured = !!(process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY);
+  console.log("[v0] GATE SA:", configured);
+  return configured;
 }
 
 export async function listDriveImagesWithServiceAccount(
   folderId: string
 ): Promise<DriveFile[]> {
-  console.log("[v0] listDriveImagesWithServiceAccount - folderId:", folderId);
+  console.log("[v0] GATE L1: listImages start");
   const accessToken = await getAccessToken();
-  console.log("[v0] Got access token:", accessToken ? "YES" : "NO");
+  console.log("[v0] GATE L2: got token");
   const files: DriveFile[] = [];
   let pageToken: string | undefined;
 
@@ -140,12 +139,12 @@ export async function listDriveImagesWithServiceAccount(
 
     const data: { files?: DriveFile[]; nextPageToken?: string } =
       await res.json();
-    console.log("[v0] Drive API returned", data.files?.length || 0, "files");
+    console.log("[v0] GATE L3: got", data.files?.length || 0, "files");
     if (data.files) files.push(...data.files);
     pageToken = data.nextPageToken;
   } while (pageToken);
 
-  console.log("[v0] Total files from Service Account:", files.length);
+  console.log("[v0] GATE L4: total", files.length);
   return files;
 }
 
