@@ -123,17 +123,25 @@ export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
   const { driveFolderId, googleApiKey } = config;
   const useServiceAccount = isServiceAccountConfigured();
 
+  console.log("[v0] fetchPhotosFromDriveFolder START");
+  console.log("[v0] - driveFolderId:", driveFolderId || "MISSING");
+  console.log("[v0] - useServiceAccount:", useServiceAccount);
+  console.log("[v0] - googleApiKey:", googleApiKey ? "SET" : "MISSING");
+
   if (!driveFolderId) {
+    console.log("[v0] No driveFolderId, returning empty");
     return [];
   }
 
   // Must have either Service Account or API Key configured
   if (!useServiceAccount && !googleApiKey) {
+    console.log("[v0] No auth method configured, returning empty");
     return [];
   }
 
   try {
     const opts = { revalidate: 30 };
+    console.log("[v0] Fetching from Drive with", useServiceAccount ? "Service Account" : "API Key");
 
     // Use Service Account if configured, otherwise fall back to API Key
     const [rootFiles, subfolders] = useServiceAccount
@@ -145,6 +153,9 @@ export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
           listDriveImages(driveFolderId, googleApiKey, opts),
           listDriveSubfolders(driveFolderId, googleApiKey, opts),
         ]);
+
+    console.log("[v0] Root files found:", rootFiles.length);
+    console.log("[v0] Subfolders found:", subfolders.length);
 
     const allPhotos = driveFilesToPhotos(rootFiles, "Root");
 
@@ -165,8 +176,10 @@ export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
     );
     allPhotos.forEach((p, i) => { p.id = String(i + 1); });
 
+    console.log("[v0] fetchPhotosFromDriveFolder COMPLETE - total photos:", allPhotos.length);
     return allPhotos;
-  } catch {
+  } catch (error) {
+    console.error("[v0] fetchPhotosFromDriveFolder ERROR:", error);
     return [];
   }
 }

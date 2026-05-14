@@ -5,12 +5,15 @@ import { fetchPhotosWithMetadata, getFolders, getTags } from "@/lib/photos";
 export const revalidate = 30;
 
 export async function GET(request: NextRequest) {
+  console.log("[v0] /api/photos GET request received");
   try {
     const { searchParams } = new URL(request.url);
     const limit = Number(searchParams.get("limit")) || 0;
     const offset = Number(searchParams.get("offset")) || 0;
 
+    console.log("[v0] Calling fetchPhotosWithMetadata...");
     const allPhotos = await fetchPhotosWithMetadata();
+    console.log("[v0] fetchPhotosWithMetadata returned", allPhotos.length, "photos");
     const folders = getFolders(allPhotos);
     const tags = getTags(allPhotos);
     const total = allPhotos.length;
@@ -28,6 +31,7 @@ export async function GET(request: NextRequest) {
           }, allPhotos[0].processedAt)
         : "";
 
+    console.log("[v0] /api/photos responding with", photos.length, "photos,", folders.length, "folders,", tags.length, "tags");
     return NextResponse.json({
       photos,
       folders,
@@ -36,7 +40,8 @@ export async function GET(request: NextRequest) {
       total,
       hasMore: limit > 0 ? offset + limit < total : false,
     });
-  } catch {
+  } catch (error) {
+    console.error("[v0] /api/photos ERROR:", error);
     return NextResponse.json(
       { error: "Failed to fetch photos" },
       { status: 500 }
