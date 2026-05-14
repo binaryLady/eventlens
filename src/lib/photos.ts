@@ -123,25 +123,14 @@ export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
   const { driveFolderId, googleApiKey } = config;
   const useServiceAccount = isServiceAccountConfigured();
 
-  console.log("[v0] fetchPhotosFromDriveFolder START");
-  console.log("[v0] - driveFolderId:", driveFolderId || "MISSING");
-  console.log("[v0] - useServiceAccount:", useServiceAccount);
-  console.log("[v0] - googleApiKey:", googleApiKey ? "SET" : "MISSING");
+  console.log("[v0] GATE A: fetchPhotos - SA:", useServiceAccount, "folder:", !!driveFolderId, "apiKey:", !!googleApiKey);
 
-  if (!driveFolderId) {
-    console.log("[v0] No driveFolderId, returning empty");
-    return [];
-  }
-
-  // Must have either Service Account or API Key configured
-  if (!useServiceAccount && !googleApiKey) {
-    console.log("[v0] No auth method configured, returning empty");
-    return [];
-  }
+  if (!driveFolderId) return [];
+  if (!useServiceAccount && !googleApiKey) return [];
 
   try {
     const opts = { revalidate: 30 };
-    console.log("[v0] Fetching from Drive with", useServiceAccount ? "Service Account" : "API Key");
+    console.log("[v0] GATE B: fetching with", useServiceAccount ? "ServiceAccount" : "APIKey");
 
     // Use Service Account if configured, otherwise fall back to API Key
     const [rootFiles, subfolders] = useServiceAccount
@@ -154,8 +143,7 @@ export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
           listDriveSubfolders(driveFolderId, googleApiKey, opts),
         ]);
 
-    console.log("[v0] Root files found:", rootFiles.length);
-    console.log("[v0] Subfolders found:", subfolders.length);
+    console.log("[v0] GATE C: root files:", rootFiles.length, "subfolders:", subfolders.length);
 
     const allPhotos = driveFilesToPhotos(rootFiles, "Root");
 
@@ -176,10 +164,10 @@ export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
     );
     allPhotos.forEach((p, i) => { p.id = String(i + 1); });
 
-    console.log("[v0] fetchPhotosFromDriveFolder COMPLETE - total photos:", allPhotos.length);
+    console.log("[v0] GATE D: total photos:", allPhotos.length);
     return allPhotos;
-  } catch (error) {
-    console.error("[v0] fetchPhotosFromDriveFolder ERROR:", error);
+  } catch (err) {
+    console.error("[v0] GATE E: ERROR", err);
     return [];
   }
 }
