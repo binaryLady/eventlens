@@ -10,6 +10,9 @@ export interface EventLensConfig {
   googleApiKey: string;
   driveFolderId: string;
   adminSecret: string;
+  // Service Account credentials (for private folders)
+  googleClientEmail: string;
+  googlePrivateKey: string;
 }
 
 export const config: EventLensConfig = {
@@ -24,4 +27,6 @@ export const config: EventLensConfig = {
   googleApiKey: process.env.GOOGLE_API_KEY || "",
   driveFolderId: process.env.GOOGLE_DRIVE_FOLDER_ID || "",
   adminSecret: process.env.ADMIN_API_SECRET || "",
+  googleClientEmail: process.env.GOOGLE_CLIENT_EMAIL || "",
+  googlePrivateKey: process.env.GOOGLE_PRIVATE_KEY || "",
 };

@@ -86,8 +86,6 @@ export async function listDriveImages(
   const files: DriveFile[] = [];
   let pageToken: string | undefined;
 
-  console.log("[v0] listDriveImages called with folderId:", folderId);
-
   do {
     const q = encodeURIComponent(
       `'${folderId}' in parents and (mimeType contains 'image/' or mimeType contains 'video/') and trashed = false`,
@@ -95,21 +93,13 @@ export async function listDriveImages(
     const pt = pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : "";
     const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,modifiedTime,owners(displayName),imageMediaMetadata(cameraMake,cameraModel)),nextPageToken&orderBy=modifiedTime%20desc&pageSize=1000&key=${apiKey}${pt}`;
 
-    console.log("[v0] Fetching from Google Drive API...");
     const res = await fetch(url, fetchInit(opts));
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.log("[v0] Drive API error:", res.status, errorText);
-      break;
-    }
+    if (!res.ok) break;
 
-    const data: { files?: DriveFile[]; nextPageToken?: string; error?: { code: number; message: string } } = await res.json();
-    console.log("[v0] Drive API full response:", JSON.stringify(data, null, 2));
-    console.log("[v0] Drive API returned", data.files?.length || 0, "files");
+    const data: { files?: DriveFile[]; nextPageToken?: string } = await res.json();
     if (data.files) files.push(...data.files);
     pageToken = data.nextPageToken;
   } while (pageToken);
 
-  console.log("[v0] Total files found:", files.length);
   return files;
 }
