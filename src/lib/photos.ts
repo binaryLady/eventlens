@@ -130,6 +130,9 @@ export async function fetchPhotosFromDriveFolder(): Promise<PhotoRecord[]> {
       listDriveSubfolders(driveFolderId, googleApiKey, opts),
     ]);
 
+    console.log("[v0] Root files found:", rootFiles.length);
+    console.log("[v0] Subfolders found:", subfolders.length, subfolders.map(f => f.name));
+
     const allPhotos = driveFilesToPhotos(rootFiles, "Root");
 
     if (subfolders.length > 0) {

@@ -1,6 +1,6 @@
 // @TheTechMargin 2026
-import { redirect } from "next/navigation";
+import PhotoGallery from "@/components/gallery/PhotoGallery";
 
 export default function Home() {
-  redirect("/login");
+  return <PhotoGallery />;
 }

@@ -103,7 +103,8 @@ export async function listDriveImages(
       break;
     }
 
-    const data: { files?: DriveFile[]; nextPageToken?: string } = await res.json();
+    const data: { files?: DriveFile[]; nextPageToken?: string; error?: { code: number; message: string } } = await res.json();
+    console.log("[v0] Drive API full response:", JSON.stringify(data, null, 2));
     console.log("[v0] Drive API returned", data.files?.length || 0, "files");
     if (data.files) files.push(...data.files);
     pageToken = data.nextPageToken;
